@@ -1,0 +1,49 @@
+<div class="main-content">
+  <div class="container-fluid">
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+                  <div class="card-header card-header-danger">
+                      <h4 class="card-title">TRANSACCIONES</h4>
+                      <p class="card-category">Historial  de transacciones</p>
+                  </div>
+                  <div class="card-body">
+                    <div class="card-body table-responsive">
+                        <table class="table table-hover">
+                            <thead class="text-warning">
+                                <th>Número de orden</th>
+                                <th>Fecha de trasacción</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Banco</th>
+                                <th>Tipo</th>
+                                <th>Acciones</th>
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of data" [class.transacctionTrue]="item.status === 'true'" [class.transacctionFalse]="item.status == 'false'">
+                                    <td>{{item.number}}</td>
+                                    <td>{{item.date}}</td>
+                                    <td>{{item.description}}</td>
+                                    <td>{{currency.format(item.amount)}}</td>  
+                                    <th>{{item.banck}}</th>
+                                    <td>{{item.type}}</td>
+                                    <td>
+                                        <button mat-mini-fab (click)="aproved(item)" color="primary" >
+                                            <mat-icon>check</mat-icon>
+                                        </button>
+                                        <button mat-mini-fab  (click)="refused(item)" color="error" >
+                                            <mat-icon>close</mat-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                                                       
+                            </tbody>
+                        </table>
+                    </div>
+                  </div>
+              </div>
+          </div>
+          
+      </div>
+  </div>
+</div>

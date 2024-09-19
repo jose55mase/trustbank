@@ -1,0 +1,96 @@
+
+<div class="main-content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card">
+            <div class="card-header card-header-danger">
+              <h4 class="card-title">ARCHIVOS</h4>
+              <p class="card-category">Lista de documentos y procesos</p>
+            </div>
+            <div class="card-body">
+              <div class="row">
+
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                  <div class="card card-stats">
+                    <div class="card-header card-header-success card-header-icon">
+                      <div class="card-icon">
+                        <i *ngIf="statusDocument.foto == false" class="material-icons">timer</i>
+                        <i *ngIf="statusDocument.foto == true"class="material-icons">check</i>
+                        <i *ngIf="statusDocument.foto == 'refused'"class="material-icons">close</i>
+                      </div>
+                      <p class="card-category">Fotografia</p>
+                      <h3 class="card-title">
+                        <!---img  [src]="imagePreviwPicture" width="300" height="120" class="img-thumbnail rounded"/-->
+                        <img *ngIf="data.foto" src="http://localhost:8080/api/user/uploads/img/{{data.foto}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                      </h3>
+                    </div>
+                    <div class="card-footer">
+                      <div class="stats">
+                          <input type="file" (change)="selectedPicture($event)">
+                          <button (click)="upluadFile()" mat-mini-fab  aria-label="upload_file" color="primary">
+                              <mat-icon>upload_file</mat-icon>
+                          </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                  <div class="card card-stats">
+                    <div class="card-header card-header-success card-header-icon">
+                      <div class="card-icon">
+                        <i *ngIf="statusDocument.fromt == false" class="material-icons">timer</i>
+                        <i *ngIf="statusDocument.fromt == true"class="material-icons">check</i>
+                        <i *ngIf="statusDocument.fromt == 'refused'"class="material-icons">close</i>
+                      </div>
+                      <p class="card-category">Documento de identidad (Parte frontal)</p>
+                      <h3 class="card-title">
+                        <img *ngIf="data.documentFrom" src="http://localhost:8080/api/user/uploads/img/{{data.documentFrom}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                      </h3>
+                    </div>
+                    <div class="card-footer">
+                      <div class="stats">
+                        <input type="file" (change)="selectedDocumentOne($event)">
+                        <button mat-mini-fab  (click)="upluadFileDocumentFromt()" aria-label="upload_file" color="primary">
+                          <mat-icon>upload_file</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 col-sm-6">
+                  <div class="card card-stats">
+                    <div class="card-header card-header-success card-header-icon">
+                      <div class="card-icon">
+                        <i *ngIf="statusDocument.back == false" class="material-icons">timer</i>
+                        <i *ngIf="statusDocument.back == true"class="material-icons">check</i>
+                        <i *ngIf="statusDocument.back == 'refused'"class="material-icons">close</i>
+                      </div>
+                      <p class="card-category">Documento de identidad (Parte trasera)</p>
+                      <h3 class="card-title">
+                        <img *ngIf="data.documentBack" src="http://localhost:8080/api/user/uploads/img/{{data.documentBack}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                      </h3>
+                    </div>
+                    <div class="card-footer">
+                      <div class="stats">
+                        <input type="file" (change)="selectedDocumentTwo($event)">
+                        <button mat-mini-fab (click)="upluadFileDocumentback()" aria-label="upload_file" color="primary">
+                            <mat-icon>upload_file</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+              <!--button mat-raised-button type="submit" class="btn btn-danger pull-right">Actulizar documentos</button-->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

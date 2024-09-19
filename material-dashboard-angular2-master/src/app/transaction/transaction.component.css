@@ -1,0 +1,18 @@
+.transacctionTrue {
+    background-color: rgb(79, 224, 74);
+}
+
+.transacctionFalse {
+    background-color: rgb(238, 80, 52);
+}
+
+.center {
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+}
+
+.wrapper {
+    height: calc(100vh - 20px);
+    background: red;
+  }

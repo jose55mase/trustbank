@@ -1,0 +1,59 @@
+<div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Crear transacción</h5>
+    <button
+      type="button"
+      class="btn-close"
+      aria-label="Close"
+      (click)="modalRef.close()"
+    ></button>
+  </div>
+  <div class="modal-body">
+    <form [formGroup]="checkoutForm">
+      <mdb-form-control class="mb-3">
+          <input mdbInput 
+            autocomplete="off"
+            formControlName="desription"  
+            type="text" 
+            id="description" 
+            class="form-control" 
+          />
+          <label mdbLabel class="form-label" for="description">Descripción</label>
+      </mdb-form-control>
+
+      <mdb-form-control class="mb-3">
+          <input mdbInput 
+          currencyMask  
+            currencyMask 
+            autocomplete="off"
+            type="number" 
+            id="amount" 
+            class="form-control" 
+            mask="separator.2" thousandSeparator="." nbInput status="primary"
+            formControlName="amount"  
+          />
+          <label mdbLabel class="form-label" for="amount">Monto</label>
+      </mdb-form-control>
+
+      <mdb-form-control class="mb-3">
+          <input mdbInput type="text" autocomplete="off" id="bank" class="form-control" formControlName="bank"  />
+          <label mdbLabel class="form-label" for="bank">Banco</label>
+      </mdb-form-control>
+
+      <mdb-form-control class="mb-3">
+          <input mdbInput type="text" autocomplete="off" id="type" class="form-control" formControlName="type"  />
+          <label mdbLabel class="form-label" for="type">Tipo</label>
+      </mdb-form-control>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="modalRef.close()">
+      Cerrar
+    </button>
+    <button type="button"
+      [disabled]="!checkoutForm.valid || loadtransaction"
+      
+      (click)="onSendTransaction()" 
+      class="btn buttonBank ">
+        {{loadtransaction ? "Cargando ..." : "Enviar"}}
+      </button>
+</div>

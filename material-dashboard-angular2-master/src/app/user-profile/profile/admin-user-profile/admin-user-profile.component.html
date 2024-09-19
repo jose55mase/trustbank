@@ -1,0 +1,241 @@
+<div class="main-content">
+  <div class="row">
+    <div class="col-md-4"></div>
+    <div class="col-md-2">
+      <div *ngIf="loadProces" class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+
+      <div *ngIf="listUser.length == 0 && loadProces==false">
+        <div class="card text-center">
+          <div class="card-header">Respuesta</div>
+          <div class="card-body">
+            <h5 class="card-title">No hay datos que mostrar</h5>           
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-5"></div>
+  </div>
+
+  <div  class="container-fluid">
+    <div *ngIf="showListUser" class="main-content ">
+      <div class="row">
+          <div class="col-md-12">
+              <div class="card">
+                  <div class="card-header card-header-danger">
+                      <h4 class="card-title">USUARIOS</h4>
+                      <p class="card-category">Lista de usuarios</p>
+                  </div>
+                  <div class="card-body">
+                    <button  (click)="createUser()" class="btn buttonBank pull-right">Crear usuario</button>
+                    
+                    <div class="card-body table-responsive">
+                        <table class="table table-hover">
+                            <thead class="text-warning">
+                                <th>ID</th>
+                                <th>Pais</th>
+                                <th>CO postal</th>
+                                <th>Nombre completo</th>                                    
+                                <th>Balance</th>
+                                
+                            </thead>
+                            <tbody>
+                                <tr *ngFor="let item of listUser">
+                                    <td>{{item.id}}</td>
+                                    <td>{{item.country}}</td>
+                                    <td>{{item.postal}}</td>
+                                    <td>{{item.firstName}} {{item.lastName}}</td>
+                                    <td>{{currency.format(item.moneyclean)}}</td>
+                                        
+                                    <th>
+                                      <button mat-mini-fab (click)="editUser(item)" color="primary" >
+                                        <mat-icon>edit</mat-icon>
+                                      </button>
+                                    </th>                                    
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+
+
+
+    <div *ngIf="showUdateUser" class="row">
+      <div class="col-md-6">
+          <div class="card">
+              <div class="card-header card-header-danger">
+                  <h4 class="card-title">Profile</h4>
+                  <p class="card-category">Crea o completa el perfil</p>
+              </div>
+              <div class="card-body">
+                  <form [formGroup]="checkoutForm">
+                      
+                      <div class="row">
+                          <div class="col-md-6">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="fistName" matInput placeholder="Fist Name" type="text">
+                            </mat-form-field>
+                          </div>
+                          <div class="col-md-6">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="lastName" matInput placeholder="Last Name" type="text">
+                            </mat-form-field>
+                          </div>
+                      </div>
+                      <div class="row"> 
+                        <div class="col-md-6">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="email"   matInput placeholder="Email address" type="email">
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-6">
+                          <mat-form-field class="example-full-width">
+                            <input type="number" formControlName="amount"   matInput placeholder="Balance" >
+                          </mat-form-field>
+                      </div>
+                    </div>
+                      
+                      <div class="row">
+                          <div class="col-md-4">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="city" matInput placeholder="City" type="text">
+                            </mat-form-field>
+                          </div>
+                          <div class="col-md-4">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="country" matInput placeholder="Country" type="text">
+                            </mat-form-field>
+                          </div>
+                          <div class="col-md-4">
+                            <mat-form-field class="example-full-width">
+                              <input formControlName="postal" matInput placeholder="Postal Code" type="text">
+                            </mat-form-field>
+                          </div>
+                      </div>
+
+                      <div class="row">
+                        <div class="col-md-6">
+                          <mat-form-field class="example-full-width">
+                            <input formControlName="password" matInput placeholder="Contraseña" type="password">
+                          </mat-form-field>
+                        </div>
+                        <div class="col-md-6">
+                          <mat-form-field class="example-full-width">
+                            <input formControlName="passwordConfir" matInput placeholder="Confirmar Contraseña" type="password">
+                          </mat-form-field>
+                        </div>
+                      </div>
+
+                      <div class="row">
+                          <div class="col-md-12">
+                            <label>About Me</label>
+                            <mat-form-field class="example-full-width">
+                                <textarea formControlName="aboutme" matInput placeholder="Lamborghini Mercy, Your chick she so thirsty, I'm in that two seat Lambo."></textarea>
+                              </mat-form-field>
+                              <!-- <div class="form-group">
+
+                                  <div class="form-group">
+                                      <label class="bmd-label-floating"> Lamborghini Mercy, Your chick she so thirsty, I'm in that two seat Lambo.</label>
+                                      <textarea class="form-control" rows="5"></textarea>
+                                  </div>
+                              </div> -->
+                          </div>
+                      </div>
+                      <button *ngIf="createBtn==false" mat-raised-button (click)="updateUser()" class="btn btn-danger pull-right">Actulizar</button>
+                      <button *ngIf="createBtn" mat-raised-button (click)="create()" class="btn btn-danger pull-right">Crear</button>
+                      <button  mat-raised-button (click)="cancelEditUser()" class="btn btn-danger pull-right">Cancelar</button>
+                      <div class="clearfix"></div>
+                  </form>
+              </div>
+          </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card card-stats">
+              <div class="card-header card-header-success card-header-icon">
+                <div class="card-icon">
+                  <i *ngIf="statusDocument.foto == false" class="material-icons">timer</i>
+                  <i *ngIf="statusDocument.foto == true"class="material-icons">check</i>
+                  <i *ngIf="statusDocument.foto == 'refused'"class="material-icons">close</i>
+                </div>
+                <p class="card-category">Foto</p>
+                <h3 class="card-title">
+                  <img *ngIf="userSelected.foto != null" src="http://localhost:8080/api/user/uploads/img/{{userSelected.foto}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                </h3>
+              </div>
+              <div class="card-footer">
+                <div class="stats">
+                  <button mat-mini-fab (click)="documentAprove('foto')" aria-label="upload_file" color="primary">
+                      <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-mini-fab (click)="documentRefuse('foto')" color="warn" aria-label="upload_file" >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card card-stats">
+              <div class="card-header card-header-success card-header-icon">
+                <div class="card-icon">
+                  <i *ngIf="statusDocument.back == false" class="material-icons">timer</i>
+                  <i *ngIf="statusDocument.back == true"class="material-icons">check</i>
+                  <i *ngIf="statusDocument.back == 'refused'"class="material-icons">close</i>
+                </div>
+                <p class="card-category">Documento de identidad (Parte trasera)</p>
+                <h3 class="card-title">
+                  <img *ngIf="userSelected.documentBack"  src="http://localhost:8080/api/user/uploads/img/{{userSelected.documentBack}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                </h3>
+              </div>
+              <div class="card-footer">
+                <div class="stats">
+                  <button mat-mini-fab (click)="documentAprove('back')" aria-label="upload_file" color="primary">
+                      <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-mini-fab (click)="documentRefuse('back')" color="warn" aria-label="upload_file" >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="card card-stats">
+              <div class="card-header card-header-success card-header-icon">
+                <div class="card-icon">
+                  <i *ngIf="statusDocument.fromt == false" class="material-icons">timer</i>
+                  <i *ngIf="statusDocument.fromt == true"class="material-icons">check</i>
+                  <i *ngIf="statusDocument.fromt == 'refused'"class="material-icons">close</i>
+                </div>
+                <p class="card-category">Documento de identidad (Parte frontal)</p>
+                <h3 class="card-title">
+                  <img *ngIf="userSelected.documentFrom"  src="http://localhost:8080/api/user/uploads/img/{{userSelected.documentFrom}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                </h3>
+              </div>
+              <div class="card-footer">
+                <div class="stats">
+                  <button mat-mini-fab (click)="documentAprove('fromt')" aria-label="upload_file" color="primary">
+                      <mat-icon>check</mat-icon>
+                  </button>
+                  <button mat-mini-fab (click)="documentRefuse('fromt')" color="warn" aria-label="upload_file" >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

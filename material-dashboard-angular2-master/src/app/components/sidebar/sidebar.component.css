@@ -1,0 +1,12 @@
+
+
+.texto {
+    background: -webkit-linear-gradient(#046381, #44AAB6, #FECF59);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: tomato;  
+}
+
+.marginbank{
+    margin-right: 100px;
+}
