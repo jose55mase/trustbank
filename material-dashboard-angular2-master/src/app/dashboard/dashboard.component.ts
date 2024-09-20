@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { ModalComponent } from 'app/components/modal/modal.component';
 import { UserService } from 'app/core/services/user.service';
 import * as Chartist from 'chartist';
@@ -29,7 +30,7 @@ export class DashboardComponent implements OnInit {
     currency: "USD"
   })
 
-  constructor( private modalService: MdbModalService, userService: UserService  ) { }
+  constructor( private modalService: MdbModalService, userService: UserService,private router:Router  ) { }
 
   openModal() {
     this.modalRef = this.modalService.open(ModalComponent)
@@ -98,7 +99,13 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit() {
     //this.gallery.addImage({ src: 'IMAGE_SRC_URL', thumb: 'IMAGE_THUMBNAIL_URL' });
-    this.dataUserPrifile = JSON.parse(localStorage.getItem("profile")) 
+    this.dataUserPrifile = JSON.parse(localStorage.getItem("profile"))
+    const token = JSON.parse(sessionStorage.getItem("token")) 
+    if(token == null || token == undefined){
+      this.router.navigate(['/login'])
+    }
+    
+    
     this.dayStatus()
   }
 

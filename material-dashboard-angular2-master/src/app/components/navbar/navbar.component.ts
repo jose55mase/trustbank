@@ -35,7 +35,8 @@ export class NavbarComponent implements OnInit {
     }
 
     onLogOut(){
-        console.log("Data -> ")
+        sessionStorage.clear()
+        localStorage.clear()
         this.router.navigate(['/login'])
     }
 
