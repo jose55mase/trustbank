@@ -9,7 +9,7 @@ import { map, catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class UserService {
-  URL = 'http://localhost:8080/api/user'
+  URL = 'https://guardianstrustbank.com:8081/api/user'
   
   private httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
   
