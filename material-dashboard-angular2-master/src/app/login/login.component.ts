@@ -2,6 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'app/core/services/auth.service';
 import { NotificationService } from 'app/core/services/Notification.service';
+import { UserService } from 'app/core/services/user.service';
 import { emojisglobal, textglobal } from 'app/core/text-global';
 import { ToastContainerDirective, ToastrService } from 'ngx-toastr';
 
@@ -20,7 +21,8 @@ export class LoginComponent implements OnInit {
   @ViewChild(ToastContainerDirective, { static: true })
   toastContainer: ToastContainerDirective;
 
-  constructor(private router:Router, private autService: AuthService,  private notificationService : NotificationService, private toastrService: ToastrService) { }
+  constructor(private router:Router, private autService: AuthService, private userService: UserService,
+    private notificationService : NotificationService, private toastrService: ToastrService) { }
 
   ngOnInit() {
     this.toastrService.overlayContainer = this.toastContainer;
@@ -67,6 +69,17 @@ export class LoginComponent implements OnInit {
 
   register(){
     this.router.navigate(['/register'])
+  }
+
+  onGetUser(){
+    this.userService.getListUser().subscribe(
+      response => {
+        console.log("todo bien ", response)
+      },
+      error => {
+        console.log("Error --> ", error)
+      }
+    )
   }
 
 }

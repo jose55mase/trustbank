@@ -17,8 +17,8 @@ import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableResourceServer
-public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
-
+public class ResourceServerConfig /*extends ResourceServerConfigurerAdapter */{
+/*
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests().antMatchers(HttpMethod.GET, "/api/clientes", "/index" ,"/api/user/uploads/img/**", "/images/**").permitAll()
@@ -28,12 +28,12 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 		.antMatchers(HttpMethod.POST, "/api/clientes/upload").hasAnyRole("USER", "ADMIN")
 		.antMatchers(HttpMethod.POST, "/api/clientes").hasRole("ADMIN")
 		.antMatchers("/api/clientes/**").hasRole("ADMIN")*/
-		.anyRequest().authenticated()
-		.and().cors().configurationSource(corsConfigurationSource());
+		//.anyRequest().authenticated()
+		//.and().cors().configurationSource(corsConfigurationSource());
 
 
-	}
-
+	//}
+/*
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
@@ -46,7 +46,8 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 		source.registerCorsConfiguration("/**", config);
 		return source;
 	}
-	
+	*/
+/*
 	@Bean
 	public FilterRegistrationBean<CorsFilter> corsFilter(){
 		FilterRegistrationBean<CorsFilter> bean = new FilterRegistrationBean<CorsFilter>(new CorsFilter(corsConfigurationSource()));
@@ -54,5 +55,5 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 		return bean;
 	}
 
-	
+	*/
 }
