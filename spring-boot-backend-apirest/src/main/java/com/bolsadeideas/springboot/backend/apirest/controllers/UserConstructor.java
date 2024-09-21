@@ -28,7 +28,7 @@ public class UserConstructor {
 
     @Autowired UsuarioService usuarioService;
     @Autowired private IUploadFileService uploadService;
-    @Autowired private BCryptPasswordEncoder passwordEncoder;
+    //@Autowired private BCryptPasswordEncoder passwordEncoder;
 
 
 
@@ -150,7 +150,7 @@ public class UserConstructor {
     @PostMapping("/save")
     public RestResponse save(@RequestBody UserEntity userEntity){
         userEntity.setDocumentsAprov("{\"foto\":false,\"fromt\":false,\"back\":false}");
-        userEntity.setPassword(this.passwordEncoder.encode(userEntity.getPassword()));
+        //userEntity.setPassword(this.passwordEncoder.encode(userEntity.getPassword()));
 
         UserEntity user = this.usuarioService.findByemail(userEntity.getEmail());
 
