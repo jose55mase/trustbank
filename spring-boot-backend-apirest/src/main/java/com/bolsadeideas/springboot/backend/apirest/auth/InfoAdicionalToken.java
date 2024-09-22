@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class InfoAdicionalToken /*implements  TokenEnhancer */{
-/*
+public class InfoAdicionalToken implements  TokenEnhancer {
+
 	@Autowired
 	private IUserService iUserService;
 
@@ -35,5 +35,5 @@ public class InfoAdicionalToken /*implements  TokenEnhancer */{
 		
 		return accessToken;
 	}
-*/
+
 }
