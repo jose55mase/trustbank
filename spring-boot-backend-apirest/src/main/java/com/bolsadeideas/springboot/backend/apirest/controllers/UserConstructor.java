@@ -130,7 +130,7 @@ public class UserConstructor {
 
     @PutMapping("/update")
     public UserEntity update(@RequestBody UserEntity userEntity){
-        System.out.println("----> "+userEntity);
+        System.out.println("0 ----> "+userEntity);
         UserEntity cliente = usuarioService.findByemail(userEntity.getEmail());
         cliente.setMoneyclean(userEntity.getMoneyclean());
         cliente.setAboutme(userEntity.getAboutme());
@@ -142,7 +142,7 @@ public class UserConstructor {
         cliente.setPostal(userEntity.getPostal());
         cliente.setDocumentsAprov(userEntity.getDocumentsAprov());
         cliente.setDocumentsAprov(cliente.getDocumentsAprov());
-
+        System.out.println("1 ---->  "+cliente);
         return this.usuarioService.save(cliente);
     }
 
