@@ -53,6 +53,9 @@ public class UserConstructor {
             String nombreFotoAnterior = cliente.getFoto();
             uploadService.eliminar(nombreFotoAnterior);
             cliente.setFoto(nombreArchivo);
+
+            System.out.println("---------------> cliente "+ cliente);
+
             usuarioService.save(cliente);
             response.put("cliente", cliente);
             response.put("mensaje", "Has subido correctamente la imagen: " + nombreArchivo);
