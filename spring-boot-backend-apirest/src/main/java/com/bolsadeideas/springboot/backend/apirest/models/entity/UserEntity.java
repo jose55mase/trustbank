@@ -197,6 +197,7 @@ public class UserEntity implements Serializable {
                 ", email='" + email + '\'' +
                 ", fistName='" + fistName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", documentsAprov='" + documentsAprov + '\'' +
                 ", document='" + document + '\'' +
                 ", city='" + city + '\'' +
                 ", country='" + country + '\'' +
@@ -206,6 +207,8 @@ public class UserEntity implements Serializable {
                 ", moneyclean=" + moneyclean +
                 ", status=" + status +
                 ", foto='" + foto + '\'' +
+                ", documentFrom='" + documentFrom + '\'' +
+                ", documentBack='" + documentBack + '\'' +
                 ", rols=" + rols +
                 '}';
     }

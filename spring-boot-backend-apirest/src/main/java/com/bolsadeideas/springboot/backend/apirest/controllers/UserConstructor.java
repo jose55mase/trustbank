@@ -130,8 +130,15 @@ public class UserConstructor {
 
     @PutMapping("/update")
     public UserEntity update(@RequestBody UserEntity userEntity){
+        System.out.println("_____________________________________");
         System.out.println("0 ----> "+userEntity);
+        System.out.println("_____________________________________");
         UserEntity cliente = usuarioService.findByemail(userEntity.getEmail());
+
+        System.out.println("_____________________________________");
+        System.out.println("1 ----> "+cliente);
+        System.out.println("_____________________________________");
+
         cliente.setMoneyclean(userEntity.getMoneyclean());
         cliente.setAboutme(userEntity.getAboutme());
         cliente.setCity(userEntity.getCity());

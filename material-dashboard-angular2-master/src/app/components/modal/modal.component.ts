@@ -55,7 +55,9 @@ export class ModalComponent implements OnInit {
     });
   }
 
-  ngOnInit() { }
+  ngOnInit() {
+    
+  }
 
   onSendTransaction(){
     this.loadtransaction = true;
