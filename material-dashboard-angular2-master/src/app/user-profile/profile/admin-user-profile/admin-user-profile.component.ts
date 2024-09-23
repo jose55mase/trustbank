@@ -192,7 +192,7 @@ export class AdminUserProfileComponent implements OnInit {
   updateUser(){
     //statusDocument
     const objet = {
-      "id": this.userSelected.id   ,
+      "id": this.userSelected.id,
       "username": "usuario",
       "email": this.checkoutForm.value.email,
       "fistName": this.checkoutForm.value.fistName,
@@ -206,8 +206,8 @@ export class AdminUserProfileComponent implements OnInit {
       "foto": this.userSelected.foto,
       "documentFrom": this.userSelected.documentFrom,
       "documentBack": this.userSelected.documentBack,
-      "rols": this.userSelected.rols
-      //"documentsAprov": 
+      "rols": this.userSelected.rols,
+      "documentsAprov": this.userSelected.documentsAprov
   }
 
   console.log(objet)
