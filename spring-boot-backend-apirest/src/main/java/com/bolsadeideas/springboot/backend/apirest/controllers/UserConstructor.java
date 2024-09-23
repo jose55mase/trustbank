@@ -54,7 +54,7 @@ public class UserConstructor {
             uploadService.eliminar(nombreFotoAnterior);
             cliente.setFoto(nombreArchivo);
 
-            System.out.println("---------------> cliente "+ cliente);
+
 
             usuarioService.save(cliente);
             response.put("cliente", cliente);
@@ -141,6 +141,7 @@ public class UserConstructor {
         cliente.setEmail(userEntity.getEmail());
         cliente.setPostal(userEntity.getPostal());
         cliente.setDocumentsAprov(userEntity.getDocumentsAprov());
+        cliente.setDocumentsAprov(cliente.getDocumentsAprov());
 
         return this.usuarioService.save(cliente);
     }
