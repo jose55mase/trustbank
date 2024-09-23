@@ -190,9 +190,10 @@ export class AdminUserProfileComponent implements OnInit {
   }
 
   updateUser(){
+    //statusDocument
     const objet = {
       "id": this.userSelected.id   ,
-      "username": "testing",
+      "username": "usuario",
       "email": this.checkoutForm.value.email,
       "fistName": this.checkoutForm.value.fistName,
       "lastName": this.checkoutForm.value.lastName,      
@@ -206,6 +207,7 @@ export class AdminUserProfileComponent implements OnInit {
       "documentFrom": this.userSelected.documentFrom,
       "documentBack": this.userSelected.documentBack,
       "rols": this.userSelected.rols
+      //"documentsAprov": 
   }
 
   console.log(objet)

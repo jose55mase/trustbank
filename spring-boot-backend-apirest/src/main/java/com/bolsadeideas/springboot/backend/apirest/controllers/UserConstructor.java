@@ -141,8 +141,8 @@ public class UserConstructor {
         cliente.setEmail(userEntity.getEmail());
         cliente.setPostal(userEntity.getPostal());
         cliente.setDocumentsAprov(userEntity.getDocumentsAprov());
-        cliente.setDocumentsAprov(cliente.getDocumentsAprov());
-        System.out.println("1 ---->  "+cliente);
+        //cliente.setDocumentsAprov(cliente.getDocumentsAprov());
+        System.out.println("1 ---->  "+cliente.getDocumentsAprov());
         return this.usuarioService.save(cliente);
     }
 
