@@ -36,28 +36,39 @@ export class LoginComponent implements OnInit {
     })
     this.loginDisable = true;
     this.autService.login(this.email, this.password).subscribe(
-      
       response => {
-        const data = JSON.parse(atob(response.access_token.split('.')[1])) 
-        this.objet = {
-          id: data.id,
-          authorities: data.authorities,
-          username: "",
-          email: data.email,
-          fistName: data.fistName,
-          lastName: data.lastName,
-          city: "",
-          country: "",
-          postal: "",
-          aboutme: "",
-          moneyclean: data.moneyclean,
-          money:  currency.format(data.moneyclean)
-        }
-        localStorage.setItem("profile", JSON.stringify(this.objet))
-        sessionStorage.setItem("token", response.access_token)
-        this.router.navigate(['/dashboard'])
-        this.notificationService.alert("", textglobal.log_user_success, 'success');
-        this.loginDisable = false;  
+        this.userService.getUser(this.email).subscribe(
+          responseUser => {
+            const data = JSON.parse(atob(response.access_token.split('.')[1])) 
+            this.objet = {
+              "id": responseUser.id,
+              "username": "usuario",
+              "email": responseUser.email,
+              "fistName": responseUser.fistName,
+              "lastName": responseUser.lastName,      
+              "city": responseUser.city,
+              "country": responseUser.country,
+              "postal": responseUser.postal,
+              "aboutme": responseUser.aboutme,
+              "moneyclean": responseUser.amount,
+              "status": true,
+              "foto": responseUser.foto,
+              "documentFrom": responseUser.documentFrom,
+              "documentBack": responseUser.documentBack,
+              "rols": responseUser.rols,
+              "documentsAprov": responseUser.documentsAprov,
+              "money":  currency.format(data.moneyclean)
+            }
+            localStorage.setItem("profile", JSON.stringify(this.objet))
+            sessionStorage.setItem("token", response.access_token)
+            this.router.navigate(['/dashboard'])
+            this.notificationService.alert("", textglobal.log_user_success, 'success');
+            this.loginDisable = false;  
+          },
+          error => {
+            console.log("Error --> ", error)
+          }
+        )
       },
       error => {
         console.log("Error---> ",error)
@@ -71,15 +82,5 @@ export class LoginComponent implements OnInit {
     this.router.navigate(['/register'])
   }
 
-  onGetUser(){
-    this.userService.getListUser().subscribe(
-      response => {
-        console.log("todo bien ", response)
-      },
-      error => {
-        console.log("Error --> ", error)
-      }
-    )
-  }
 
 }
