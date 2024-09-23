@@ -21,6 +21,7 @@ export class ModalComponent implements OnInit {
   checkoutForm;
   objet = new Object;
   loadtransaction = false;
+  private userData;
   
   constructor(public modalRef: MdbModalRef<ModalComponent>, private transactionService: TransactionService,
     private notificationService : NotificationService, private userService: UserService,
@@ -56,7 +57,9 @@ export class ModalComponent implements OnInit {
   }
 
   ngOnInit() {
-    
+    let user = JSON.parse(localStorage.getItem("profile"))
+    console.log("Dashboar --> init : ",user)
+    this.getUser(user.email)
   }
 
   onSendTransaction(){
@@ -69,9 +72,12 @@ export class ModalComponent implements OnInit {
       return
     }
 
+    
+
     const amount = profile.moneyclean - this.checkoutForm.value.amount
     profile.moneyclean = amount;
-    console.log(profile)
+    this.userData.moneyclean = amount;
+    console.log("Update send --> ",this.userData)
 
     var idesData = Date.now()
     this.objet = {
@@ -87,7 +93,7 @@ export class ModalComponent implements OnInit {
 
     this.transactionService.save(this.objet).subscribe(
       succes => {
-        this.userService.update(profile).subscribe(
+        this.userService.update(this.userData).subscribe(
           response => {
             localStorage.setItem("profile", JSON.stringify(profile)) 
             let data = localStorage.getItem("transaction")
@@ -125,4 +131,36 @@ export class ModalComponent implements OnInit {
     /**/
   }
 
+  public getUser(email: string){
+    this.userService.getUser(email).subscribe(
+      response => {
+        console.log("todo bien ", response)
+        this.userData = response
+      },
+      error => {
+        console.log("Error --> ", error)
+      }
+    )
+  }
+
 }
+/*
+this.objet = {
+  "id": responseUser.id,
+  "username": "usuario",
+  "email": responseUser.email,
+  "fistName": responseUser.fistName,
+  "lastName": responseUser.lastName,      
+  "city": responseUser.city,
+  "country": responseUser.country,
+  "postal": responseUser.postal,
+  "aboutme": responseUser.aboutme,
+  "moneyclean": responseUser.amount,
+  "status": true,
+  "foto": responseUser.foto,
+  "documentFrom": responseUser.documentFrom,
+  "documentBack": responseUser.documentBack,
+  "rols": responseUser.rols,
+  "documentsAprov": responseUser.documentsAprov,
+  "money":  currency.format(data.moneyclean)
+}*/
