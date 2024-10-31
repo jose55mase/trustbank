@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 
-//@CrossOrigin(origins = { "https://guardianstrustbank.com" })
-@CrossOrigin(origins = { "http://localhost:4200" })
+@CrossOrigin(origins = { "https://guardianstrustbank.com" })
+//@CrossOrigin(origins = { "http://localhost:4200" })
 @RestController
 @RequestMapping("/api/transaction")
 public class TransactionConstructor {
