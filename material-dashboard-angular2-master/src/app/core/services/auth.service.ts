@@ -13,6 +13,7 @@ export class AuthService {
 
   login(email: string, password: string): Observable<any>{
     const urlEndPoint = 'https://guardianstrustbank.com:8081/oauth/token'
+    //const urlEndPoint = 'http://localhost:8081/oauth/token'
     const credenciales = btoa('angularapp' + ':' + '12345')
     const httpHeader = new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Basic ' + credenciales 

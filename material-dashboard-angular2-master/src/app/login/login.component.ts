@@ -60,7 +60,7 @@ export class LoginComponent implements OnInit {
         this.loginDisable = false;  
       },
       error => {
-        console.log("Error---> ",error)
+        console.log("Error show---> ",error)
         this.notificationService.alert(emojisglobal.error, textglobal.log_user_error, 'error');
         this.loginDisable = false;
       }
