@@ -5,7 +5,7 @@ import com.bolsadeideas.springboot.backend.apirest.models.entity.TransactionEnti
 import java.util.List;
 
 public interface ITransactionService {
-    public List<TransactionEntity> getAllTransaction();
+    public List<TransactionEntity> getAllTransaction(Integer idManageAdmin);
     public List<TransactionEntity> getTransactionByUser(Integer id);
     public TransactionEntity save(TransactionEntity entity);
 

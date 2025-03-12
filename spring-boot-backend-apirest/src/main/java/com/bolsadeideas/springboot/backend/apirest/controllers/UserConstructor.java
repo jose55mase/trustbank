@@ -112,9 +112,6 @@ public class UserConstructor {
 
     @GetMapping("/uploads/img/{nombreFoto:.+}")
     public ResponseEntity<Resource> verFoto(@PathVariable String nombreFoto){
-
-        System.out.println("Data -----> "+ nombreFoto);
-
         Resource recurso = null;
 
         try {
@@ -131,14 +128,8 @@ public class UserConstructor {
 
     @PutMapping("/update")
     public UserEntity update(@RequestBody UserEntity userEntity){
-        System.out.println("_____________________________________");
-        System.out.println("0 ----> "+userEntity);
-        System.out.println("_____________________________________");
         UserEntity cliente = usuarioService.findByemail(userEntity.getEmail());
 
-        System.out.println("_____________________________________");
-        System.out.println("1 ----> "+cliente);
-        System.out.println("_____________________________________");
 
         cliente.setMoneyclean(userEntity.getMoneyclean());
         cliente.setAboutme(userEntity.getAboutme());
@@ -149,14 +140,18 @@ public class UserConstructor {
         cliente.setEmail(userEntity.getEmail());
         cliente.setPostal(userEntity.getPostal());
         cliente.setDocumentsAprov(userEntity.getDocumentsAprov());
-        //cliente.setDocumentsAprov(cliente.getDocumentsAprov());
-        System.out.println("1 ---->  "+cliente.getDocumentsAprov());
         return this.usuarioService.save(cliente);
     }
 
     @GetMapping("/findAll")
     public  List<UserEntity> findAll(){
         return this.usuarioService.findAll();
+    }
+
+    @GetMapping("/findByAdministratorManager/{administratorManager}")
+    public  RestResponse findByAdministratorManager(@PathVariable Integer administratorManager){
+        return new RestResponse(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value(),
+                "Operacion incorrecta", this.usuarioService.findByAdministratorManager(administratorManager));
     }
 
     @PostMapping("/save")

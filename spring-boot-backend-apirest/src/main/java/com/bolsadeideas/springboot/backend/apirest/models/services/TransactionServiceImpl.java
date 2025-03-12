@@ -17,8 +17,8 @@ public class TransactionServiceImpl implements ITransactionService {
 
     @Transactional
     @Override
-    public List<TransactionEntity> getAllTransaction() {
-        return (List<TransactionEntity>) this.iuTransactionDao.findAll();
+    public List<TransactionEntity> getAllTransaction(Integer idManageAdmin) {
+        return (List<TransactionEntity>) this.iuTransactionDao.findManagerAdmin(idManageAdmin);
     }
 
     @Transactional

@@ -15,7 +15,7 @@ public class UserEntity implements Serializable {
     //@Column(unique = true, length = 20)
     private String username;
 
-    @Column(unique = true, length = 20)
+    @Column(unique = true, length = 40)
     private String email;
 
     @Column(length = 20)
@@ -40,6 +40,8 @@ public class UserEntity implements Serializable {
     private String foto;
     private String documentFrom;
     private String documentBack;
+    @Column(length = 10)
+    private Integer administratorManager;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<RolEntity> rols;
@@ -187,6 +189,14 @@ public class UserEntity implements Serializable {
 
     public void setRols(List<RolEntity> rols) {
         this.rols = rols;
+    }
+
+    public Integer getAdministratorManager() {
+        return administratorManager;
+    }
+
+    public void setAdministratorManager(Integer administratorManager) {
+        this.administratorManager = administratorManager;
     }
 
     @Override

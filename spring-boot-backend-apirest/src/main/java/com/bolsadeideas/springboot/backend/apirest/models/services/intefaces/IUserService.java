@@ -9,4 +9,5 @@ public interface IUserService {
     public UserEntity findByid(Long id);
     public UserEntity save(UserEntity cliente);
     public List<UserEntity> findAll();
+    public List<UserEntity> findByAdministratorManager(Integer administratorManager);
 }

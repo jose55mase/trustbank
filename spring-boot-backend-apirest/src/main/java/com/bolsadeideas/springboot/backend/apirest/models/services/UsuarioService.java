@@ -32,8 +32,6 @@ public class UsuarioService implements IUserService, UserDetailsService {
 
         UserEntity userEntity = this.userDao.findByemail(s);
 
-        System.out.println("----------> corriendo ");
-
         if(s == null) {
             logger.error("Error en el login: no existe el usuario '"+s+"' en el sistema!");
             throw new UsernameNotFoundException("Error en el login: no existe el usuario '"+s+"' en el sistema!");
@@ -67,5 +65,11 @@ public class UsuarioService implements IUserService, UserDetailsService {
     @Override
     public List<UserEntity> findAll() {
         return (List<UserEntity>) this.userDao.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEntity> findByAdministratorManager(Integer administratorManager) {
+        return this.userDao.findByAdministratorManager(administratorManager);
     }
 }
