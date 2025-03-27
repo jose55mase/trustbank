@@ -26,10 +26,10 @@ export class AdminTransactionComponent implements OnInit {
 
   ngOnInit() {
     let profile = JSON.parse(localStorage.getItem("profile"))
-    this.transactionService.getall().subscribe(
+    this.transactionService.findByManageAdmin(profile.id).subscribe(
       response => {
         this.data = response;
-        console.log("Data --> ", response)},
+      },
       error => {
         if(error.status == 401){
           Swal.fire({

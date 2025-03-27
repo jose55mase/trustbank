@@ -9,8 +9,8 @@ import { map, catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class TransactionService {
+  //private URL = 'https://guardianstrustbank.com:8081/api/transaction'
   private URL = 'https://guardianstrustbank.com:8081/api/transaction'
-  //private URL = 'http://localhost:8081/api/transaction'
   private httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
   
   constructor(private httpClient: HttpClient, private router: Router) { }
@@ -44,6 +44,12 @@ export class TransactionService {
     let params = new HttpParams()
     return this.httpClient.get<any>(`${this.URL}/findAll`,  {headers: this.agregarAuthorizationHeader(),params: params})
   }
+
+  findByManageAdmin(idManageAdmin : number): Observable<any>{
+    let params = new HttpParams()
+    return this.httpClient.get<any>(`${this.URL}/findAll/${idManageAdmin}`,  {headers: this.agregarAuthorizationHeader(),params: params})
+  }
+  
 
   
 }

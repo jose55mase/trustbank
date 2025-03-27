@@ -116,17 +116,15 @@ export class AdminUserProfileComponent implements OnInit {
 
     const stringFile = JSON.stringify(documentsAprov)
 
-    console.log(stringFile)
   }
 
  
 
   getUserList(){
-    this.userService.getListUser().subscribe(
+    this.userService.getListUserAdministratorManager().subscribe(
       respone => {
         this.loadProces = false;
-        console.log(respone)
-        this.listUser = respone
+        this.listUser = respone.data
       },
       error => {
         console.log("Error en la consulta", error)

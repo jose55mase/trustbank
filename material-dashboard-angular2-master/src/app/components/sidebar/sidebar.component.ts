@@ -45,7 +45,6 @@ export class SidebarComponent implements OnInit {
 
   ngOnInit() {
     let profile = JSON.parse(localStorage.getItem("profile"))
-    console.log(profile.authorities)
     if(profile.authorities != undefined ){
       if(profile.authorities[0] === "ROLE_ADMIN"){
         this.menuItems = ROUTESADMIN.filter(menuItem => menuItem);

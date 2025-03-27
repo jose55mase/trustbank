@@ -29,7 +29,8 @@ export class TransactionComponent implements OnInit {
     this.transactionService.getByuser(profile.id).subscribe(
       response => {
         this.data = response;
-        console.log("Data --> ", response)},
+        //console.log("Data --> ", response)
+      },
       error => {
         if(error.status == 401){
           Swal.fire({

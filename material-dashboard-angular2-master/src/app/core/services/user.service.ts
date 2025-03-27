@@ -9,8 +9,8 @@ import { map, catchError, tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class UserService {
-  URL = 'https://guardianstrustbank.com:8081/api/user'
-  //private URL = 'http://localhost:8081/api/user'
+  //URL = 'https://guardianstrustbank.com:8081/api/user'
+  private URL = 'https://guardianstrustbank.com:8081/api/user'
   
   private httpHeaders = new HttpHeaders({ 'Content-Type': 'application/json' });
   
@@ -114,9 +114,18 @@ export class UserService {
     return this.httpClient.get<any>(`${this.URL}/findAll`, {headers: this.agregarAuthorizationHeader()})
   }
 
+  
+  getListUserAdministratorManager(){
+    let user = JSON.parse(localStorage.getItem("profile"))
+    return this.httpClient.get<any>(`${this.URL}/findByAdministratorManager/${user.id}`, {headers: this.agregarAuthorizationHeader()})
+  }
+
   savaUser(user: any): Observable<any>{
     return this.httpClient.post<any>(`${this.URL}/save`, user)
   }
 
   
 }
+
+
+

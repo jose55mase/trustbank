@@ -70,6 +70,6 @@ public class UsuarioService implements IUserService, UserDetailsService {
     @Override
     @Transactional(readOnly = true)
     public List<UserEntity> findByAdministratorManager(Integer administratorManager) {
-        return this.userDao.findByAdministratorManager(administratorManager);
+        return this.userDao.findByAdministratorManagerOrderByIdDesc(administratorManager);
     }
 }

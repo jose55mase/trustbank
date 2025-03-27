@@ -83,7 +83,20 @@
                                   </div>
                               </div> -->
                           </div>
-                      </div>                      
+
+                          
+                      </div> 
+                      <div class="row">
+                        <div class="col-md-4">
+                          <mat-form-field appearance="fill">
+                            <mat-label>Administrador</mat-label>
+                            <select matNativeControl required formControlName="administratorManager">
+                              <option value="2" >122-87246-223</option>
+                              <option value="3">322-736346-42442</option>
+                            </select>
+                          </mat-form-field>
+                      </div>
+                      </div>                  
                       <button  mat-raised-button (click)="create()" class="btn btn-danger pull-right">Crear</button>
                       <button  mat-raised-button (click)="cancelReister()" class="btn btn-danger pull-right">Cancelar</button>
                       <div class="clearfix"></div>

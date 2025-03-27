@@ -97,6 +97,10 @@ export class RegisterProfileComponent implements OnInit {
         Validators.maxLength(30)      
       ])),
 
+      administratorManager: new FormControl('',Validators.compose([
+        Validators.required   
+      ])),
+
     });
   }
 
@@ -158,8 +162,9 @@ export class RegisterProfileComponent implements OnInit {
   
 
   create(){
+
     if(this.checkoutForm.value.email.length == 0){
-      this.notificationService.alert("", "El campo contraseña es email es necesario", 'warning');
+      this.notificationService.alert("", "El campo  email es necesario", 'warning');
       return
     }
 
@@ -194,8 +199,10 @@ export class RegisterProfileComponent implements OnInit {
         "status": true,
         "foto": "",
         "documentFrom": "",
-        "documentBack": ""
+        "documentBack": "",
+        "administratorManager": this.checkoutForm.value.administratorManager
         //"rols": rols
+        
     }
   
     console.log(objet)
@@ -233,8 +240,7 @@ export class RegisterProfileComponent implements OnInit {
         }
       )
     }
-    /*
-    */
+    
   }
 
 
