@@ -106,7 +106,7 @@ export class RegisterProfileComponent implements OnInit {
 
   ngOnInit() {
     this.loadProces = true;
-    //this.getUserList()
+    this.checkoutForm.reset();
   }
 
  

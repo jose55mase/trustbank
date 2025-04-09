@@ -22,7 +22,7 @@
                       <p class="card-category">Fotografia</p>
                       <h3 class="card-title">
                         <!---img  [src]="imagePreviwPicture" width="300" height="120" class="img-thumbnail rounded"/-->
-                        <img *ngIf="data.foto" src="https://guardianstrustbank.com:8081/api/user/uploads/img/{{data.foto}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                        <img *ngIf="data.foto" src="http://localhost:8081/api/user/uploads/img/{{data.foto}}"  width="300" height="120" class="img-thumbnail rounded"/>
                       </h3>
                     </div>
                     <div class="card-footer">
@@ -47,7 +47,7 @@
                       </div>
                       <p class="card-category">Documento de identidad (Parte frontal)</p>
                       <h3 class="card-title">
-                        <img *ngIf="data.documentFrom" src="https://guardianstrustbank.com:8081/api/user/uploads/img/{{data.documentFrom}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                        <img *ngIf="data.documentFrom" src="http://localhost:8081/api/user/uploads/img/{{data.documentFrom}}"  width="300" height="120" class="img-thumbnail rounded"/>
                       </h3>
                     </div>
                     <div class="card-footer">
@@ -71,7 +71,7 @@
                       </div>
                       <p class="card-category">Documento de identidad (Parte trasera)</p>
                       <h3 class="card-title">
-                        <img *ngIf="data.documentBack" src="https://guardianstrustbank.com:8081/api/user/uploads/img/{{data.documentBack}}"  width="300" height="120" class="img-thumbnail rounded"/>
+                        <img *ngIf="data.documentBack" src="http://localhost:8081/api/user/uploads/img/{{data.documentBack}}"  width="300" height="120" class="img-thumbnail rounded"/>
                       </h3>
                     </div>
                     <div class="card-footer">
