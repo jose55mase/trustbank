@@ -42,9 +42,11 @@ export class AdminUserProfileComponent implements OnInit {
     this.checkoutForm = this.formBuilder.group({
       
       email: new FormControl('',Validators.compose([
+       
         Validators.required,
         Validators.minLength(4),
-        Validators.maxLength(30)      
+        Validators.maxLength(30),
+          
       ])),
 
       fistName: new FormControl('',Validators.compose([
