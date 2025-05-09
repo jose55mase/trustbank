@@ -16,4 +16,4 @@ EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # docker build -t springboot-app-security .
-# docker run -d -p 8082:8082 --name springboot-app-security springboot-app-security
+# docker run -d -p 8081:8081 --name springboot-app-guardiam springboot-app-guardiam
