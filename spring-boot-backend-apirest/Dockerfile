@@ -14,3 +14,6 @@ EXPOSE 8081
 
 # Comando para ejecutar la app
 ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# docker build -t springboot-app-security .
+# docker run -d -p 8082:8082 --name springboot-app-security springboot-app-security
