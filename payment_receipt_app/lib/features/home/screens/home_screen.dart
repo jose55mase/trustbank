@@ -1,0 +1,412 @@
+import 'package:flutter/material.dart';
+import '../../../design_system/colors/tb_colors.dart';
+import '../../../design_system/typography/tb_typography.dart';
+import '../../../design_system/spacing/tb_spacing.dart';
+import '../../../screens/receipt_list_screen.dart';
+import '../../send_money/screens/send_money_screen.dart';
+import '../../recharge/screens/recharge_screen.dart';
+import '../../qr_pay/screens/qr_pay_screen.dart';
+import '../../auth/screens/login_screen.dart';
+import '../../credits/screens/credits_screen.dart';
+import '../../../design_system/components/molecules/custom_header_painter.dart';
+import '../../notifications/screens/notifications_screen.dart';
+import '../../notifications/bloc/notifications_bloc.dart';
+import '../../admin/screens/admin_dashboard_screen.dart';
+import '../../account/screens/account_screen.dart';
+import '../../../services/auth_service.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _showBalance = true;
+  int _notificationCount = NotificationsBloc.unreadCount;
+
+  void _updateNotificationCount() {
+    setState(() {
+      _notificationCount = NotificationsBloc.unreadCount;
+    });
+  }
+
+  Widget _buildActionItem(IconData icon, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: TBColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            ),
+            child: Icon(icon, color: TBColors.primary, size: 20),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TBTypography.labelMedium.copyWith(fontSize: 10),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransactionItem(String title, String subtitle, String amount, IconData icon, bool isIncome) {
+    return Container(
+      padding: const EdgeInsets.all(TBSpacing.sm),
+      decoration: BoxDecoration(
+        color: TBColors.surface,
+        borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        border: Border.all(color: TBColors.grey300.withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isIncome ? TBColors.success.withOpacity(0.1) : TBColors.grey100,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: isIncome ? TBColors.success : TBColors.grey600, size: 16),
+          ),
+          const SizedBox(width: TBSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                Text(subtitle, style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
+              ],
+            ),
+          ),
+          Text(
+            '\$${amount}',
+            style: TBTypography.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+              color: isIncome ? TBColors.success : TBColors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToSend() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const SendMoneyScreen()));
+  }
+
+  void _navigateToRecharge() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const RechargeScreen()));
+  }
+
+  void _navigateToReceipts() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const ReceiptListScreen()));
+  }
+
+  void _navigateToQR() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const QRPayScreen()));
+  }
+
+  void _navigateToCredits() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (context) => const CreditsScreen()));
+    _updateNotificationCount();
+  }
+
+  void _navigateToAdmin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+    );
+  }
+
+  void _navigateToAccount() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AccountScreen()),
+    );
+  }
+
+  void _logout() async {
+    await AuthService.logout();
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: TBColors.background,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: Container(
+          child: CustomPaint(
+            painter: CustomHeaderPainter(),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TBSpacing.screenPadding,
+                  vertical: TBSpacing.md,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Hola, Usuario',
+                          style: TBTypography.headlineMedium.copyWith(
+                            color: TBColors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'Bienvenido a TrustBank',
+                          style: TBTypography.bodyMedium.copyWith(
+                            color: TBColors.white.withOpacity(0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: TBColors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Stack(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_outlined,
+                                  color: TBColors.white,
+                                ),
+                                onPressed: () async {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const NotificationsScreen(),
+                                    ),
+                                  );
+                                  _updateNotificationCount();
+                                },
+                              ),
+                              if (_notificationCount > 0)
+                                Positioned(
+                                  right: 8,
+                                  top: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.orange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    constraints: const BoxConstraints(
+                                      minWidth: 16,
+                                      minHeight: 16,
+                                    ),
+                                    child: Text(
+                                      '$_notificationCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: TBSpacing.sm),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: TBColors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: PopupMenuButton<String>(
+                            icon: const Icon(
+                              Icons.person_outline,
+                              color: TBColors.white,
+                            ),
+                            onSelected: (value) {
+                              if (value == 'logout') {
+                                _logout();
+                              } else if (value == 'admin') {
+                                _navigateToAdmin();
+                              } else if (value == 'account') {
+                                _navigateToAccount();
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'admin',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.admin_panel_settings, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Panel Admin'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'account',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Mi Cuenta'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'logout',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.logout, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Cerrar sesión'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(TBSpacing.screenPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Balance Card compacta
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(TBSpacing.md),
+              decoration: BoxDecoration(
+                gradient: TBColors.primaryGradient,
+                borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                boxShadow: [
+                  BoxShadow(
+                    color: TBColors.primary.withOpacity(0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Saldo disponible',
+                        style: TBTypography.labelMedium.copyWith(
+                          color: TBColors.white.withOpacity(0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            'USD ',
+                            style: TBTypography.titleLarge.copyWith(
+                              color: TBColors.white.withOpacity(0.9),
+                            ),
+                          ),
+                          Text(
+                            _showBalance ? '3,250.50' : '••••••',
+                            style: TBTypography.headlineMedium.copyWith(
+                              color: TBColors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showBalance = !_showBalance;
+                      });
+                    },
+                    icon: Icon(
+                      _showBalance ? Icons.visibility : Icons.visibility_off,
+                      color: TBColors.white.withOpacity(0.8),
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: TBSpacing.lg),
+            // Grid de acciones compacto
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 5,
+              crossAxisSpacing: TBSpacing.xs,
+              mainAxisSpacing: TBSpacing.sm,
+              childAspectRatio: 0.7,
+              children: [
+                _buildActionItem(Icons.send, 'Enviar', _navigateToSend),
+                _buildActionItem(Icons.add, 'Recargar', _navigateToRecharge),
+                _buildActionItem(Icons.credit_card, 'Créditos', _navigateToCredits),
+                _buildActionItem(Icons.qr_code, 'QR', _navigateToQR),
+                _buildActionItem(Icons.receipt_long, 'Recibos', _navigateToReceipts),
+              ],
+            ),
+            const SizedBox(height: TBSpacing.lg),
+            // Header de transacciones
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Movimientos recientes',
+                  style: TBTypography.titleLarge,
+                ),
+                TextButton(
+                  onPressed: _navigateToReceipts,
+                  child: Text(
+                    'Ver todos',
+                    style: TBTypography.labelMedium.copyWith(
+                      color: TBColors.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: TBSpacing.sm),
+            // Solo 2 transacciones para ahorrar espacio
+            _buildTransactionItem('Pago recibido', 'Juan Pérez', '+150.00', Icons.arrow_downward, true),
+            const SizedBox(height: TBSpacing.sm),
+            _buildTransactionItem('Compra Amazon', 'Tienda online', '-89.50', Icons.shopping_cart, false),
+          ],
+        ),
+      ),
+    );
+  }
+}
