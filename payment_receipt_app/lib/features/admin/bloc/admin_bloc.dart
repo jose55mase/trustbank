@@ -117,15 +117,51 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       if (userDataString != null) {
         final userData = json.decode(userDataString);
         if (userData['id'] == userId) {
+          // Actualizar saldo
           final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
           userData['moneyclean'] = currentBalance + amount;
           
           await prefs.setString('user_data', json.encode(userData));
           print('Local balance updated: ${userData['moneyclean']}');
+          
+          // Agregar transacción local a movimientos recientes
+          await _addLocalTransaction(userId, amount);
         }
       }
     } catch (e) {
       print('Error updating local balance: $e');
+    }
+  }
+  
+  Future<void> _addLocalTransaction(int userId, double amount) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final transactionsKey = 'user_transactions_$userId';
+      final transactionsString = prefs.getString(transactionsKey) ?? '[]';
+      final transactions = List<Map<String, dynamic>>.from(json.decode(transactionsString));
+      
+      // Agregar nueva transacción al inicio
+      final newTransaction = {
+        'id': DateTime.now().millisecondsSinceEpoch,
+        'userId': userId,
+        'type': 'INCOME',
+        'amount': amount,
+        'description': 'Transacción aprobada por administrador',
+        'date': DateTime.now().toIso8601String(),
+      };
+      
+      transactions.insert(0, newTransaction);
+      
+      // Mantener solo las últimas 50 transacciones
+      if (transactions.length > 50) {
+        transactions.removeRange(50, transactions.length);
+      }
+      
+      await prefs.setString(transactionsKey, json.encode(transactions));
+      print('Local transaction added: +\$${amount.toStringAsFixed(2)}');
+      
+    } catch (e) {
+      print('Error adding local transaction: $e');
     }
   }
 

@@ -40,8 +40,33 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       final currentState = state;
       if (currentState is HomeLoaded) {
-        final transactions = await ApiService.getUserTransactions(currentState.user['id']);
-        emit(currentState.copyWith(transactions: transactions));
+        final userId = currentState.user['id'];
+        
+        // Cargar transacciones del backend
+        List<dynamic> backendTransactions = [];
+        try {
+          backendTransactions = await ApiService.getUserTransactions(userId);
+        } catch (e) {
+          print('Error loading backend transactions: $e');
+        }
+        
+        // Cargar transacciones locales
+        final prefs = await SharedPreferences.getInstance();
+        final transactionsKey = 'user_transactions_$userId';
+        final localTransactionsString = prefs.getString(transactionsKey) ?? '[]';
+        final localTransactions = List<dynamic>.from(json.decode(localTransactionsString));
+        
+        // Combinar transacciones (locales primero)
+        final allTransactions = [...localTransactions, ...backendTransactions];
+        
+        // Ordenar por fecha descendente
+        allTransactions.sort((a, b) {
+          final dateA = DateTime.parse(a['date'] ?? DateTime.now().toIso8601String());
+          final dateB = DateTime.parse(b['date'] ?? DateTime.now().toIso8601String());
+          return dateB.compareTo(dateA);
+        });
+        
+        emit(currentState.copyWith(transactions: allTransactions));
       }
     } catch (e) {
       // Mantener estado actual si falla cargar transacciones
