@@ -1,7 +1,11 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/payment_receipt.dart';
 import '../services/pdf_service.dart';
+import '../services/api_service.dart';
+import '../services/auth_service.dart';
 
 part 'receipt_event.dart';
 part 'receipt_state.dart';
@@ -19,37 +23,57 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
     emit(ReceiptLoading());
     
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final user = await AuthService.getCurrentUser();
+      if (user == null) {
+        emit(ReceiptError('Usuario no encontrado'));
+        return;
+      }
       
-      final receipts = [
-        PaymentReceipt(
-          id: 'TXN001',
-          recipientName: 'Juan Pérez',
-          recipientAccount: '1234567890',
-          amount: 150.00,
-          currency: 'USD',
-          date: DateTime.now().subtract(const Duration(days: 1)),
-          concept: 'Pago de servicios',
-          reference: 'REF001',
-          status: 'Completado',
-        ),
-        PaymentReceipt(
-          id: 'TXN002',
-          recipientName: 'María García',
-          recipientAccount: '0987654321',
-          amount: 75.00,
-          currency: 'USD',
-          date: DateTime.now().subtract(const Duration(days: 2)),
-          concept: 'Transferencia personal',
-          reference: 'REF002',
-          status: 'Completado',
-        ),
-      ];
+      final userId = user['id'];
+      final receipts = <PaymentReceipt>[];
+      
+      // Cargar transacciones del backend
+      try {
+        final backendTransactions = await ApiService.getUserTransactions(userId);
+        for (final transaction in backendTransactions) {
+          receipts.add(_mapTransactionToReceipt(transaction));
+        }
+      } catch (e) {
+        print('Error loading backend transactions: $e');
+      }
+      
+      // Cargar transacciones locales
+      final prefs = await SharedPreferences.getInstance();
+      final transactionsKey = 'user_transactions_$userId';
+      final localTransactionsString = prefs.getString(transactionsKey) ?? '[]';
+      final localTransactions = List<dynamic>.from(json.decode(localTransactionsString));
+      
+      for (final transaction in localTransactions) {
+        receipts.add(_mapTransactionToReceipt(transaction));
+      }
+      
+      // Ordenar por fecha descendente
+      receipts.sort((a, b) => b.date.compareTo(a.date));
       
       emit(ReceiptLoaded(receipts));
     } catch (e) {
       emit(ReceiptError(e.toString()));
     }
+  }
+  
+  PaymentReceipt _mapTransactionToReceipt(Map<String, dynamic> transaction) {
+    final isIncome = transaction['type'] == 'INCOME';
+    return PaymentReceipt(
+      id: transaction['id'].toString(),
+      recipientName: isIncome ? 'TrustBank' : 'Destinatario',
+      recipientAccount: 'N/A',
+      amount: (transaction['amount'] ?? 0.0).toDouble(),
+      currency: 'USD',
+      date: DateTime.parse(transaction['date'] ?? DateTime.now().toIso8601String()),
+      concept: transaction['description'] ?? 'Transacción',
+      reference: 'REF${transaction['id']}',
+      status: 'Completado',
+    );
   }
 
   Future<void> _onGeneratePdf(
