@@ -47,14 +47,13 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         event.notes,
       );
       
-      // Si es una recarga aprobada, actualizar saldo del usuario
+      // Si es una transacción aprobada, actualizar saldo del usuario
       if (event.status == RequestStatus.approved) {
         final currentState = state;
         if (currentState is AdminLoaded) {
           final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
-          if (request.type == RequestType.recharge) {
-            await _updateUserBalance(int.parse(request.userId), request.amount);
-          }
+          // Sumar el monto a la cuenta para cualquier tipo de transacción aprobada
+          await _updateUserBalance(int.parse(request.userId), request.amount);
         }
       }
       
@@ -81,12 +80,12 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       final balanceResponse = await ApiService.updateUserBalance(userId, amount);
       print('Balance update response: $balanceResponse');
       
-      // Crear transacción de recarga
+      // Crear transacción aprobada
       final transactionResponse = await ApiService.createTransaction({
         'userId': userId,
         'type': 'INCOME',
         'amount': amount,
-        'description': 'Recarga de saldo aprobada',
+        'description': 'Transacción aprobada por administrador',
         'date': DateTime.now().toIso8601String(),
       });
       print('Transaction created: $transactionResponse');
