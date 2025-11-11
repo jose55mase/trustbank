@@ -4,6 +4,7 @@ import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
+import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../models/user_model.dart';
 import '../bloc/users_bloc.dart';
 
@@ -97,17 +98,7 @@ class UserDetailDialog extends StatelessWidget {
                     type: user.accountStatus.toLowerCase() == 'active' 
                         ? TBButtonType.secondary 
                         : TBButtonType.primary,
-                    onPressed: () {
-                      final newStatus = user.accountStatus.toLowerCase() == 'active' 
-                          ? UserStatus.suspended 
-                          : UserStatus.active;
-                      
-                      context.read<UsersBloc>().add(UpdateUserStatus(
-                        userId: user.id,
-                        status: newStatus,
-                      ));
-                      Navigator.of(context).pop();
-                    },
+                    onPressed: () => _showConfirmationDialog(context),
                   ),
                 ),
                 const SizedBox(width: TBSpacing.sm),
@@ -201,5 +192,71 @@ class UserDetailDialog extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+  
+  void _showConfirmationDialog(BuildContext context) {
+    final isActive = user.accountStatus.toLowerCase() == 'active';
+    final action = isActive ? 'suspender' : 'activar';
+    final newStatus = isActive ? UserStatus.suspended : UserStatus.active;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text('Confirmar acción'),
+        content: Text(
+          '¿Estás seguro de que deseas $action al usuario ${user.name}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              
+              // Mostrar diálogo de carga
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => AlertDialog(
+                  content: Row(
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(width: 16),
+                      Text('Actualizando usuario...'),
+                    ],
+                  ),
+                ),
+              );
+              
+              context.read<UsersBloc>().add(UpdateUserStatus(
+                userId: user.id,
+                status: newStatus,
+              ));
+              
+              // Cerrar diálogos después de un breve delay
+              Future.delayed(Duration(seconds: 1), () {
+                Navigator.of(context).pop(); // Cerrar loading
+                Navigator.of(context).pop(); // Cerrar detail dialog
+                
+                TBDialogHelper.showSuccess(
+                  context,
+                  title: 'Usuario actualizado',
+                  message: 'El estado del usuario ha sido cambiado exitosamente.',
+                );
+              });
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isActive ? TBColors.error : TBColors.success,
+            ),
+            child: Text(
+              isActive ? 'Suspender' : 'Activar',
+              style: TextStyle(color: TBColors.white),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
