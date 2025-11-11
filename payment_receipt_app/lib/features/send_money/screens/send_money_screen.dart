@@ -18,9 +18,10 @@ class SendMoneyScreen extends StatefulWidget {
 }
 
 class _SendMoneyScreenState extends State<SendMoneyScreen> {
-  final _recipientController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
-  final _conceptController = TextEditingController();
+  final _bankController = TextEditingController();
+  final _typeController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +52,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               child: Column(
                 children: [
                   TBInput(
-                    label: 'Destinatario',
-                    hint: 'Email o número de teléfono',
-                    controller: _recipientController,
-                    prefixIcon: const Icon(Icons.person_outline),
+                    label: 'Descripción',
+                    hint: 'Descripción del envío',
+                    controller: _descriptionController,
+                    prefixIcon: const Icon(Icons.description_outlined),
                   ),
                   const SizedBox(height: TBSpacing.lg),
                   TBInput(
@@ -66,10 +67,17 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   ),
                   const SizedBox(height: TBSpacing.lg),
                   TBInput(
-                    label: 'Concepto (opcional)',
-                    hint: 'Descripción del pago',
-                    controller: _conceptController,
-                    prefixIcon: const Icon(Icons.note_outlined),
+                    label: 'Banco',
+                    hint: 'Nombre del banco',
+                    controller: _bankController,
+                    prefixIcon: const Icon(Icons.account_balance),
+                  ),
+                  const SizedBox(height: TBSpacing.lg),
+                  TBInput(
+                    label: 'Tipo',
+                    hint: 'Tipo de transferencia',
+                    controller: _typeController,
+                    prefixIcon: const Icon(Icons.category_outlined),
                   ),
                 ],
               ),
@@ -80,36 +88,29 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               fullWidth: true,
               onPressed: () async {
                 final amount = double.tryParse(_amountController.text) ?? 0;
-                final recipient = _recipientController.text;
+                final description = _descriptionController.text;
+                final bank = _bankController.text;
+                final type = _typeController.text;
                 
-                if (amount > 0 && recipient.isNotEmpty) {
+                if (amount > 0 && description.isNotEmpty && bank.isNotEmpty && type.isNotEmpty) {
                   try {
                     final userId = await AuthService.getCurrentUserId() ?? 1;
                     final response = await ApiService.createAdminRequest({
                       'requestType': 'SEND_MONEY',
                       'userId': userId,
                       'amount': amount,
-                      'details': 'Envío a: $recipient. Concepto: ${_conceptController.text}',
+                      'details': 'Descripción: $description. Banco: $bank. Tipo: $type',
                     });
                     
-                    if (response['status'] == 201) {
-                      NotificationsBloc().add(AddSendMoneyNotification(
-                        recipient: recipient,
-                        amount: amount,
-                      ));
-                      
-                      TBDialogHelper.showSuccess(
-                        context,
-                        title: '¡Envío exitoso!',
-                        message: response['message'] ?? 'Tu solicitud de envío ha sido creada exitosamente.',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    } else {
-                      throw Exception(response['message'] ?? 'Error desconocido');
-                    }
+                    TBDialogHelper.showSuccess(
+                      context,
+                      title: '¡Solicitud enviada!',
+                      message: 'Tu solicitud de envío ha sido creada y está pendiente de aprobación.',
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                      },
+                    );
                   } catch (e) {
                     TBDialogHelper.showError(
                       context,
@@ -121,7 +122,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   TBDialogHelper.showWarning(
                     context,
                     title: 'Campos incompletos',
-                    message: 'Por favor, completa todos los campos requeridos para continuar con el envío.',
+                    message: 'Por favor, completa todos los campos requeridos.',
                   );
                 }
               },

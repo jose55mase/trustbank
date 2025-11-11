@@ -56,8 +56,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         final currentState = state;
         if (currentState is AdminLoaded) {
           final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
-          // Sumar el monto a la cuenta para cualquier tipo de transacción aprobada
-          await _updateUserBalance(int.parse(request.userId), request.amount);
+          // Para SEND_MONEY restar dinero, para otros tipos sumar
+          final amount = request.type == RequestType.sendMoney ? -request.amount : request.amount;
+          await _updateUserBalance(int.parse(request.userId), amount, request.type);
         }
       }
       
@@ -76,7 +77,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     }
   }
   
-  Future<void> _updateUserBalance(int userId, double amount) async {
+  Future<void> _updateUserBalance(int userId, double amount, RequestType requestType) async {
     try {
       print('Starting balance update for user $userId with amount $amount');
       
@@ -84,15 +85,20 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       await _updateBackendBalance(userId, amount);
       
       // 2. Actualizar localmente para UI inmediata
-      await _updateLocalBalance(userId, amount);
+      await _updateLocalBalance(userId, amount, requestType);
       
       // 3. Crear transacción en base de datos
       try {
+        final transactionType = requestType == RequestType.sendMoney ? 'EXPENSE' : 'INCOME';
+        final description = requestType == RequestType.sendMoney 
+            ? 'Envío de dinero aprobado por administrador'
+            : 'Transacción aprobada por administrador';
+        
         final transactionResponse = await ApiService.createTransaction({
           'userId': userId,
-          'type': 'INCOME',
-          'amount': amount,
-          'description': 'Transacción aprobada por administrador',
+          'type': transactionType,
+          'amount': amount.abs(),
+          'description': description,
           'date': DateTime.now().toIso8601String(),
         });
         print('Transaction created: $transactionResponse');
@@ -155,7 +161,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     }
   }
   
-  Future<void> _updateLocalBalance(int userId, double amount) async {
+  Future<void> _updateLocalBalance(int userId, double amount, RequestType requestType) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final userDataString = prefs.getString('user_data');
@@ -174,7 +180,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           BalanceService().updateBalance(userId, userData['moneyclean']);
           
           // Agregar transacción local a movimientos recientes
-          await _addLocalTransaction(userId, amount);
+          await _addLocalTransaction(userId, amount, requestType);
         }
       }
     } catch (e) {
@@ -182,7 +188,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     }
   }
   
-  Future<void> _addLocalTransaction(int userId, double amount) async {
+  Future<void> _addLocalTransaction(int userId, double amount, RequestType requestType) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final transactionsKey = 'user_transactions_$userId';
@@ -190,12 +196,17 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       final transactions = List<Map<String, dynamic>>.from(json.decode(transactionsString));
       
       // Agregar nueva transacción al inicio
+      final transactionType = requestType == RequestType.sendMoney ? 'EXPENSE' : 'INCOME';
+      final description = requestType == RequestType.sendMoney 
+          ? 'Envío de dinero aprobado por administrador'
+          : 'Transacción aprobada por administrador';
+      
       final newTransaction = {
         'id': DateTime.now().millisecondsSinceEpoch,
         'userId': userId,
-        'type': 'INCOME',
-        'amount': amount,
-        'description': 'Transacción aprobada por administrador',
+        'type': transactionType,
+        'amount': amount.abs(),
+        'description': description,
         'date': DateTime.now().toIso8601String(),
       };
       
