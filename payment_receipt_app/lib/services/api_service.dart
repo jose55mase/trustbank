@@ -84,15 +84,23 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
+    // Primero obtener el usuario actual
+    final currentUser = await getUserById(userId);
+    final currentBalance = (currentUser['moneyclean'] ?? 0.0).toDouble();
+    final newBalance = currentBalance + amount;
+    
+    // Actualizar con el nuevo saldo
     final response = await http.put(
-      Uri.parse('$baseUrl/user/$userId/addBalance'),
+      Uri.parse('$baseUrl/user/update'),
       headers: await headers,
       body: json.encode({
-        'amount': amount,
+        'id': userId,
+        'moneyclean': newBalance,
       }),
     );
 
     print('Update balance response: ${response.statusCode} - ${response.body}');
+    print('Updated balance from $currentBalance to $newBalance');
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
