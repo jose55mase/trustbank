@@ -72,26 +72,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
-    // Usar endpoint directo para agregar saldo
-    final response = await http.put(
-      Uri.parse('$baseUrl/user/addBalance'),
-      headers: await headers,
-      body: json.encode({
-        'userId': userId,
-        'amount': amount,
-      }),
-    );
 
-    print('Update balance response: ${response.statusCode} - ${response.body}');
-    print('Adding $amount to user $userId balance');
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to update balance: ${response.body}');
-    }
-  }
 
   // Document endpoints
   static Future<Map<String, dynamic>> uploadDocument(
