@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
@@ -14,6 +15,10 @@ import '../../notifications/bloc/notifications_bloc.dart';
 import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../account/screens/account_screen.dart';
 import '../../../services/auth_service.dart';
+import '../bloc/home_bloc.dart';
+import '../bloc/home_event.dart';
+import '../bloc/home_state.dart';
+import '../widgets/loading_home.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,6 +28,21 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late HomeBloc _homeBloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _homeBloc = HomeBloc();
+    _homeBloc.add(LoadUserData());
+  }
+
+  @override
+  void dispose() {
+    _homeBloc.close();
+    super.dispose();
+  }
+
   bool _showBalance = true;
   int _notificationCount = NotificationsBloc.unreadCount;
 
@@ -118,6 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToCredits() async {
     await Navigator.push(context, MaterialPageRoute(builder: (context) => const CreditsScreen()));
     _updateNotificationCount();
+    _homeBloc.add(RefreshData());
   }
 
   void _navigateToAdmin() {
@@ -127,11 +148,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _navigateToAccount() {
-    Navigator.push(
+  void _navigateToAccount() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AccountScreen()),
     );
+    _homeBloc.add(RefreshData());
   }
 
   void _logout() async {
@@ -145,8 +167,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: TBColors.background,
+    return BlocProvider.value(
+      value: _homeBloc,
+      child: BlocListener<HomeBloc, HomeState>(
+        listener: (context, state) {
+          if (state is HomeError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.message)),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: TBColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Container(
@@ -165,12 +197,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'Hola, Usuario',
-                          style: TBTypography.headlineMedium.copyWith(
-                            color: TBColors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        BlocBuilder<HomeBloc, HomeState>(
+                          builder: (context, state) {
+                            String userName = 'Usuario';
+                            if (state is HomeLoaded) {
+                              userName = state.user['firstName'] ?? 'Usuario';
+                            }
+                            return Text(
+                              'Hola, $userName',
+                              style: TBTypography.headlineMedium.copyWith(
+                                color: TBColors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            );
+                          },
                         ),
                         Text(
                           'Bienvenido a TrustBank',
@@ -295,11 +335,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(TBSpacing.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          if (state is HomeLoading) {
+            return const SingleChildScrollView(
+              padding: EdgeInsets.all(TBSpacing.screenPadding),
+              child: LoadingHome(),
+            );
+          }
+          
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(TBSpacing.screenPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
             // Balance Card compacta
             Container(
               width: double.infinity,
@@ -336,12 +385,20 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: TBColors.white.withOpacity(0.9),
                             ),
                           ),
-                          Text(
-                            _showBalance ? '3,250.50' : '••••••',
-                            style: TBTypography.headlineMedium.copyWith(
-                              color: TBColors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          BlocBuilder<HomeBloc, HomeState>(
+                            builder: (context, state) {
+                              String balance = '0.00';
+                              if (state is HomeLoaded) {
+                                balance = state.balance.toStringAsFixed(2);
+                              }
+                              return Text(
+                                _showBalance ? balance : '••••••',
+                                style: TBTypography.headlineMedium.copyWith(
+                                  color: TBColors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -400,13 +457,41 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             const SizedBox(height: TBSpacing.sm),
-            // Solo 2 transacciones para ahorrar espacio
-            _buildTransactionItem('Pago recibido', 'Juan Pérez', '+150.00', Icons.arrow_downward, true),
-            const SizedBox(height: TBSpacing.sm),
-            _buildTransactionItem('Compra Amazon', 'Tienda online', '-89.50', Icons.shopping_cart, false),
-          ],
-        ),
+            // Transacciones reales del usuario
+            BlocBuilder<HomeBloc, HomeState>(
+              builder: (context, state) {
+                if (state is HomeLoaded && state.transactions.isNotEmpty) {
+                  final recentTransactions = state.transactions.take(3).toList();
+                  return Column(
+                    children: recentTransactions.map((transaction) {
+                      final isIncome = transaction['type'] == 'INCOME';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: TBSpacing.sm),
+                        child: _buildTransactionItem(
+                          transaction['description'] ?? 'Transacción',
+                          transaction['date'] ?? 'Hoy',
+                          transaction['amount']?.toString() ?? '0.00',
+                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                          isIncome,
+                        ),
+                      );
+                    }).toList(),
+                  );
+                } else {
+                  return Column(
+                    children: [
+                      _buildTransactionItem('Sin transacciones', 'No hay movimientos recientes', '0.00', Icons.info, false),
+                    ],
+                  );
+                }
+              },
+            ),
+              ],
+            ),
+          );
+        },
       ),
+    ),
     );
   }
 }
