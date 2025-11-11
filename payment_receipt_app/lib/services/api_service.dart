@@ -142,7 +142,7 @@ class ApiService {
 
   static Future<List<dynamic>> getUserDocuments(int userId) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/documents/user/$userId'),
+      Uri.parse('$baseUrl/documents/user/$userId?sort=createdAt,desc'),
       headers: await headers,
     );
 
@@ -156,7 +156,7 @@ class ApiService {
 
   static Future<List<dynamic>> getPendingDocuments() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/documents/pending'),
+      Uri.parse('$baseUrl/documents/pending?sort=createdAt,desc'),
       headers: await headers,
     );
 
@@ -205,7 +205,7 @@ class ApiService {
 
   static Future<List<dynamic>> getAllAdminRequests() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/admin-requests/all'),
+      Uri.parse('$baseUrl/admin-requests/all?sort=createdAt,desc'),
       headers: await headers,
     );
 
@@ -219,7 +219,7 @@ class ApiService {
 
   static Future<List<dynamic>> getPendingAdminRequests() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/admin-requests/pending'),
+      Uri.parse('$baseUrl/admin-requests/pending?sort=createdAt,desc'),
       headers: await headers,
     );
 
@@ -265,7 +265,7 @@ class ApiService {
 
   static Future<List<dynamic>> getUserTransactions(int userId) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/transaction/findByUser?idUser=$userId'),
+      Uri.parse('$baseUrl/transaction/findByUser?idUser=$userId&sort=date,desc'),
       headers: await headers,
     );
 
@@ -293,7 +293,7 @@ class ApiService {
 
   static Future<List<dynamic>> getUserNotifications(int userId) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/notifications/user/$userId'),
+      Uri.parse('$baseUrl/notifications/user/$userId?sort=createdAt,desc'),
       headers: await headers,
     );
 
