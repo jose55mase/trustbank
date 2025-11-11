@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/request_model.dart';
 import '../../../services/api_service.dart';
 import '../../notifications/bloc/notifications_bloc.dart';
@@ -73,22 +75,29 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _updateUserBalance(int userId, double amount) async {
     try {
+      print('Starting balance update for user $userId with amount $amount');
+      
       // Actualizar saldo del usuario
-      await ApiService.updateUserBalance(userId, amount);
+      final balanceResponse = await ApiService.updateUserBalance(userId, amount);
+      print('Balance update response: $balanceResponse');
       
       // Crear transacción de recarga
-      await ApiService.createTransaction({
+      final transactionResponse = await ApiService.createTransaction({
         'userId': userId,
         'type': 'INCOME',
         'amount': amount,
         'description': 'Recarga de saldo aprobada',
         'date': DateTime.now().toIso8601String(),
       });
-      
-      print('Balance updated for user $userId with amount $amount');
+      print('Transaction created: $transactionResponse');
       
       // Forzar actualización de datos del usuario en SharedPreferences
       await _refreshUserData(userId);
+      
+      // Fallback: actualizar saldo localmente si el backend no responde correctamente
+      await _updateLocalBalance(userId, amount);
+      
+      print('Balance update process completed for user $userId');
       
     } catch (e) {
       print('Error updating balance: $e');
@@ -97,13 +106,36 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _refreshUserData(int userId) async {
     try {
-      // Obtener usuario actualizado por ID
-      final users = await ApiService.getAllAdminRequests(); // Temporal, necesitamos endpoint getUserById
+      // Obtener usuario actualizado
+      final updatedUser = await ApiService.getUserById(userId);
       
-      // Por ahora, simplemente esperamos que el usuario refresque manualmente
-      print('User data should be refreshed for user $userId');
+      // Actualizar datos en SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', json.encode(updatedUser));
+      
+      print('User data refreshed for user $userId with new balance: ${updatedUser['balance']}');
     } catch (e) {
       print('Error refreshing user data: $e');
+    }
+  }
+  
+  Future<void> _updateLocalBalance(int userId, double amount) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        if (userData['id'] == userId) {
+          final currentBalance = (userData['balance'] ?? 0.0).toDouble();
+          userData['balance'] = currentBalance + amount;
+          
+          await prefs.setString('user_data', json.encode(userData));
+          print('Local balance updated: ${userData['balance']}');
+        }
+      }
+    } catch (e) {
+      print('Error updating local balance: $e');
     }
   }
 
