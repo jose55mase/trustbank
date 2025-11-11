@@ -9,13 +9,16 @@ class AuthService {
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       final response = await ApiService.login(email, password);
-      
+
+
+
       if (response['access_token'] != null) {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(_tokenKey, response['access_token']);
         
         // Obtener datos del usuario
         final userData = await ApiService.getUserByEmail(email);
+        print('Geting userData --> ${userData}');
         await prefs.setString(_userKey, json.encode(userData));
         
         return {'success': true, 'user': userData};

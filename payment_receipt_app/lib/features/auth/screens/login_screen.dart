@@ -51,6 +51,7 @@ class LoginScreen extends StatelessWidget {
                         LoginCard(
                           onLogin: (email, password) async {
                             final result = await AuthService.login(email, password);
+                            print('Response ----------> ${result}');
                             if (result['success']) {
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(builder: (context) => const HomeScreen()),

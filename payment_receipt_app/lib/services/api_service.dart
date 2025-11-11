@@ -4,26 +4,29 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8081/api';
-  
+  static String credentials = base64Encode(utf8.encode('angularapp:12345'));
   static Map<String, String> get headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'Authorization': 'Basic $credentials',
   };
 
   // Auth endpoints
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
+      // Codifica las credenciales igual que en Angular
+
+
+      // Construye el body como string, no como mapa
+      final body = 'grant_type=password&username=${Uri.encodeComponent(email)}&password=${Uri.encodeComponent(password)}';
+
       final response = await http.post(
-        Uri.parse('$baseUrl/oauth/token'),
+        Uri.parse('http://localhost:8081/oauth/token'),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Basic YW5ndWxhcmFwcDpteXNlY3JldA==',
+          'Authorization': 'Basic $credentials',
         },
-        body: {
-          'grant_type': 'password',
-          'username': email,
-          'password': password,
-        },
+        body: body,
       );
 
       if (response.statusCode == 200) {
@@ -42,7 +45,7 @@ class ApiService {
       Uri.parse('$baseUrl/user/getUserByEmail/$email'),
       headers: headers,
     );
-
+    print('Response get user ----> ${response.body}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
