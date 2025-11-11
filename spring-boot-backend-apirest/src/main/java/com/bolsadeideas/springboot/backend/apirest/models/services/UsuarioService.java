@@ -15,7 +15,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -71,5 +73,46 @@ public class UsuarioService implements IUserService, UserDetailsService {
     @Transactional(readOnly = true)
     public List<UserEntity> findByAdministratorManager(Integer administratorManager) {
         return this.userDao.findByAdministratorManagerOrderByIdDesc(administratorManager);
+    }
+    
+    // Nuevos métodos para gestión de usuarios
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEntity> findAllOrderByCreatedAtDesc() {
+        return this.userDao.findAllOrderByCreatedAtDesc();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEntity> findByAccountStatus(String accountStatus) {
+        return this.userDao.findByAccountStatusOrderByCreatedAtDesc(accountStatus);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEntity> searchUsers(String query) {
+        return this.userDao.searchUsersOrderByCreatedAtDesc(query);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public Map<String, Long> getUserStats() {
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("total", this.userDao.countAllUsers());
+        stats.put("active", this.userDao.countUsersByStatus("ACTIVE"));
+        stats.put("inactive", this.userDao.countUsersByStatus("INACTIVE"));
+        stats.put("pending", this.userDao.countUsersByStatus("PENDING"));
+        stats.put("suspended", this.userDao.countUsersByStatus("SUSPENDED"));
+        return stats;
+    }
+    
+    @Override
+    public UserEntity updateUserStatus(Long userId, String status) {
+        UserEntity user = this.userDao.findByid(userId);
+        if (user != null) {
+            user.setAccountStatus(status);
+            return this.userDao.save(user);
+        }
+        return null;
     }
 }

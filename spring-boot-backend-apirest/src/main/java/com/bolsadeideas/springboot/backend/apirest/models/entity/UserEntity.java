@@ -3,6 +3,7 @@ package com.bolsadeideas.springboot.backend.apirest.models.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.List;
+import java.util.Date;
 
 @Entity
 @Table(name = "usersbank")
@@ -36,6 +37,30 @@ public class UserEntity implements Serializable {
     private String password;
     private Integer moneyclean;
     private Boolean status;
+    
+    // Nuevos campos para gestión de usuarios
+    @Column(length = 20)
+    private String phone;
+    
+    @Column(length = 100)
+    private String address;
+    
+    @Column(length = 20)
+    private String documentType;
+    
+    @Column(length = 30)
+    private String documentNumber;
+    
+    @Column(length = 20)
+    private String accountStatus = "ACTIVE";
+    
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at")
+    private java.util.Date createdAt;
+    
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at")
+    private java.util.Date updatedAt;
 
     private String foto;
     private String documentFrom;
@@ -197,6 +222,74 @@ public class UserEntity implements Serializable {
 
     public void setAdministratorManager(Integer administratorManager) {
         this.administratorManager = administratorManager;
+    }
+    
+    // Getters y setters para nuevos campos
+    public String getPhone() {
+        return phone;
+    }
+    
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+    
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public String getDocumentType() {
+        return documentType;
+    }
+    
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
+    }
+    
+    public String getDocumentNumber() {
+        return documentNumber;
+    }
+    
+    public void setDocumentNumber(String documentNumber) {
+        this.documentNumber = documentNumber;
+    }
+    
+    public String getAccountStatus() {
+        return accountStatus;
+    }
+    
+    public void setAccountStatus(String accountStatus) {
+        this.accountStatus = accountStatus;
+    }
+    
+    public java.util.Date getCreatedAt() {
+        return createdAt;
+    }
+    
+    public void setCreatedAt(java.util.Date createdAt) {
+        this.createdAt = createdAt;
+    }
+    
+    public java.util.Date getUpdatedAt() {
+        return updatedAt;
+    }
+    
+    public void setUpdatedAt(java.util.Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = new java.util.Date();
+        updatedAt = new java.util.Date();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = new java.util.Date();
     }
 
     @Override

@@ -377,7 +377,8 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final data = json.decode(response.body);
+      return data is List ? data : data['data'] ?? [];
     } else {
       throw Exception('Failed to get users');
     }
@@ -398,14 +399,56 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updateUserStatus(int userId, String status) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/user/updateStatus/$userId?status=$status'),
+      Uri.parse('$baseUrl/user/updateStatus/$userId'),
       headers: await headers,
+      body: json.encode({'accountStatus': status}),
     );
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to update user status');
+    }
+  }
+
+  static Future<List<dynamic>> getUsersByStatus(String status) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/byStatus/$status?sort=createdAt,desc'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data is List ? data : data['data'] ?? [];
+    } else {
+      throw Exception('Failed to get users by status');
+    }
+  }
+
+  static Future<List<dynamic>> searchUsers(String query) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/search?q=${Uri.encodeComponent(query)}&sort=createdAt,desc'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data is List ? data : data['data'] ?? [];
+    } else {
+      throw Exception('Failed to search users');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUserStats() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/stats'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get user stats');
     }
   }
 }

@@ -170,6 +170,75 @@ public class UserConstructor {
                     "Operacion incorrecta",user);
         }
     }
-
+    
+    // Nuevos endpoints para gestión de usuarios
+    @GetMapping("/all")
+    public ResponseEntity<List<UserEntity>> getAllUsers() {
+        try {
+            List<UserEntity> users = this.usuarioService.findAllOrderByCreatedAtDesc();
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
+        try {
+            UserEntity user = this.usuarioService.findByid(id);
+            if (user != null) {
+                return new ResponseEntity<>(user, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @GetMapping("/byStatus/{status}")
+    public ResponseEntity<List<UserEntity>> getUsersByStatus(@PathVariable String status) {
+        try {
+            List<UserEntity> users = this.usuarioService.findByAccountStatus(status);
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<List<UserEntity>> searchUsers(@RequestParam String q) {
+        try {
+            List<UserEntity> users = this.usuarioService.searchUsers(q);
+            return new ResponseEntity<>(users, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Long>> getUserStats() {
+        try {
+            Map<String, Long> stats = this.usuarioService.getUserStats();
+            return new ResponseEntity<>(stats, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @PutMapping("/updateStatus/{id}")
+    public ResponseEntity<UserEntity> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("accountStatus");
+            UserEntity updatedUser = this.usuarioService.updateUserStatus(id, status);
+            if (updatedUser != null) {
+                return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
