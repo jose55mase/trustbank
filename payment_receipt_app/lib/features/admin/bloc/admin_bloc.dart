@@ -127,11 +127,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       if (userDataString != null) {
         final userData = json.decode(userDataString);
         if (userData['id'] == userId) {
-          final currentBalance = (userData['balance'] ?? 0.0).toDouble();
-          userData['balance'] = currentBalance + amount;
+          final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
+          userData['moneyclean'] = currentBalance + amount;
           
           await prefs.setString('user_data', json.encode(userData));
-          print('Local balance updated: ${userData['balance']}');
+          print('Local balance updated: ${userData['moneyclean']}');
         }
       }
     } catch (e) {

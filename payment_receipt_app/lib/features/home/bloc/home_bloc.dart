@@ -23,7 +23,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         emit(HomeLoaded(
           user: user,
           transactions: [],
-          balance: user['balance']?.toDouble() ?? 0.0,
+          balance: user['moneyclean']?.toDouble() ?? user['balance']?.toDouble() ?? 0.0,
         ));
         
         // Cargar transacciones automáticamente
