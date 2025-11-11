@@ -6,8 +6,9 @@ import '../models/account_model.dart';
 
 class AccountStatusCard extends StatelessWidget {
   final UserAccount account;
+  final Map<String, dynamic>? userData;
 
-  const AccountStatusCard({super.key, required this.account});
+  const AccountStatusCard({super.key, required this.account, this.userData});
 
   @override
   Widget build(BuildContext context) {
@@ -43,18 +44,31 @@ class AccountStatusCard extends StatelessWidget {
           ),
           const SizedBox(height: TBSpacing.sm),
           Text(
-            account.userName,
+            userData != null 
+                ? '${userData!['fistName'] ?? userData!['firstName'] ?? ''} ${userData!['lastName'] ?? ''}'
+                : account.userName,
             style: TBTypography.headlineMedium.copyWith(color: TBColors.white),
           ),
           Text(
-            account.email,
+            userData?['email'] ?? account.email,
             style: TBTypography.bodyMedium.copyWith(
               color: TBColors.white.withOpacity(0.9),
             ),
           ),
+          if (userData != null) ..[
+            const SizedBox(height: TBSpacing.xs),
+            Text(
+              'ID: ${userData!['id']} • Doc: ${userData!['document'] ?? 'N/A'}',
+              style: TBTypography.labelMedium.copyWith(
+                color: TBColors.white.withOpacity(0.8),
+              ),
+            ),
+          ],
           const SizedBox(height: TBSpacing.md),
           Text(
-            _getStatusMessage(),
+            userData != null 
+                ? _getRealStatusMessage(userData!['accountStatus'])
+                : _getStatusMessage(),
             style: TBTypography.bodyMedium.copyWith(
               color: TBColors.white.withOpacity(0.9),
             ),
@@ -112,6 +126,21 @@ class AccountStatusCard extends StatelessWidget {
         return 'Tu cuenta está suspendida. Contacta soporte para más información.';
       default:
         return 'Sube todos los documentos requeridos para verificar tu cuenta.';
+    }
+  }
+  
+  String _getRealStatusMessage(String? status) {
+    switch (status?.toUpperCase()) {
+      case 'ACTIVE':
+        return 'Tu cuenta está activa. Puedes usar todos los servicios.';
+      case 'SUSPENDED':
+        return 'Tu cuenta está suspendida. Contacta soporte para más información.';
+      case 'INACTIVE':
+        return 'Tu cuenta está inactiva. Contacta al administrador.';
+      case 'PENDING':
+        return 'Tu cuenta está pendiente de verificación.';
+      default:
+        return 'Estado de cuenta: ${status ?? 'No especificado'}';
     }
   }
 }
