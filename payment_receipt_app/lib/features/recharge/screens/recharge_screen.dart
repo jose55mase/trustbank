@@ -93,15 +93,21 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 if (amount > 0) {
                   try {
                     final userId = await AuthService.getCurrentUserId();
+                    print('User ID: $userId');
                     if (userId == null) throw Exception('Usuario no encontrado');
                     
-                    await ApiService.createAdminRequest({
-                      'requestType': 'BALANCE_RECHARGE',
+                    final requestData = {
+                      'requestType': 'RECHARGE',
                       'userId': userId,
                       'amount': amount,
                       'description': 'Solicitud de recarga de saldo',
                       'details': 'Método: $_selectedMethod - Monto: \$${amount.toStringAsFixed(2)}',
-                    });
+                      'status': 'PENDING'
+                    };
+                    print('Request data: $requestData');
+                    
+                    final response = await ApiService.createAdminRequest(requestData);
+                    print('Response: $response');
                     
                     TBDialogHelper.showSuccess(
                       context,
