@@ -174,7 +174,10 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   void _showUserDetail(BuildContext context, AdminUser user) {
     showDialog(
       context: context,
-      builder: (context) => UserDetailDialog(user: user),
+      builder: (dialogContext) => BlocProvider.value(
+        value: context.read<UsersBloc>(),
+        child: UserDetailDialog(user: user),
+      ),
     );
   }
 }
