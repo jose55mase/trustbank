@@ -5,11 +5,12 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../bloc/admin_bloc.dart';
-import '../models/request_model.dart';
+
 import '../widgets/request_card.dart';
 import '../widgets/admin_stats.dart';
 import '../widgets/filter_chips.dart';
 import 'document_management_screen.dart';
+import 'users_management_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -25,6 +26,19 @@ class AdminDashboardScreen extends StatelessWidget {
           backgroundColor: TBColors.primary,
           foregroundColor: TBColors.white,
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.people),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UsersManagementScreen(),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: BlocBuilder<AdminBloc, AdminState>(
           builder: (context, state) {
@@ -66,6 +80,19 @@ class AdminDashboardScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => const DocumentManagementScreen(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: TBSpacing.sm),
+                        Expanded(
+                          child: TBButton(
+                            text: 'Gestionar Usuarios',
+                            type: TBButtonType.secondary,
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const UsersManagementScreen(),
                               ),
                             ),
                           ),

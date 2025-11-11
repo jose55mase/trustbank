@@ -368,4 +368,44 @@ class ApiService {
       throw Exception('Failed to approve credit');
     }
   }
+
+  // User management endpoints
+  static Future<List<dynamic>> getAllUsers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/all?sort=createdAt,desc'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get users');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getUserById(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/$userId'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get user');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateUserStatus(int userId, String status) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/updateStatus/$userId?status=$status'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to update user status');
+    }
+  }
 }
