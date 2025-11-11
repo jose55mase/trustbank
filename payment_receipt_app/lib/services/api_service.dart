@@ -57,8 +57,9 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> getUserById(int userId) async {
+    // Usar endpoint existente con parámetro
     final response = await http.get(
-      Uri.parse('$baseUrl/user/$userId'),
+      Uri.parse('$baseUrl/user/findById?id=$userId'),
       headers: await headers,
     );
     
