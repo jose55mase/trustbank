@@ -95,7 +95,7 @@ class RecentTransactions extends StatelessWidget {
                   ),
                 ],
                 border: Border.all(
-                  color: TBColors.grey200.withOpacity(0.6),
+                  color: TBColors.grey300.withOpacity(0.6),
                   width: 1,
                 ),
               ),
@@ -144,7 +144,7 @@ class RecentTransactions extends StatelessWidget {
                         const SizedBox(height: 2),
                         Text(
                           transaction.subtitle,
-                          style: TBTypography.bodySmall.copyWith(
+                          style: TBTypography.labelMedium.copyWith(
                             color: TBColors.grey600,
                           ),
                           maxLines: 1,
@@ -166,8 +166,9 @@ class RecentTransactions extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         _formatDate(transaction.date),
-                        style: TBTypography.labelSmall.copyWith(
+                        style: TBTypography.labelMedium.copyWith(
                           color: TBColors.grey500,
+                          fontSize: 10,
                         ),
                       ),
                     ],

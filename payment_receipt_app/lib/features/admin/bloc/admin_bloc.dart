@@ -142,7 +142,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
             'updatedAt': DateTime.now().toIso8601String(),
           };
           
-          final response = await ApiService.updateUser(userEntity);
+          await ApiService.updateUser(userEntity);
           print('Backend balance updated to: $newBalance');
         }
       }
@@ -152,14 +152,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     }
   }
   
-  Future<void> _refreshUserData(int userId) async {
-    try {
-      print('User data should be refreshed for user $userId');
-      // El usuario tendrá que refrescar manualmente o esperar el auto-refresh
-    } catch (e) {
-      print('Error refreshing user data: $e');
-    }
-  }
+
   
   Future<void> _updateLocalBalance(int userId, double amount, RequestType requestType) async {
     try {

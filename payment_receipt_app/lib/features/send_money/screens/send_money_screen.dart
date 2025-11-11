@@ -4,11 +4,11 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_input.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
-import '../../notifications/bloc/notifications_bloc.dart';
+
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
-import '../../../design_system/components/molecules/tb_loading_dialog.dart';
+
 import '../../recharge/screens/recharge_screen.dart';
 
 class SendMoneyScreen extends StatefulWidget {
@@ -90,9 +90,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                       ),
                       Text(
                         '\$${_currentBalance.toStringAsFixed(2)}',
-                        style: TBTypography.headlineSmall.copyWith(
+                        style: TBTypography.headlineMedium.copyWith(
                           color: TBColors.primary,
                           fontWeight: FontWeight.w700,
+                          fontSize: 20,
                         ),
                       ),
                     ],
@@ -164,8 +165,9 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                                       : amount > _currentBalance
                                           ? 'Saldo insuficiente'
                                           : 'Ingresa un monto válido',
-                                  style: TBTypography.labelSmall.copyWith(
+                                  style: TBTypography.labelMedium.copyWith(
                                     color: isValid ? TBColors.success : TBColors.error,
+                                    fontSize: 12,
                                   ),
                                 ),
                               ),
@@ -231,7 +233,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 
                 try {
                   final userId = await AuthService.getCurrentUserId() ?? 1;
-                  final response = await ApiService.createAdminRequest({
+                  await ApiService.createAdminRequest({
                     'requestType': 'SEND_MONEY',
                     'userId': userId,
                     'amount': amount,
