@@ -35,6 +35,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           isRead: data['isRead'] ?? false,
         )).toList();
         
+        // Ordenar por fecha descendente
+        notifications.sort((a, b) => b.date.compareTo(a.date));
+        
         _notifications.addAll(notifications);
       }
       
@@ -93,10 +96,13 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           // Evitar duplicados
           final exists = _notifications.any((n) => n.id == notification.id);
           if (!exists) {
-            _notifications.insert(0, notification);
+            _notifications.add(notification);
           }
         }
       }
+      
+      // Ordenar todas las notificaciones por fecha descendente
+      _notifications.sort((a, b) => b.date.compareTo(a.date));
       
       emit(NotificationsLoaded(_notifications));
     } catch (e) {

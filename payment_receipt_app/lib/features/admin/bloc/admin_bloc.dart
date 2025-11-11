@@ -33,6 +33,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         adminNotes: data['adminNotes'],
       )).toList();
       
+      // Ordenar por fecha descendente (más recientes primero)
+      requests.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
       emit(AdminLoaded(requests: requests));
     } catch (e) {
       emit(AdminError(e.toString()));
