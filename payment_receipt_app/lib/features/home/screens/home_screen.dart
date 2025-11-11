@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/colors/tb_colors.dart';
@@ -35,6 +36,15 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _homeBloc = HomeBloc();
     _homeBloc.add(LoadUserData());
+    
+    // Refrescar datos cada 30 segundos para capturar cambios de saldo
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _homeBloc.add(RefreshData());
+      } else {
+        timer.cancel();
+      }
+    });
   }
 
   @override

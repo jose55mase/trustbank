@@ -56,6 +56,19 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getUserById(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/$userId'),
+      headers: await headers,
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get user by ID');
+    }
+  }
+
   static Future<Map<String, dynamic>> updateUser(Map<String, dynamic> userData) async {
     final response = await http.put(
       Uri.parse('$baseUrl/user/update'),
@@ -72,17 +85,20 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/user/$userId/balance'),
+      Uri.parse('$baseUrl/user/updateBalance'),
       headers: await headers,
       body: json.encode({
+        'userId': userId,
         'amount': amount,
       }),
     );
 
+    print('Update balance response: ${response.statusCode} - ${response.body}');
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to update balance');
+      throw Exception('Failed to update balance: ${response.body}');
     }
   }
 
