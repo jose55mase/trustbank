@@ -126,8 +126,10 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         'description': 'Recarga de saldo aprobada',
         'date': DateTime.now().toIso8601String(),
       });
+      
+      print('Balance updated for user $userId with amount $amount');
     } catch (e) {
-      // Error al actualizar saldo, pero continuar
+      print('Error updating balance: $e');
     }
   }
 

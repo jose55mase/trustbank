@@ -17,6 +17,12 @@ class AuthService {
         // Obtener datos del usuario
         final userData = await ApiService.getUserByEmail(email);
         print('Getting userData --> ${userData}');
+        
+        // Asegurar que tenemos el nombre del usuario
+        if (userData['firstName'] == null && userData['name'] != null) {
+          userData['firstName'] = userData['name'];
+        }
+        
         await prefs.setString(_userKey, json.encode(userData));
         
         return {'success': true, 'user': userData};

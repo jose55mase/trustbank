@@ -72,10 +72,9 @@ class ApiService {
 
   static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/user/updateBalance'),
+      Uri.parse('$baseUrl/user/$userId/balance'),
       headers: await headers,
       body: json.encode({
-        'userId': userId,
         'amount': amount,
       }),
     );

@@ -11,6 +11,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<LoadUserData>(_onLoadUserData);
     on<LoadUserTransactions>(_onLoadUserTransactions);
     on<RefreshData>(_onRefreshData);
+    on<RefreshBalance>(_onRefreshBalance);
   }
 
   Future<void> _onLoadUserData(LoadUserData event, Emitter<HomeState> emit) async {
@@ -63,5 +64,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } catch (e) {
       add(LoadUserData());
     }
+  }
+  
+  Future<void> _onRefreshBalance(RefreshBalance event, Emitter<HomeState> emit) async {
+    add(RefreshData());
   }
 }

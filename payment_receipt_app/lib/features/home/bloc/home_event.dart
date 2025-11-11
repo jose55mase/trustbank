@@ -5,3 +5,5 @@ class LoadUserData extends HomeEvent {}
 class LoadUserTransactions extends HomeEvent {}
 
 class RefreshData extends HomeEvent {}
+
+class RefreshBalance extends HomeEvent {}

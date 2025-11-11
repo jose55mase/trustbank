@@ -108,10 +108,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Text(
-            '\$${amount}',
+            '${isIncome ? '+' : '-'}\$${amount}',
             style: TBTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
-              color: isIncome ? TBColors.success : TBColors.black,
+              color: isIncome ? TBColors.success : TBColors.error,
             ),
           ),
         ],
@@ -201,7 +201,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           builder: (context, state) {
                             String userName = 'Usuario';
                             if (state is HomeLoaded) {
-                              userName = state.user['firstName'] ?? 'Usuario';
+                              userName = state.user['firstName'] ?? 
+                                        state.user['name'] ?? 
+                                        state.user['username'] ?? 
+                                        'Usuario';
                             }
                             return Text(
                               'Hola, $userName',
@@ -465,13 +468,50 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Column(
                     children: recentTransactions.map((transaction) {
                       final isIncome = transaction['type'] == 'INCOME';
+                      final amount = (transaction['amount'] ?? 0.0).toDouble();
+                      final description = transaction['description'] ?? 'Transacción';
+                      
+                      // Formatear fecha
+                      String dateStr = 'Hoy';
+                      try {
+                        if (transaction['date'] != null) {
+                          final date = DateTime.parse(transaction['date']);
+                          final now = DateTime.now();
+                          final diff = now.difference(date).inDays;
+                          
+                          if (diff == 0) {
+                            dateStr = 'Hoy';
+                          } else if (diff == 1) {
+                            dateStr = 'Ayer';
+                          } else if (diff < 7) {
+                            dateStr = 'Hace $diff días';
+                          } else {
+                            dateStr = '${date.day}/${date.month}/${date.year}';
+                          }
+                        }
+                      } catch (e) {
+                        dateStr = 'Hoy';
+                      }
+                      
+                      // Determinar icono según tipo de transacción
+                      IconData icon = Icons.swap_horiz;
+                      if (description.toLowerCase().contains('recarga')) {
+                        icon = Icons.add_circle;
+                      } else if (description.toLowerCase().contains('envío')) {
+                        icon = Icons.send;
+                      } else if (description.toLowerCase().contains('pago')) {
+                        icon = Icons.payment;
+                      } else {
+                        icon = isIncome ? Icons.arrow_downward : Icons.arrow_upward;
+                      }
+                      
                       return Padding(
                         padding: const EdgeInsets.only(bottom: TBSpacing.sm),
                         child: _buildTransactionItem(
-                          transaction['description'] ?? 'Transacción',
-                          transaction['date'] ?? 'Hoy',
-                          transaction['amount']?.toString() ?? '0.00',
-                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                          description,
+                          dateStr,
+                          amount.toStringAsFixed(2),
+                          icon,
                           isIncome,
                         ),
                       );
@@ -480,7 +520,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 } else {
                   return Column(
                     children: [
-                      _buildTransactionItem('Sin transacciones', 'No hay movimientos recientes', '0.00', Icons.info, false),
+                      _buildTransactionItem(
+                        'Sin transacciones', 
+                        'No hay movimientos recientes', 
+                        '0.00', 
+                        Icons.info_outline, 
+                        false
+                      ),
                     ],
                   );
                 }
