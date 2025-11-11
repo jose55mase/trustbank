@@ -171,10 +171,13 @@ class ApiService {
       body: json.encode(requestData),
     );
 
-    if (response.statusCode == 201) {
+    print('Create request response status: ${response.statusCode}');
+    print('Create request response body: ${response.body}');
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to create request');
+      throw Exception('Server error: ${response.statusCode} - ${response.body}');
     }
   }
 
