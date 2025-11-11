@@ -55,15 +55,14 @@ class AccountStatusCard extends StatelessWidget {
               color: TBColors.white.withOpacity(0.9),
             ),
           ),
-          if (userData != null) ..[
-            const SizedBox(height: TBSpacing.xs),
+          if (userData != null) const SizedBox(height: TBSpacing.xs),
+          if (userData != null)
             Text(
               'ID: ${userData!['id']} • Doc: ${userData!['document'] ?? 'N/A'}',
               style: TBTypography.labelMedium.copyWith(
                 color: TBColors.white.withOpacity(0.8),
               ),
-            ),
-          ],
+            )
           const SizedBox(height: TBSpacing.md),
           Text(
             userData != null 

@@ -5,7 +5,7 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../bloc/account_bloc.dart';
-import '../models/account_model.dart';
+
 import '../widgets/account_status_card.dart';
 import '../widgets/document_list.dart';
 import '../widgets/upload_document_dialog.dart';
