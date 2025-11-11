@@ -77,6 +77,17 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         event.notes,
       );
       
+      // Si es una recarga aprobada, actualizar saldo del usuario
+      if (event.status == RequestStatus.approved) {
+        final currentState = state;
+        if (currentState is AdminLoaded) {
+          final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
+          if (request.type == RequestType.recharge) {
+            await _updateUserBalance(int.parse(request.userId), request.amount);
+          }
+        }
+      }
+      
       // Recargar solicitudes
       add(LoadRequests());
     } catch (e) {
@@ -90,6 +101,24 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         );
         emit(AdminLoaded(requests: _mockRequests));
       }
+    }
+  }
+  
+  Future<void> _updateUserBalance(int userId, double amount) async {
+    try {
+      // Actualizar saldo del usuario
+      await ApiService.updateUserBalance(userId, amount);
+      
+      // Crear transacción de recarga
+      await ApiService.createTransaction({
+        'userId': userId,
+        'type': 'INCOME',
+        'amount': amount,
+        'description': 'Recarga de saldo aprobada',
+        'date': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      // Error al actualizar saldo, pero continuar
     }
   }
 
@@ -112,6 +141,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       case 'SEND_MONEY':
         return RequestType.sendMoney;
       case 'RECHARGE':
+      case 'BALANCE_RECHARGE':
         return RequestType.recharge;
       case 'CREDIT':
         return RequestType.credit;

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
 import 'home_event.dart';
@@ -46,6 +48,20 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   Future<void> _onRefreshData(RefreshData event, Emitter<HomeState> emit) async {
-    add(LoadUserData());
+    try {
+      final user = await AuthService.getCurrentUser();
+      if (user != null) {
+        // Obtener datos actualizados del usuario
+        final updatedUser = await ApiService.getUserByEmail(user['email']);
+        
+        // Actualizar datos guardados
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_data', json.encode(updatedUser));
+        
+        add(LoadUserData());
+      }
+    } catch (e) {
+      add(LoadUserData());
+    }
   }
 }

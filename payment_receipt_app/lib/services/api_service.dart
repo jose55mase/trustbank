@@ -70,6 +70,23 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/updateBalance'),
+      headers: await headers,
+      body: json.encode({
+        'userId': userId,
+        'amount': amount,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to update balance');
+    }
+  }
+
   // Document endpoints
   static Future<Map<String, dynamic>> uploadDocument(
     File file,

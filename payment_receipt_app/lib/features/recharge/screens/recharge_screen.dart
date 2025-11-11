@@ -92,36 +92,30 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 
                 if (amount > 0) {
                   try {
-                    final userId = await AuthService.getCurrentUserId() ?? 1;
-                    final response = await ApiService.createAdminRequest({
-                      'requestType': 'RECHARGE',
+                    final userId = await AuthService.getCurrentUserId();
+                    if (userId == null) throw Exception('Usuario no encontrado');
+                    
+                    await ApiService.createAdminRequest({
+                      'requestType': 'BALANCE_RECHARGE',
                       'userId': userId,
                       'amount': amount,
-                      'details': 'Recarga con: $_selectedMethod',
+                      'description': 'Solicitud de recarga de saldo',
+                      'details': 'Método: $_selectedMethod - Monto: \$${amount.toStringAsFixed(2)}',
                     });
                     
-                    if (response['status'] == 201) {
-                      NotificationsBloc().add(AddRechargeNotification(
-                        amount: amount,
-                        method: _selectedMethod,
-                      ));
-                      
-                      TBDialogHelper.showSuccess(
-                        context,
-                        title: '¡Recarga exitosa!',
-                        message: response['message'] ?? 'Tu solicitud de recarga ha sido creada exitosamente.',
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                        },
-                      );
-                    } else {
-                      throw Exception(response['message'] ?? 'Error desconocido');
-                    }
+                    TBDialogHelper.showSuccess(
+                      context,
+                      title: 'Solicitud enviada',
+                      message: 'Tu solicitud de recarga ha sido enviada y está pendiente de aprobación.',
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop();
+                      },
+                    );
                   } catch (e) {
                     TBDialogHelper.showError(
                       context,
-                      title: 'Error en la recarga',
+                      title: 'Error',
                       message: e.toString().replaceAll('Exception: ', ''),
                     );
                   }
@@ -129,7 +123,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
                   TBDialogHelper.showWarning(
                     context,
                     title: 'Monto inválido',
-                    message: 'Por favor, ingresa un monto válido mayor a cero para continuar con la recarga.',
+                    message: 'Ingresa un monto válido mayor a cero.',
                   );
                 }
               },
