@@ -40,6 +40,12 @@ class LoginScreen extends StatelessWidget {
                       builder: (context) => const HomeScreen(),
                     ),
                   );
+                } else if (state is AccountSuspended) {
+                  TBDialogHelper.showError(
+                    context,
+                    title: 'Cuenta Suspendida',
+                    message: state.message,
+                  );
                 }
               },
               builder: (context, state) {
@@ -65,7 +71,8 @@ class LoginScreen extends StatelessWidget {
                             }
                           },
                           isLoading: state is AuthLoading,
-                          errorMessage: state is AuthError ? state.message : null,
+                          errorMessage: state is AuthError ? state.message : 
+                                       state is AccountSuspended ? state.message : null,
                         ),
                         const SizedBox(height: TBSpacing.lg),
                         Row(

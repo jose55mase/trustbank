@@ -29,17 +29,28 @@ class AuthError extends AuthState {
   List<Object> get props => [message];
 }
 
+class AccountSuspended extends AuthState {
+  final String message;
+
+  const AccountSuspended(this.message);
+
+  @override
+  List<Object> get props => [message];
+}
+
 class User extends Equatable {
   final String id;
   final String email;
   final String name;
+  final String accountStatus;
 
   const User({
     required this.id,
     required this.email,
     required this.name,
+    this.accountStatus = 'active',
   });
 
   @override
-  List<Object> get props => [id, email, name];
+  List<Object> get props => [id, email, name, accountStatus];
 }
