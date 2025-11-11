@@ -9,6 +9,8 @@ abstract class NotificationsEvent extends Equatable {
 
 class LoadNotifications extends NotificationsEvent {}
 
+class LoadUserRequests extends NotificationsEvent {}
+
 class AddCreditNotification extends NotificationsEvent {
   final String creditType;
   final double amount;

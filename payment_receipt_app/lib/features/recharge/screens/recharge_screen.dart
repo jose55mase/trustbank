@@ -109,6 +109,9 @@ class _RechargeScreenState extends State<RechargeScreen> {
                     final response = await ApiService.createAdminRequest(requestData);
                     print('Response: $response');
                     
+                    // Actualizar notificaciones
+                    NotificationsBloc().add(LoadNotifications());
+                    
                     TBDialogHelper.showSuccess(
                       context,
                       title: 'Solicitud enviada',

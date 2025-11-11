@@ -35,6 +35,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
 
   NotificationsBloc() : super(NotificationsInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
+    on<LoadUserRequests>(_onLoadUserRequests);
     on<AddCreditNotification>(_onAddCreditNotification);
     on<AddSendMoneyNotification>(_onAddSendMoneyNotification);
     on<AddRechargeNotification>(_onAddRechargeNotification);
@@ -59,10 +60,71 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         _notifications.clear();
         _notifications.addAll(notifications);
       }
+      
+      // También cargar solicitudes del usuario
+      add(LoadUserRequests());
+      
       emit(NotificationsLoaded(_notifications));
     } catch (e) {
       // Mantener notificaciones locales si falla la conexión
       emit(NotificationsLoaded(_notifications));
+    }
+  }
+  
+  void _onLoadUserRequests(LoadUserRequests event, Emitter<NotificationsState> emit) async {
+    try {
+      final userId = await AuthService.getCurrentUserId();
+      if (userId == null) return;
+      
+      final requests = await ApiService.getAllAdminRequests();
+      final userRequests = requests.where((r) => r['userId'] == userId).toList();
+      
+      for (var request in userRequests) {
+        final status = request['status'];
+        final type = request['requestType'];
+        final amount = request['amount']?.toString() ?? '0';
+        
+        String title = '';
+        String message = '';
+        NotificationType notifType = NotificationType.general;
+        
+        if (type == 'RECHARGE' || type == 'BALANCE_RECHARGE') {
+          if (status == 'PENDING') {
+            title = 'Recarga Pendiente ⏳';
+            message = 'Tu solicitud de recarga por \$$amount está siendo procesada.';
+            notifType = NotificationType.recharge;
+          } else if (status == 'APPROVED') {
+            title = 'Recarga Aprobada ✅';
+            message = 'Tu recarga por \$$amount ha sido aprobada y tu saldo actualizado.';
+            notifType = NotificationType.recharge;
+          } else if (status == 'REJECTED') {
+            title = 'Recarga Rechazada ❌';
+            message = 'Tu solicitud de recarga por \$$amount ha sido rechazada.';
+            notifType = NotificationType.recharge;
+          }
+        }
+        
+        if (title.isNotEmpty) {
+          final notification = NotificationModel(
+            id: 'req_${request['id']}',
+            title: title,
+            message: message,
+            date: DateTime.parse(request['createdAt']),
+            type: notifType,
+            isRead: status != 'PENDING',
+          );
+          
+          // Evitar duplicados
+          final exists = _notifications.any((n) => n.id == notification.id);
+          if (!exists) {
+            _notifications.insert(0, notification);
+          }
+        }
+      }
+      
+      emit(NotificationsLoaded(_notifications));
+    } catch (e) {
+      // Error silencioso
     }
   }
 

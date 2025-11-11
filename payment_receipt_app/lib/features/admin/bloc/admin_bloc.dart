@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/request_model.dart';
 import '../../../services/api_service.dart';
+import '../../notifications/bloc/notifications_bloc.dart';
 
 part 'admin_event.dart';
 part 'admin_state.dart';
@@ -88,8 +89,16 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         }
       }
       
-      // Recargar solicitudes
+      // Recargar solicitudes y actualizar notificaciones
       add(LoadRequests());
+      
+      // Actualizar notificaciones del usuario
+      try {
+        final notificationsBloc = NotificationsBloc();
+        notificationsBloc.add(LoadNotifications());
+      } catch (e) {
+        // Error silencioso
+      }
     } catch (e) {
       // Fallback a lógica local
       final index = _mockRequests.indexWhere((r) => r.id == event.requestId);
