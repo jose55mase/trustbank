@@ -8,30 +8,7 @@ part 'notifications_event.dart';
 part 'notifications_state.dart';
 
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
-  static final List<NotificationModel> _notifications = [
-    NotificationModel(
-      id: '1',
-      title: 'Crédito Aprobado ✅',
-      message: 'Tu solicitud de Crédito Personal por \$5,000 ha sido aprobada. Revisa los términos y condiciones.',
-      date: DateTime.now().subtract(const Duration(hours: 2)),
-      type: NotificationType.creditApproved,
-    ),
-    NotificationModel(
-      id: '2',
-      title: 'Solicitud en Revisión ⏳',
-      message: 'Tu solicitud de Crédito Vehicular está siendo evaluada. Te contactaremos pronto.',
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      type: NotificationType.creditPending,
-    ),
-    NotificationModel(
-      id: '3',
-      title: 'Bienvenido a TrustBank 🎉',
-      message: 'Gracias por unirte a nuestra familia financiera. Explora todos nuestros servicios.',
-      date: DateTime.now().subtract(const Duration(days: 3)),
-      type: NotificationType.general,
-      isRead: true,
-    ),
-  ];
+  static final List<NotificationModel> _notifications = <NotificationModel>[];
 
   NotificationsBloc() : super(NotificationsInitial()) {
     on<LoadNotifications>(_onLoadNotifications);
@@ -47,6 +24,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       final userId = await AuthService.getCurrentUserId() ?? 1;
       final response = await ApiService.getUserNotifications(userId);
       
+      _notifications.clear();
       if (response.isNotEmpty) {
         final notifications = response.map<NotificationModel>((data) => NotificationModel(
           id: data['id'].toString(),
@@ -57,7 +35,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           isRead: data['isRead'] ?? false,
         )).toList();
         
-        _notifications.clear();
         _notifications.addAll(notifications);
       }
       
@@ -66,7 +43,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       
       emit(NotificationsLoaded(_notifications));
     } catch (e) {
-      // Mantener notificaciones locales si falla la conexión
       emit(NotificationsLoaded(_notifications));
     }
   }
@@ -144,16 +120,8 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         throw Exception('Error al crear notificación');
       }
     } catch (e) {
-      // Fallback local
-      final notification = NotificationModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: 'Solicitud Enviada ✉️',
-        message: 'Tu solicitud de ${event.creditType} por \$${event.amount.toStringAsFixed(2)} ha sido enviada y está en proceso de validación.',
-        date: DateTime.now(),
-        type: NotificationType.creditPending,
-      );
-      _notifications.insert(0, notification);
-      emit(NotificationsLoaded(_notifications));
+      // Error al crear notificación en backend
+      print('Error creating notification: $e');
     }
   }
 

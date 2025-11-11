@@ -7,40 +7,6 @@ part 'admin_event.dart';
 part 'admin_state.dart';
 
 class AdminBloc extends Bloc<AdminEvent, AdminState> {
-  static final List<AdminRequest> _mockRequests = [
-    AdminRequest(
-      id: '1',
-      type: RequestType.sendMoney,
-      status: RequestStatus.pending,
-      userId: 'user1',
-      userName: 'Juan Pérez',
-      amount: 150.00,
-      details: 'Envío a María García',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    AdminRequest(
-      id: '2',
-      type: RequestType.recharge,
-      status: RequestStatus.pending,
-      userId: 'user2',
-      userName: 'Ana López',
-      amount: 500.00,
-      details: 'Recarga con tarjeta de crédito',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    AdminRequest(
-      id: '3',
-      type: RequestType.credit,
-      status: RequestStatus.approved,
-      userId: 'user3',
-      userName: 'Carlos Ruiz',
-      amount: 10000.00,
-      details: 'Crédito personal - 24 meses',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      processedAt: DateTime.now().subtract(const Duration(hours: 12)),
-      adminNotes: 'Documentos verificados correctamente',
-    ),
-  ];
 
   AdminBloc() : super(AdminInitial()) {
     on<LoadRequests>(_onLoadRequests);
@@ -50,13 +16,14 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
 
   void _onLoadRequests(LoadRequests event, Emitter<AdminState> emit) async {
     try {
+      emit(AdminLoading());
       final response = await ApiService.getAllAdminRequests();
       final requests = response.map((data) => AdminRequest(
         id: data['id'].toString(),
         type: _mapRequestType(data['requestType']),
         status: _mapRequestStatus(data['status']),
         userId: data['userId'].toString(),
-        userName: 'Usuario ${data['userId']}', // En producción obtener nombre real
+        userName: 'Usuario ${data['userId']}',
         amount: (data['amount'] ?? 0.0).toDouble(),
         details: data['details'] ?? '',
         createdAt: DateTime.parse(data['createdAt']),
@@ -66,7 +33,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       
       emit(AdminLoaded(requests: requests));
     } catch (e) {
-      emit(AdminLoaded(requests: _mockRequests)); // Fallback a datos mock
+      emit(AdminError(e.toString()));
     }
   }
 
@@ -100,16 +67,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         // Error silencioso
       }
     } catch (e) {
-      // Fallback a lógica local
-      final index = _mockRequests.indexWhere((r) => r.id == event.requestId);
-      if (index != -1) {
-        _mockRequests[index] = _mockRequests[index].copyWith(
-          status: event.status,
-          processedAt: DateTime.now(),
-          adminNotes: event.notes,
-        );
-        emit(AdminLoaded(requests: _mockRequests));
-      }
+      emit(AdminError(e.toString()));
     }
   }
   
@@ -150,17 +108,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   }
 
   void _onFilterRequests(FilterRequests event, Emitter<AdminState> emit) {
-    List<AdminRequest> filtered = _mockRequests;
-    
-    if (event.type != null) {
-      filtered = filtered.where((r) => r.type == event.type).toList();
-    }
-    
-    if (event.status != null) {
-      filtered = filtered.where((r) => r.status == event.status).toList();
-    }
-    
-    emit(AdminLoaded(requests: filtered));
+    // Recargar desde backend con filtros
+    add(LoadRequests());
   }
 
   RequestType _mapRequestType(String type) {

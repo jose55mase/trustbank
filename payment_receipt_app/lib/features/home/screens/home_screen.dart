@@ -417,17 +417,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        _showBalance = !_showBalance;
-                      });
-                    },
-                    icon: Icon(
-                      _showBalance ? Icons.visibility : Icons.visibility_off,
-                      color: TBColors.white.withOpacity(0.8),
-                      size: 20,
-                    ),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          _homeBloc.add(RefreshData());
+                        },
+                        icon: Icon(
+                          Icons.refresh,
+                          color: TBColors.white.withOpacity(0.8),
+                          size: 20,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            _showBalance = !_showBalance;
+                          });
+                        },
+                        icon: Icon(
+                          _showBalance ? Icons.visibility : Icons.visibility_off,
+                          color: TBColors.white.withOpacity(0.8),
+                          size: 20,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

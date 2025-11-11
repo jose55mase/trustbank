@@ -11,3 +11,8 @@ class AdminLoaded extends AdminState {
 
   AdminLoaded({required this.requests});
 }
+
+class AdminError extends AdminState {
+  final String message;
+  AdminError(this.message);
+}

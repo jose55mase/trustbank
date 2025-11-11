@@ -28,6 +28,26 @@ class AdminDashboardScreen extends StatelessWidget {
         ),
         body: BlocBuilder<AdminBloc, AdminState>(
           builder: (context, state) {
+            if (state is AdminLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            if (state is AdminError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Error: ${state.message}'),
+                    const SizedBox(height: 16),
+                    TBButton(
+                      text: 'Reintentar',
+                      onPressed: () => context.read<AdminBloc>().add(LoadRequests()),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
             if (state is AdminLoaded) {
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(TBSpacing.screenPadding),
@@ -63,22 +83,28 @@ class AdminDashboardScreen extends StatelessWidget {
                     const SizedBox(height: TBSpacing.lg),
                     Text('Solicitudes', style: TBTypography.titleLarge),
                     const SizedBox(height: TBSpacing.md),
-                    ...state.requests.map((request) => RequestCard(
-                      request: request,
-                      onProcess: (status, notes) {
-                        context.read<AdminBloc>().add(
-                          ProcessRequest(
-                            requestId: request.id,
-                            status: status,
-                            notes: notes,
-                          ),
-                        );
-                      },
-                    )),
+                    if (state.requests.isEmpty)
+                      const Center(
+                        child: Text('No hay solicitudes disponibles'),
+                      )
+                    else
+                      ...state.requests.map((request) => RequestCard(
+                        request: request,
+                        onProcess: (status, notes) {
+                          context.read<AdminBloc>().add(
+                            ProcessRequest(
+                              requestId: request.id,
+                              status: status,
+                              notes: notes,
+                            ),
+                          );
+                        },
+                      )),
                   ],
                 ),
               );
             }
+            
             return const Center(child: CircularProgressIndicator());
           },
         ),
