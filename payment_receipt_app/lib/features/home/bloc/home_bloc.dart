@@ -1,17 +1,33 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/api_service.dart';
+import '../../../services/balance_service.dart';
 import 'home_event.dart';
 import 'home_state.dart';
 
 class HomeBloc extends Bloc<HomeEvent, HomeState> {
+  late StreamSubscription _balanceSubscription;
+  
   HomeBloc() : super(HomeInitial()) {
     on<LoadUserData>(_onLoadUserData);
     on<LoadUserTransactions>(_onLoadUserTransactions);
     on<RefreshData>(_onRefreshData);
     on<RefreshBalance>(_onRefreshBalance);
+    on<UpdateBalanceFromStream>(_onUpdateBalanceFromStream);
+    
+    // Escuchar actualizaciones de saldo en tiempo real
+    _balanceSubscription = BalanceService().balanceStream.listen((balanceUpdate) {
+      add(UpdateBalanceFromStream(balanceUpdate));
+    });
+  }
+  
+  @override
+  Future<void> close() {
+    _balanceSubscription.cancel();
+    return super.close();
   }
 
   Future<void> _onLoadUserData(LoadUserData event, Emitter<HomeState> emit) async {
@@ -93,5 +109,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   
   Future<void> _onRefreshBalance(RefreshBalance event, Emitter<HomeState> emit) async {
     add(RefreshData());
+  }
+  
+  Future<void> _onUpdateBalanceFromStream(UpdateBalanceFromStream event, Emitter<HomeState> emit) async {
+    final currentState = state;
+    if (currentState is HomeLoaded) {
+      final userId = currentState.user['id'];
+      if (userId == event.balanceUpdate['userId']) {
+        final newBalance = event.balanceUpdate['balance'];
+        emit(currentState.copyWith(balance: newBalance));
+        print('Balance updated in real-time: $newBalance');
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/request_model.dart';
 import '../../../services/api_service.dart';
+import '../../../services/balance_service.dart';
 import '../../notifications/bloc/notifications_bloc.dart';
 
 part 'admin_event.dart';
@@ -126,6 +127,9 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           
           await prefs.setString('user_data', json.encode(userData));
           print('Local balance updated: ${userData['moneyclean']}');
+          
+          // Notificar actualización de saldo globalmente
+          BalanceService().updateBalance(userId, userData['moneyclean']);
           
           // Agregar transacción local a movimientos recientes
           await _addLocalTransaction(userId, amount);
