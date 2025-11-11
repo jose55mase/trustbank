@@ -80,10 +80,13 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     try {
       print('Starting balance update for user $userId with amount $amount');
       
-      // Por ahora solo actualizar localmente hasta que tengas el endpoint
+      // 1. Actualizar saldo en base de datos
+      await _updateBackendBalance(userId, amount);
+      
+      // 2. Actualizar localmente para UI inmediata
       await _updateLocalBalance(userId, amount);
       
-      // Crear transacción aprobada
+      // 3. Crear transacción en base de datos
       try {
         final transactionResponse = await ApiService.createTransaction({
           'userId': userId,
@@ -101,6 +104,17 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       
     } catch (e) {
       print('Error updating balance: $e');
+    }
+  }
+  
+  Future<void> _updateBackendBalance(int userId, double amount) async {
+    try {
+      // Incrementar saldo en base de datos
+      final response = await ApiService.incrementUserBalance(userId, amount);
+      print('Backend balance incremented: $response');
+    } catch (e) {
+      print('Error updating backend balance: $e');
+      // Continuar con actualización local aunque falle el backend
     }
   }
   
