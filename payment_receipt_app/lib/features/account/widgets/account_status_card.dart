@@ -62,7 +62,7 @@ class AccountStatusCard extends StatelessWidget {
               style: TBTypography.labelMedium.copyWith(
                 color: TBColors.white.withOpacity(0.8),
               ),
-            )
+            ),
           const SizedBox(height: TBSpacing.md),
           Text(
             userData != null 
