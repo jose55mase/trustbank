@@ -9,6 +9,8 @@ class Transaction {
   final String amount;
   final IconData icon;
   final bool isIncome;
+  final String type;
+  final DateTime date;
 
   Transaction({
     required this.title,
@@ -16,6 +18,8 @@ class Transaction {
     required this.amount,
     required this.icon,
     this.isIncome = false,
+    this.type = 'INCOME',
+    required this.date,
   });
 }
 
@@ -28,6 +32,21 @@ class RecentTransactions extends StatelessWidget {
     required this.transactions,
     this.onSeeAll,
   });
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    if (difference == 0) {
+      return 'Hoy';
+    } else if (difference == 1) {
+      return 'Ayer';
+    } else if (difference < 7) {
+      return 'Hace $difference días';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,31 +79,52 @@ class RecentTransactions extends StatelessWidget {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: transactions.length,
-          separatorBuilder: (context, index) => const SizedBox(height: TBSpacing.sm),
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final transaction = transactions[index];
             return Container(
-              padding: const EdgeInsets.all(TBSpacing.md),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: TBColors.surface,
-                borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                border: Border.all(color: TBColors.grey300.withOpacity(0.5)),
+                color: TBColors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: TBColors.black.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  color: TBColors.grey200.withOpacity(0.6),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
-                      color: transaction.isIncome 
-                          ? TBColors.success.withOpacity(0.1)
-                          : TBColors.grey100,
-                      borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                      gradient: LinearGradient(
+                        colors: transaction.isIncome 
+                            ? [TBColors.success.withOpacity(0.8), TBColors.success]
+                            : [TBColors.error.withOpacity(0.8), TBColors.error],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (transaction.isIncome ? TBColors.success : TBColors.error).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       transaction.icon,
-                      color: transaction.isIncome ? TBColors.success : TBColors.grey600,
-                      size: 20,
+                      color: TBColors.white,
+                      size: 24,
                     ),
                   ),
                   const SizedBox(width: TBSpacing.md),
@@ -94,25 +134,43 @@ class RecentTransactions extends StatelessWidget {
                       children: [
                         Text(
                           transaction.title,
-                          style: TBTypography.bodyMedium.copyWith(
+                          style: TBTypography.bodyLarge.copyWith(
                             fontWeight: FontWeight.w600,
+                            color: TBColors.black,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           transaction.subtitle,
-                          style: TBTypography.labelMedium.copyWith(
+                          style: TBTypography.bodySmall.copyWith(
                             color: TBColors.grey600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  Text(
-                    '${transaction.isIncome ? '+' : '-'}\$${transaction.amount}',
-                    style: TBTypography.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: transaction.isIncome ? TBColors.success : TBColors.black,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${transaction.isIncome ? '+' : '-'}\$${transaction.amount}',
+                        style: TBTypography.bodyLarge.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: transaction.isIncome ? TBColors.success : TBColors.error,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _formatDate(transaction.date),
+                        style: TBTypography.labelSmall.copyWith(
+                          color: TBColors.grey500,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

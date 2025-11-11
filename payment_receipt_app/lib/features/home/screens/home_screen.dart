@@ -517,12 +517,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         dateStr = 'Hoy';
                       }
                       
-                      // Determinar icono según tipo de transacción
+                      // Determinar icono y título según tipo de transacción
                       IconData icon = Icons.swap_horiz;
-                      if (description.toLowerCase().contains('recarga')) {
-                        icon = Icons.add_circle;
+                      String title = description;
+                      
+                      if (description.toLowerCase().contains('recarga') || description.toLowerCase().contains('aprobada por administrador')) {
+                        if (isIncome) {
+                          icon = Icons.add_circle;
+                          title = 'Recarga aprobada';
+                        } else {
+                          icon = Icons.send;
+                          title = 'Envío de dinero';
+                        }
                       } else if (description.toLowerCase().contains('envío')) {
                         icon = Icons.send;
+                        title = 'Envío de dinero';
                       } else if (description.toLowerCase().contains('pago')) {
                         icon = Icons.payment;
                       } else {
@@ -532,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: TBSpacing.sm),
                         child: _buildTransactionItem(
-                          description,
+                          title,
                           dateStr,
                           amount.toStringAsFixed(2),
                           icon,
