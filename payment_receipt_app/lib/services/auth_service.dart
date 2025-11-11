@@ -18,6 +18,24 @@ class AuthService {
         final userData = await ApiService.getUserByEmail(email);
         print('Getting userData --> ${userData}');
         
+        // Validar estado de la cuenta
+        final accountStatus = userData['accountStatus']?.toString().toUpperCase();
+        if (accountStatus == 'SUSPENDED') {
+          return {
+            'success': false, 
+            'error': 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.',
+            'suspended': true
+          };
+        }
+        
+        if (accountStatus == 'INACTIVE') {
+          return {
+            'success': false, 
+            'error': 'Tu cuenta está inactiva. Contacta al administrador.',
+            'inactive': true
+          };
+        }
+        
         // Asegurar que tenemos el nombre del usuario
         if (userData['firstName'] == null && userData['name'] != null) {
           userData['firstName'] = userData['name'];
