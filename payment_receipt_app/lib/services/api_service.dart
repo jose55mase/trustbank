@@ -72,24 +72,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> incrementUserBalance(int userId, double amount) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/user/incrementBalance'),
-      headers: await headers,
-      body: json.encode({
-        'userId': userId,
-        'amount': amount,
-      }),
-    );
 
-    print('Increment balance response: ${response.statusCode} - ${response.body}');
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to increment balance: ${response.body}');
-    }
-  }
 
 
 

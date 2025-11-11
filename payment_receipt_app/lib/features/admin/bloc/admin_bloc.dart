@@ -109,9 +109,24 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _updateBackendBalance(int userId, double amount) async {
     try {
-      // Incrementar saldo en base de datos
-      final response = await ApiService.incrementUserBalance(userId, amount);
-      print('Backend balance incremented: $response');
+      // Obtener saldo actual del usuario desde SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString('user_data');
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        if (userData['id'] == userId) {
+          final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
+          final newBalance = currentBalance + amount;
+          
+          // Actualizar en base de datos con el nuevo saldo total
+          final response = await ApiService.updateUser({
+            'id': userId,
+            'moneyclean': newBalance,
+          });
+          print('Backend balance updated to: $newBalance');
+        }
+      }
     } catch (e) {
       print('Error updating backend balance: $e');
       // Continuar con actualización local aunque falle el backend
