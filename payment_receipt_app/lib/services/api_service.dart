@@ -56,19 +56,7 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> getUserById(int userId) async {
-    // Usar endpoint existente con parámetro
-    final response = await http.get(
-      Uri.parse('$baseUrl/user/findById?id=$userId'),
-      headers: await headers,
-    );
-    
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to get user by ID');
-    }
-  }
+
 
   static Future<Map<String, dynamic>> updateUser(Map<String, dynamic> userData) async {
     final response = await http.put(
@@ -85,23 +73,18 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> updateUserBalance(int userId, double amount) async {
-    // Primero obtener el usuario actual
-    final currentUser = await getUserById(userId);
-    final currentBalance = (currentUser['moneyclean'] ?? 0.0).toDouble();
-    final newBalance = currentBalance + amount;
-    
-    // Actualizar con el nuevo saldo
+    // Usar endpoint directo para agregar saldo
     final response = await http.put(
-      Uri.parse('$baseUrl/user/update'),
+      Uri.parse('$baseUrl/user/addBalance'),
       headers: await headers,
       body: json.encode({
-        'id': userId,
-        'moneyclean': newBalance,
+        'userId': userId,
+        'amount': amount,
       }),
     );
 
     print('Update balance response: ${response.statusCode} - ${response.body}');
-    print('Updated balance from $currentBalance to $newBalance');
+    print('Adding $amount to user $userId balance');
 
     if (response.statusCode == 200) {
       return json.decode(response.body);

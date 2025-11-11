@@ -105,14 +105,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _refreshUserData(int userId) async {
     try {
-      // Obtener usuario actualizado
-      final updatedUser = await ApiService.getUserById(userId);
-      
-      // Actualizar datos en SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('user_data', json.encode(updatedUser));
-      
-      print('User data refreshed for user $userId with new balance: ${updatedUser['balance']}');
+      print('User data should be refreshed for user $userId');
+      // El usuario tendrá que refrescar manualmente o esperar el auto-refresh
     } catch (e) {
       print('Error refreshing user data: $e');
     }
