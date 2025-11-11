@@ -109,7 +109,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _updateBackendBalance(int userId, double amount) async {
     try {
-      // Obtener saldo actual del usuario desde SharedPreferences
+      // Obtener datos completos del usuario
       final prefs = await SharedPreferences.getInstance();
       final userDataString = prefs.getString('user_data');
       
@@ -119,11 +119,24 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
           final newBalance = currentBalance + amount;
           
-          // Actualizar en base de datos con el nuevo saldo total
-          final response = await ApiService.updateUser({
-            'id': userId,
+          // Crear objeto UserEntity completo
+          final userEntity = {
+            'id': userData['id'],
+            'name': userData['name'],
+            'email': userData['email'],
+            'password': userData['password'],
             'moneyclean': newBalance,
-          });
+            'balance': newBalance,
+            'phone': userData['phone'],
+            'address': userData['address'],
+            'documentType': userData['documentType'],
+            'documentNumber': userData['documentNumber'],
+            'accountStatus': userData['accountStatus'] ?? 'ACTIVE',
+            'createdAt': userData['createdAt'],
+            'updatedAt': DateTime.now().toIso8601String(),
+          };
+          
+          final response = await ApiService.updateUser(userEntity);
           print('Backend balance updated to: $newBalance');
         }
       }
