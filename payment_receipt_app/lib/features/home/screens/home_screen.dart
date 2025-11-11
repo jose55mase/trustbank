@@ -179,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         child: Scaffold(
           backgroundColor: TBColors.background,
-      appBar: PreferredSize(
+          appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Container(
           child: CustomPaint(
@@ -491,7 +491,8 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         },
       ),
-    ),
+        ),
+      ),
     );
   }
 }

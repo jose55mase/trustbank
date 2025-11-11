@@ -14,7 +14,7 @@ class LoadingHome extends StatelessWidget {
           width: double.infinity,
           height: 100,
           decoration: BoxDecoration(
-            color: TBColors.grey200,
+            color: TBColors.grey300,
             borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
           ),
           child: const Center(
@@ -32,7 +32,7 @@ class LoadingHome extends StatelessWidget {
           childAspectRatio: 0.7,
           children: List.generate(5, (index) => Container(
             decoration: BoxDecoration(
-              color: TBColors.grey200,
+              color: TBColors.grey300,
               borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
             ),
           )),
@@ -44,7 +44,7 @@ class LoadingHome extends StatelessWidget {
           child: Container(
             height: 60,
             decoration: BoxDecoration(
-              color: TBColors.grey200,
+              color: TBColors.grey300,
               borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
             ),
           ),
