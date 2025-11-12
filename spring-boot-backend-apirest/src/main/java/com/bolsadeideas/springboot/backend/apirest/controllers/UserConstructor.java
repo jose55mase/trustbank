@@ -163,7 +163,7 @@ public class UserConstructor {
         List<RolEntity> roles = new ArrayList<>();
         RolEntity userRole = new RolEntity();
         userRole.setId(2L); // Asumiendo que el rol USER tiene ID 2
-        userRole.setNombre("ROLE_USER");
+        userRole.setName("ROLE_USER");
         roles.add(userRole);
         userEntity.setRols(roles);
         
