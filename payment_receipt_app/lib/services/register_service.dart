@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'api_service.dart';
 
 class RegisterService {
@@ -21,18 +22,25 @@ class RegisterService {
         'status': true,
       };
 
-      final user = await ApiService.registerUser(userData);
-      return {
-        'success': true,
-        'message': 'Usuario registrado exitosamente',
-        'user': user,
-      };
+      final response = await ApiService.registerUser(userData);
+      
+      // Verificar si la respuesta indica éxito
+      if (response['status'] == 200) {
+        return {
+          'success': true,
+          'message': response['message'] ?? 'Usuario registrado exitosamente',
+          'user': response['data'],
+        };
+      } else {
+        return {
+          'success': false,
+          'error': response['message'] ?? 'Error al registrar usuario',
+        };
+      }
     } catch (e) {
       return {
         'success': false,
-        'error': e.toString().contains('Failed to register user') 
-            ? 'El email ya está registrado o hay un error en los datos'
-            : 'Error de conexión: ${e.toString()}',
+        'error': e.toString().replaceAll('Exception: ', ''),
       };
     }
   }

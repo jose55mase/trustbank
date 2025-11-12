@@ -53,10 +53,12 @@ class ApiService {
       body: json.encode(userData),
     );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      return json.decode(response.body);
+    final responseData = json.decode(response.body);
+    
+    if (response.statusCode == 200) {
+      return responseData;
     } else {
-      throw Exception('Failed to register user: ${response.body}');
+      throw Exception(responseData['message'] ?? 'Error al registrar usuario');
     }
   }
 
