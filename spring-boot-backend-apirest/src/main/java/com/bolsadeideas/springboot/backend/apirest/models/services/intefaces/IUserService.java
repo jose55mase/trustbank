@@ -7,6 +7,7 @@ import java.util.Map;
 
 public interface IUserService {
     public UserEntity findByemail(String email);
+    public UserEntity findByUsername(String username);
     public UserEntity findByid(Long id);
     public UserEntity save(UserEntity cliente);
     public List<UserEntity> findAll();

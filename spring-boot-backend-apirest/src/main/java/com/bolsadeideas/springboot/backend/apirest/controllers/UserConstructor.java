@@ -171,16 +171,23 @@ public class UserConstructor {
             userEntity.setAccountStatus("ACTIVE");
         }
 
-        UserEntity user = this.usuarioService.findByemail(userEntity.getEmail());
-
-        if(user == null){
-            user = this.usuarioService.save(userEntity);
-            return new RestResponse(HttpStatus.OK.value(),
-                    "Usuario registrado exitosamente", user);
-        }else {
+        // Validar email único
+        UserEntity existingUserByEmail = this.usuarioService.findByemail(userEntity.getEmail());
+        if(existingUserByEmail != null){
             return new RestResponse(HttpStatus.CONFLICT.value(),
                     "El email ya está registrado", null);
         }
+        
+        // Validar username único
+        UserEntity existingUserByUsername = this.usuarioService.findByUsername(userEntity.getUsername());
+        if(existingUserByUsername != null){
+            return new RestResponse(HttpStatus.CONFLICT.value(),
+                    "El nombre de usuario ya está en uso", null);
+        }
+
+        UserEntity user = this.usuarioService.save(userEntity);
+        return new RestResponse(HttpStatus.OK.value(),
+                "Usuario registrado exitosamente", user);
     }
     
     // Nuevos endpoints para gestión de usuarios

@@ -10,6 +10,7 @@ import java.util.List;
 public interface IUserDao extends CrudRepository<UserEntity, Long> {
     public List<UserEntity> findByAdministratorManagerOrderByIdDesc(Integer administratorManager);
     public UserEntity findByemail(String email);
+    public UserEntity findByUsername(String username);
     public UserEntity findByid(Long id);
     
     // Nuevos métodos para gestión de usuarios

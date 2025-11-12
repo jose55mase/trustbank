@@ -52,6 +52,12 @@ public class UsuarioService implements IUserService, UserDetailsService {
     public UserEntity findByemail(String email) {
         return this.userDao.findByemail(email);
     }
+    
+    @Transactional(readOnly = true)
+    @Override
+    public UserEntity findByUsername(String username) {
+        return this.userDao.findByUsername(username);
+    }
 
     @Transactional(readOnly = true)
     @Override

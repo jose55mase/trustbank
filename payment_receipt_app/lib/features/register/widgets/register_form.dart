@@ -159,10 +159,21 @@ class _RegisterFormState extends State<RegisterForm> {
             },
           );
         } else {
+          String errorMessage = result['error'] ?? 'No se pudo crear la cuenta';
+          String title = 'Error en el registro';
+          
+          if (errorMessage.contains('email ya está registrado')) {
+            title = 'Email en uso';
+            errorMessage = 'Este email ya está registrado. Intenta con otro email o inicia sesión.';
+          } else if (errorMessage.contains('nombre de usuario ya está en uso')) {
+            title = 'Username en uso';
+            errorMessage = 'Este nombre de usuario ya está en uso. Elige otro nombre de usuario.';
+          }
+          
           TBDialogHelper.showError(
             context,
-            title: 'Error en el registro',
-            message: result['error'] ?? 'No se pudo crear la cuenta',
+            title: title,
+            message: errorMessage,
           );
         }
       }
