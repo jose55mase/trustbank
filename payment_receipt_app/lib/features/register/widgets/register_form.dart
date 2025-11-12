@@ -22,6 +22,7 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -46,6 +47,13 @@ class _RegisterFormState extends State<RegisterForm> {
           hint: 'Ingresa tu apellido',
           controller: _lastNameController,
           prefixIcon: const Icon(Icons.person_outline),
+        ),
+        const SizedBox(height: TBSpacing.md),
+        TBInput(
+          label: 'Nombre de usuario',
+          hint: 'Elige un nombre de usuario',
+          controller: _usernameController,
+          prefixIcon: const Icon(Icons.alternate_email),
         ),
         const SizedBox(height: TBSpacing.md),
         TBInput(
@@ -125,6 +133,7 @@ class _RegisterFormState extends State<RegisterForm> {
       final result = await RegisterService.registerUser(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
+        username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
@@ -174,6 +183,7 @@ class _RegisterFormState extends State<RegisterForm> {
   bool _validateForm() {
     if (_firstNameController.text.trim().isEmpty ||
         _lastNameController.text.trim().isEmpty ||
+        _usernameController.text.trim().isEmpty ||
         _emailController.text.trim().isEmpty ||
         _phoneController.text.trim().isEmpty ||
         _passwordController.text.length < 6 ||
@@ -206,6 +216,7 @@ class _RegisterFormState extends State<RegisterForm> {
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();

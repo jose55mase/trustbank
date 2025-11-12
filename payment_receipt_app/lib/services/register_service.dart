@@ -4,6 +4,7 @@ class RegisterService {
   static Future<Map<String, dynamic>> registerUser({
     required String firstName,
     required String lastName,
+    required String username,
     required String email,
     required String phone,
     required String password,
@@ -12,6 +13,7 @@ class RegisterService {
       final userData = {
         'fistName': firstName,
         'lastName': lastName,
+        'username': username,
         'email': email,
         'phone': phone,
         'password': password,
