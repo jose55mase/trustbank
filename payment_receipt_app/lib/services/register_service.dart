@@ -10,13 +10,13 @@ class RegisterService {
   }) async {
     try {
       final userData = {
-        'firstName': firstName,
+        'fistName': firstName,
         'lastName': lastName,
         'email': email,
         'phone': phone,
         'password': password,
         'accountStatus': 'ACTIVE',
-        'role': 'USER',
+        'status': true,
       };
 
       final user = await ApiService.registerUser(userData);

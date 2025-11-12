@@ -158,16 +158,32 @@ public class UserConstructor {
     public RestResponse save(@RequestBody UserEntity userEntity){
         userEntity.setDocumentsAprov("{\"foto\":false,\"fromt\":false,\"back\":false}");
         userEntity.setPassword(this.passwordEncoder.encode(userEntity.getPassword()));
+        
+        // Asignar rol USER por defecto
+        List<RolEntity> roles = new ArrayList<>();
+        RolEntity userRole = new RolEntity();
+        userRole.setId(2L); // Asumiendo que el rol USER tiene ID 2
+        userRole.setNombre("ROLE_USER");
+        roles.add(userRole);
+        userEntity.setRols(roles);
+        
+        // Establecer valores por defecto
+        if (userEntity.getStatus() == null) {
+            userEntity.setStatus(true);
+        }
+        if (userEntity.getAccountStatus() == null) {
+            userEntity.setAccountStatus("ACTIVE");
+        }
 
         UserEntity user = this.usuarioService.findByemail(userEntity.getEmail());
 
         if(user == null){
             user = this.usuarioService.save(userEntity);
             return new RestResponse(HttpStatus.OK.value(),
-                    "Operacion correcta",user);
+                    "Usuario registrado exitosamente", user);
         }else {
-            return new RestResponse(HttpStatus.NON_AUTHORITATIVE_INFORMATION.value(),
-                    "Operacion incorrecta",user);
+            return new RestResponse(HttpStatus.CONFLICT.value(),
+                    "El email ya está registrado", null);
         }
     }
     

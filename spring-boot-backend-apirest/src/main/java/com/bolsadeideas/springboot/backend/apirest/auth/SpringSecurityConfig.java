@@ -40,6 +40,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.authorizeRequests()
+                .antMatchers("/api/user/save").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .csrf().disable()

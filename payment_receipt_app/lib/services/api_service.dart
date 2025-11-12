@@ -45,7 +45,7 @@ class ApiService {
   // User endpoints
   static Future<Map<String, dynamic>> registerUser(Map<String, dynamic> userData) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/public/register'), // Cambiar por el endpoint correcto
+      Uri.parse('$baseUrl/user/save'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
