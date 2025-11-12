@@ -3,12 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
-import '../../../design_system/components/atoms/tb_button.dart';
 import '../bloc/account_bloc.dart';
-
-import '../widgets/account_status_card.dart';
-import '../widgets/document_list.dart';
-import '../widgets/upload_document_dialog.dart';
+import '../widgets/profile_header.dart';
+import '../widgets/account_menu_section.dart';
+import '../widgets/security_section.dart';
+import '../widgets/support_section.dart';
 import '../../../services/auth_service.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -25,12 +24,17 @@ class AccountScreen extends StatelessWidget {
           backgroundColor: TBColors.primary,
           foregroundColor: TBColors.white,
           elevation: 0,
+          centerTitle: true,
         ),
         body: FutureBuilder<Map<String, dynamic>?>(
           future: AuthService.getCurrentUser(),
           builder: (context, userSnapshot) {
             if (!userSnapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(TBColors.primary),
+                ),
+              );
             }
             
             final user = userSnapshot.data!;
@@ -39,44 +43,29 @@ class AccountScreen extends StatelessWidget {
               builder: (context, state) {
                 if (state is AccountLoaded) {
                   return SingleChildScrollView(
-                    padding: const EdgeInsets.all(TBSpacing.screenPadding),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        AccountStatusCard(account: state.account, userData: user),
-                        const SizedBox(height: TBSpacing.lg),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Documentos', style: TBTypography.titleLarge),
-                            TBButton(
-                              text: 'Subir documento',
-                              type: TBButtonType.outline,
-                              onPressed: () => _showUploadDialog(context),
-                            ),
-                          ],
-                        ),
+                        ProfileHeader(user: user, account: state.account),
                         const SizedBox(height: TBSpacing.md),
-                        DocumentList(documents: state.account.documents),
+                        AccountMenuSection(account: state.account),
+                        const SizedBox(height: TBSpacing.md),
+                        const SecuritySection(),
+                        const SizedBox(height: TBSpacing.md),
+                        const SupportSection(),
+                        const SizedBox(height: TBSpacing.xl),
                       ],
                     ),
                   );
                 }
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(TBColors.primary),
+                  ),
+                );
               },
             );
           },
         ),
-      ),
-    );
-  }
-
-  void _showUploadDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => BlocProvider.value(
-        value: context.read<AccountBloc>(),
-        child: const UploadDocumentDialog(),
       ),
     );
   }
