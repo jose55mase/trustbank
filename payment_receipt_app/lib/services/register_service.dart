@@ -24,8 +24,8 @@ class RegisterService {
 
       final response = await ApiService.registerUser(userData);
       
-      // El backend siempre retorna la respuesta, verificamos el status interno
-      if (response['status'] == 200) {
+      // El backend usa RestResponse con responseCode
+      if (response['responseCode'] == 200) {
         return {
           'success': true,
           'message': 'Usuario registrado exitosamente',
