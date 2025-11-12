@@ -19,10 +19,10 @@ public class UserEntity implements Serializable {
     @Column(unique = true, length = 40)
     private String email;
 
-    @Column(length = 20)
+    @Column(length = 50)
     private String fistName;
 
-    @Column(length = 20)
+    @Column(length = 50)
     private String lastName;
 
     private String documentsAprov;
@@ -39,7 +39,7 @@ public class UserEntity implements Serializable {
     private Boolean status;
     
     // Nuevos campos para gestión de usuarios
-    @Column(length = 20)
+    @Column(length = 30)
     private String phone;
     
     @Column(length = 100)
