@@ -6,7 +6,6 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../widgets/register_form.dart';
 import '../../auth/bloc/auth_bloc.dart';
 import '../../home/screens/home_screen.dart';
-import '../../../design_system/components/molecules/tb_dialog.dart';
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
@@ -109,18 +108,9 @@ class RegisterScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: TBSpacing.xl),
                           RegisterForm(
-                            onSubmit: (name, email, phone, password) {
-                              TBDialogHelper.showSuccess(
-                                context,
-                                title: '¡Registro exitoso!',
-                                message: 'Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión.',
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  Navigator.of(context).pop();
-                                },
-                              );
+                            onSuccess: () {
+                              Navigator.of(context).pop();
                             },
-                            isLoading: state is AuthLoading,
                             errorMessage: state is AuthError ? state.message : null,
                           ),
                           const SizedBox(height: TBSpacing.lg),

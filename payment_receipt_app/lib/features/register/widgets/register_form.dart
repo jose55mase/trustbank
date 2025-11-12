@@ -3,16 +3,15 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_input.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../services/register_service.dart';
 
 class RegisterForm extends StatefulWidget {
-  final Function(String name, String email, String phone, String password) onSubmit;
-  final bool isLoading;
+  final VoidCallback? onSuccess;
   final String? errorMessage;
 
   const RegisterForm({
     super.key,
-    required this.onSubmit,
-    this.isLoading = false,
+    this.onSuccess,
     this.errorMessage,
   });
 
@@ -21,22 +20,31 @@ class RegisterForm extends StatefulWidget {
 }
 
 class _RegisterFormState extends State<RegisterForm> {
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         TBInput(
-          label: 'Nombre completo',
+          label: 'Nombre',
           hint: 'Ingresa tu nombre',
-          controller: _nameController,
+          controller: _firstNameController,
+          prefixIcon: const Icon(Icons.person_outline),
+        ),
+        const SizedBox(height: TBSpacing.md),
+        TBInput(
+          label: 'Apellido',
+          hint: 'Ingresa tu apellido',
+          controller: _lastNameController,
           prefixIcon: const Icon(Icons.person_outline),
         ),
         const SizedBox(height: TBSpacing.md),
@@ -91,17 +99,8 @@ class _RegisterFormState extends State<RegisterForm> {
         TBButton(
           text: 'Crear cuenta',
           fullWidth: true,
-          isLoading: widget.isLoading,
-          onPressed: () {
-            if (_validateForm()) {
-              widget.onSubmit(
-                _nameController.text,
-                _emailController.text,
-                _phoneController.text,
-                _passwordController.text,
-              );
-            }
-          },
+          isLoading: _isLoading,
+          onPressed: _isLoading ? null : _handleSubmit,
         ),
         if (widget.errorMessage != null) ...[
           const SizedBox(height: TBSpacing.md),
@@ -115,10 +114,68 @@ class _RegisterFormState extends State<RegisterForm> {
     );
   }
 
+  Future<void> _handleSubmit() async {
+    if (!_validateForm()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await RegisterService.registerUser(
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (result['success']) {
+          TBDialogHelper.showSuccess(
+            context,
+            title: '¡Registro exitoso!',
+            message: 'Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión.',
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (widget.onSuccess != null) {
+                widget.onSuccess!();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+          );
+        } else {
+          TBDialogHelper.showError(
+            context,
+            title: 'Error en el registro',
+            message: result['error'] ?? 'No se pudo crear la cuenta',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        TBDialogHelper.showError(
+          context,
+          title: 'Error de conexión',
+          message: 'No se pudo conectar con el servidor. Intenta nuevamente.',
+        );
+      }
+    }
+  }
+
   bool _validateForm() {
-    if (_nameController.text.isEmpty ||
-        _emailController.text.isEmpty ||
-        _phoneController.text.isEmpty ||
+    if (_firstNameController.text.trim().isEmpty ||
+        _lastNameController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _phoneController.text.trim().isEmpty ||
         _passwordController.text.length < 6 ||
         _passwordController.text != _confirmPasswordController.text) {
       if (_passwordController.text != _confirmPasswordController.text) {
@@ -147,7 +204,8 @@ class _RegisterFormState extends State<RegisterForm> {
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
