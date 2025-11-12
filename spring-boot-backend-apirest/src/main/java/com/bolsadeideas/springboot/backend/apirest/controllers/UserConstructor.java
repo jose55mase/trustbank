@@ -159,13 +159,9 @@ public class UserConstructor {
         userEntity.setDocumentsAprov("{\"foto\":false,\"fromt\":false,\"back\":false}");
         userEntity.setPassword(this.passwordEncoder.encode(userEntity.getPassword()));
         
-        // Asignar rol USER por defecto
-        List<RolEntity> roles = new ArrayList<>();
-        RolEntity userRole = new RolEntity();
-        userRole.setId(2L); // Asumiendo que el rol USER tiene ID 2
-        userRole.setName("ROLE_USER");
-        roles.add(userRole);
-        userEntity.setRols(roles);
+        // Asignar rol USER por defecto - obtener desde base de datos
+        // Comentamos la asignación de roles por ahora para evitar el error
+        // Los roles se pueden asignar después o mediante otro endpoint
         
         // Establecer valores por defecto
         if (userEntity.getStatus() == null) {
