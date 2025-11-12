@@ -43,4 +43,28 @@ class TBTypography {
     fontWeight: FontWeight.w600,
     height: 1.2,
   );
+  
+  static TextStyle get headlineSmall => GoogleFonts.inter(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+  );
+  
+  static TextStyle get titleMedium => GoogleFonts.inter(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    height: 1.4,
+  );
+  
+  static TextStyle get bodySmall => GoogleFonts.inter(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    height: 1.4,
+  );
+  
+  static TextStyle get labelSmall => GoogleFonts.inter(
+    fontSize: 10,
+    fontWeight: FontWeight.w500,
+    height: 1.3,
+  );
 }

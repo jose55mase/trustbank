@@ -46,7 +46,7 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
   void _onUploadDocument(UploadDocument event, Emitter<AccountState> emit) async {
     try {
       // Simular subida de archivo (en producción usar file_picker)
-      final response = await ApiService.createAdminRequest({
+      await ApiService.createAdminRequest({
         'requestType': 'DOCUMENT_UPLOAD',
         'userId': 1, // ID del usuario actual
         'amount': 0.0,
