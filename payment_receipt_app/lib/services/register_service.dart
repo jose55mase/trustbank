@@ -24,11 +24,11 @@ class RegisterService {
 
       final response = await ApiService.registerUser(userData);
       
-      // Verificar si la respuesta indica éxito
+      // El backend siempre retorna la respuesta, verificamos el status interno
       if (response['status'] == 200) {
         return {
           'success': true,
-          'message': response['message'] ?? 'Usuario registrado exitosamente',
+          'message': 'Usuario registrado exitosamente',
           'user': response['data'],
         };
       } else {

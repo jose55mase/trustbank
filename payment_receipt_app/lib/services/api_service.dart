@@ -53,13 +53,8 @@ class ApiService {
       body: json.encode(userData),
     );
 
-    final responseData = json.decode(response.body);
-    
-    if (response.statusCode == 200) {
-      return responseData;
-    } else {
-      throw Exception(responseData['message'] ?? 'Error al registrar usuario');
-    }
+    // Siempre retornar la respuesta del backend sin lanzar excepción
+    return json.decode(response.body);
   }
 
   static Future<Map<String, dynamic>> getUserByEmail(String email) async {
