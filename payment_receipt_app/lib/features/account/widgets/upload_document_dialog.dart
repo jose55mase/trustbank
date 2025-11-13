@@ -7,6 +7,7 @@ import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../bloc/account_bloc.dart';
 import '../models/account_model.dart';
+import 'upload_document_images_dialog.dart';
 
 class UploadDocumentDialog extends StatefulWidget {
   const UploadDocumentDialog({super.key});
@@ -33,6 +34,26 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          Row(
+            children: [
+              Expanded(
+                child: TBButton(
+                  text: 'Documentos con Fotos',
+                  type: TBButtonType.outline,
+                  onPressed: () {
+                    Navigator.pop(context);
+                    showDialog(
+                      context: context,
+                      builder: (context) => const UploadDocumentImagesDialog(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TBSpacing.md),
+          const Divider(),
+          const SizedBox(height: TBSpacing.md),
           DropdownButtonFormField<DocumentType>(
             decoration: const InputDecoration(
               labelText: 'Tipo de documento',

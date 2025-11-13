@@ -6,6 +6,9 @@ class AdminUser {
   final String? address;
   final String? documentType;
   final String? documentNumber;
+  final String? documentFront;
+  final String? documentBack;
+  final String? clientPhoto;
   final String accountStatus;
   final double balance;
   final DateTime createdAt;
@@ -19,6 +22,9 @@ class AdminUser {
     this.address,
     this.documentType,
     this.documentNumber,
+    this.documentFront,
+    this.documentBack,
+    this.clientPhoto,
     required this.accountStatus,
     required this.balance,
     required this.createdAt,
@@ -34,6 +40,9 @@ class AdminUser {
       address: json['address'],
       documentType: json['documentType'],
       documentNumber: json['documentNumber'],
+      documentFront: json['documentFront'],
+      documentBack: json['documentBack'],
+      clientPhoto: json['clientPhoto'],
       accountStatus: json['accountStatus'] ?? 'ACTIVE',
       balance: _parseBalance(json),
       createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
@@ -72,6 +81,9 @@ class AdminUser {
       'address': address,
       'documentType': documentType,
       'documentNumber': documentNumber,
+      'documentFront': documentFront,
+      'documentBack': documentBack,
+      'clientPhoto': clientPhoto,
       'accountStatus': accountStatus,
       'moneyclean': balance,
       'balance': balance,
@@ -88,6 +100,9 @@ class AdminUser {
     String? address,
     String? documentType,
     String? documentNumber,
+    String? documentFront,
+    String? documentBack,
+    String? clientPhoto,
     String? accountStatus,
     double? balance,
     DateTime? createdAt,
@@ -101,6 +116,9 @@ class AdminUser {
       address: address ?? this.address,
       documentType: documentType ?? this.documentType,
       documentNumber: documentNumber ?? this.documentNumber,
+      documentFront: documentFront ?? this.documentFront,
+      documentBack: documentBack ?? this.documentBack,
+      clientPhoto: clientPhoto ?? this.clientPhoto,
       accountStatus: accountStatus ?? this.accountStatus,
       balance: balance ?? this.balance,
       createdAt: createdAt ?? this.createdAt,
