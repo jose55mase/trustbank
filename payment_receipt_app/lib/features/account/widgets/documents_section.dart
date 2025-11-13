@@ -4,7 +4,9 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../services/user_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/image_storage_service.dart';
 import 'upload_document_images_dialog.dart';
+import 'dart:typed_data';
 
 class DocumentsSection extends StatefulWidget {
   const DocumentsSection({super.key});
@@ -15,7 +17,7 @@ class DocumentsSection extends StatefulWidget {
 
 class _DocumentsSectionState extends State<DocumentsSection> {
   List<dynamic> userDocuments = [];
-  Map<String, dynamic>? userImages;
+  Map<String, Uint8List?> localImages = {};
   bool isLoadingDocs = true;
 
   @override
@@ -45,13 +47,16 @@ class _DocumentsSectionState extends State<DocumentsSection> {
 
   Future<void> _loadUserImages() async {
     try {
-      final user = await AuthService.getCurrentUser();
-      if (user != null && mounted) {
+      final documentFront = await ImageStorageService.getDocumentFront();
+      final documentBack = await ImageStorageService.getDocumentBack();
+      final clientPhoto = await ImageStorageService.getClientPhoto();
+      
+      if (mounted) {
         setState(() {
-          userImages = {
-            'documentFront': user['documentFrom'],
-            'documentBack': user['documentBack'],
-            'clientPhoto': user['foto'],
+          localImages = {
+            'documentFront': documentFront,
+            'documentBack': documentBack,
+            'clientPhoto': clientPhoto,
           };
         });
       }
@@ -106,7 +111,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
               ],
             ),
           ),
-          if (userImages != null) _buildImagesSection(),
+          if (localImages.isNotEmpty) _buildImagesSection(),
           Expanded(
             child: isLoadingDocs
                 ? const Center(child: CircularProgressIndicator())
@@ -305,11 +310,11 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           const SizedBox(height: TBSpacing.sm),
           Row(
             children: [
-              Expanded(child: _buildImageCard('Frontal', userImages!['documentFront'], Icons.credit_card)),
+              Expanded(child: _buildImageCard('Frontal', localImages['documentFront'], Icons.credit_card)),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Reverso', userImages!['documentBack'], Icons.flip_to_back)),
+              Expanded(child: _buildImageCard('Reverso', localImages['documentBack'], Icons.flip_to_back)),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Foto', userImages!['clientPhoto'], Icons.person)),
+              Expanded(child: _buildImageCard('Foto', localImages['clientPhoto'], Icons.person)),
             ],
           ),
         ],
@@ -317,7 +322,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     );
   }
 
-  Widget _buildImageCard(String title, String? imageUrl, IconData icon) {
+  Widget _buildImageCard(String title, Uint8List? imageBytes, IconData icon) {
     return Container(
       height: 80,
       decoration: BoxDecoration(
@@ -325,13 +330,12 @@ class _DocumentsSectionState extends State<DocumentsSection> {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: TBColors.grey300),
       ),
-      child: imageUrl != null
+      child: imageBytes != null
           ? ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                imageUrl,
+              child: Image.memory(
+                imageBytes,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(title, icon),
               ),
             )
           : _buildPlaceholder(title, icon),

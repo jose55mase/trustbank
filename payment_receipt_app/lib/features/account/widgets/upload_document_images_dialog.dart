@@ -9,6 +9,7 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../services/document_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/image_storage_service.dart';
 
 class UploadDocumentImagesDialog extends StatefulWidget {
   const UploadDocumentImagesDialog({super.key});
@@ -204,6 +205,17 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
     try {
       final user = await AuthService.getCurrentUser();
       if (user == null) throw Exception('Usuario no encontrado');
+      
+      // Guardar imágenes localmente
+      if (_documentFrontBytes != null) {
+        await ImageStorageService.saveDocumentFront(_documentFrontBytes!);
+      }
+      if (_documentBackBytes != null) {
+        await ImageStorageService.saveDocumentBack(_documentBackBytes!);
+      }
+      if (_clientPhotoBytes != null) {
+        await ImageStorageService.saveClientPhoto(_clientPhotoBytes!);
+      }
       
       // Simular subida exitosa
       await Future.delayed(const Duration(seconds: 1));
