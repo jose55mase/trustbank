@@ -209,12 +209,6 @@ public class UserConstructor {
     
     @GetMapping("/{id}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
-        UserEntity user = this.usuarioService.findByid(id);
-        if (user != null) {
-            return new ResponseEntity<>(user, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    }y> getUserById(@PathVariable Long id) {
         try {
             UserEntity user = this.usuarioService.findByid(id);
             if (user != null) {
