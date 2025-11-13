@@ -1,14 +1,14 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 
 class DocumentService {
   static const String baseUrl = 'https://api.trustbank.com';
 
   static Future<Map<String, dynamic>> uploadDocumentImages({
-    File? documentFront,
-    File? documentBack,
-    File? clientPhoto,
+    XFile? documentFront,
+    XFile? documentBack,
+    XFile? clientPhoto,
     required String userId,
   }) async {
     try {
@@ -18,20 +18,35 @@ class DocumentService {
       );
 
       if (documentFront != null) {
+        final bytes = await documentFront.readAsBytes();
         request.files.add(
-          await http.MultipartFile.fromPath('documentFront', documentFront.path),
+          http.MultipartFile.fromBytes(
+            'documentFront',
+            bytes,
+            filename: documentFront.name,
+          ),
         );
       }
 
       if (documentBack != null) {
+        final bytes = await documentBack.readAsBytes();
         request.files.add(
-          await http.MultipartFile.fromPath('documentBack', documentBack.path),
+          http.MultipartFile.fromBytes(
+            'documentBack',
+            bytes,
+            filename: documentBack.name,
+          ),
         );
       }
 
       if (clientPhoto != null) {
+        final bytes = await clientPhoto.readAsBytes();
         request.files.add(
-          await http.MultipartFile.fromPath('clientPhoto', clientPhoto.path),
+          http.MultipartFile.fromBytes(
+            'clientPhoto',
+            bytes,
+            filename: clientPhoto.name,
+          ),
         );
       }
 
@@ -49,9 +64,9 @@ class DocumentService {
       return {
         'success': true,
         'message': 'Documentos subidos exitosamente',
-        'documentFront': documentFront?.path,
-        'documentBack': documentBack?.path,
-        'clientPhoto': clientPhoto?.path,
+        'documentFront': documentFront?.name,
+        'documentBack': documentBack?.name,
+        'clientPhoto': clientPhoto?.name,
       };
     }
   }
