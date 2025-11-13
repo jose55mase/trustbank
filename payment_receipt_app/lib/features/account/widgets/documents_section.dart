@@ -3,6 +3,7 @@ import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../services/user_service.dart';
+import '../../../services/auth_service.dart';
 import 'upload_document_images_dialog.dart';
 
 class DocumentsSection extends StatefulWidget {
@@ -14,12 +15,14 @@ class DocumentsSection extends StatefulWidget {
 
 class _DocumentsSectionState extends State<DocumentsSection> {
   List<dynamic> userDocuments = [];
+  Map<String, dynamic>? userImages;
   bool isLoadingDocs = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserDocuments();
+    _loadUserImages();
   }
 
   Future<void> _loadUserDocuments() async {
@@ -37,6 +40,23 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           isLoadingDocs = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadUserImages() async {
+    try {
+      final user = await AuthService.getCurrentUser();
+      if (user != null && mounted) {
+        setState(() {
+          userImages = {
+            'documentFront': user['documentFrom'],
+            'documentBack': user['documentBack'],
+            'clientPhoto': user['foto'],
+          };
+        });
+      }
+    } catch (e) {
+      // Error loading images
     }
   }
 
@@ -86,6 +106,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
               ],
             ),
           ),
+          if (userImages != null) _buildImagesSection(),
           Expanded(
             child: isLoadingDocs
                 ? const Center(child: CircularProgressIndicator())
@@ -271,10 +292,71 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     }
   }
 
+  Widget _buildImagesSection() {
+    return Container(
+      padding: const EdgeInsets.all(TBSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Documentos con Imágenes',
+            style: TBTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: TBSpacing.sm),
+          Row(
+            children: [
+              Expanded(child: _buildImageCard('Frontal', userImages!['documentFront'], Icons.credit_card)),
+              const SizedBox(width: TBSpacing.sm),
+              Expanded(child: _buildImageCard('Reverso', userImages!['documentBack'], Icons.flip_to_back)),
+              const SizedBox(width: TBSpacing.sm),
+              Expanded(child: _buildImageCard('Foto', userImages!['clientPhoto'], Icons.person)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageCard(String title, String? imageUrl, IconData icon) {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: TBColors.grey100,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: TBColors.grey300),
+      ),
+      child: imageUrl != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => _buildPlaceholder(title, icon),
+              ),
+            )
+          : _buildPlaceholder(title, icon),
+    );
+  }
+
+  Widget _buildPlaceholder(String title, IconData icon) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, color: TBColors.grey500, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TBTypography.labelSmall.copyWith(color: TBColors.grey600),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
   void _showUploadDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => const UploadDocumentImagesDialog(),
-    );
+    ).then((_) => _loadUserImages());
   }
 }
