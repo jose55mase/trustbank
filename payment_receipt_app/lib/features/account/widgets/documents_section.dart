@@ -115,7 +115,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           Expanded(
             child: isLoadingDocs
                 ? const Center(child: CircularProgressIndicator())
-                : userDocuments.isEmpty
+                : userDocuments.isEmpty && _hasNoImages()
                   ? _buildEmptyState()
                   : _buildDocumentsList(),
           ),
@@ -324,7 +324,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
 
   Widget _buildImageCard(String title, Uint8List? imageBytes, IconData icon) {
     return Container(
-      height: 80,
+      height: 120,
       decoration: BoxDecoration(
         color: TBColors.grey100,
         borderRadius: BorderRadius.circular(8),
@@ -355,6 +355,12 @@ class _DocumentsSectionState extends State<DocumentsSection> {
         ),
       ],
     );
+  }
+
+  bool _hasNoImages() {
+    return localImages['documentFront'] == null && 
+           localImages['documentBack'] == null && 
+           localImages['clientPhoto'] == null;
   }
 
   void _showUploadDialog(BuildContext context) {
