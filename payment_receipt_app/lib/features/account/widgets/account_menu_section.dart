@@ -5,6 +5,7 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../models/account_model.dart';
 import '../widgets/documents_section.dart';
 import '../../../services/user_service.dart';
+import '../../../services/image_storage_service.dart';
 
 class AccountMenuSection extends StatefulWidget {
   final UserAccount account;
@@ -20,12 +21,14 @@ class AccountMenuSection extends StatefulWidget {
 
 class _AccountMenuSectionState extends State<AccountMenuSection> {
   List<dynamic> userDocuments = [];
+  int imageCount = 0;
   bool isLoadingDocs = true;
 
   @override
   void initState() {
     super.initState();
     _loadUserDocuments();
+    _loadImageCount();
   }
 
   Future<void> _loadUserDocuments() async {
@@ -43,6 +46,23 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
           isLoadingDocs = false;
         });
       }
+    }
+  }
+
+  Future<void> _loadImageCount() async {
+    try {
+      int count = 0;
+      if (await ImageStorageService.getDocumentFront() != null) count++;
+      if (await ImageStorageService.getDocumentBack() != null) count++;
+      if (await ImageStorageService.getClientPhoto() != null) count++;
+      
+      if (mounted) {
+        setState(() {
+          imageCount = count;
+        });
+      }
+    } catch (e) {
+      // Error loading image count
     }
   }
 
@@ -77,7 +97,7 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
             context,
             icon: Icons.description_outlined,
             title: 'Documentos',
-            subtitle: isLoadingDocs ? 'Cargando...' : '${userDocuments.length} documentos subidos',
+            subtitle: isLoadingDocs ? 'Cargando...' : '${userDocuments.length} docs, $imageCount imágenes',
             onTap: () => _showDocuments(context),
             trailing: isLoadingDocs ? 
               const SizedBox(
@@ -221,7 +241,7 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const DocumentsSection(),
-    );
+    ).then((_) => _loadImageCount());
   }
 
 

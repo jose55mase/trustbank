@@ -298,14 +298,34 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   }
 
   Widget _buildImagesSection() {
+    final imageCount = _getImageCount();
     return Container(
       padding: const EdgeInsets.all(TBSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Documentos con Imágenes',
-            style: TBTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Documentos con Imágenes',
+                style: TBTypography.titleMedium.copyWith(fontWeight: FontWeight.w600),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: TBColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$imageCount/3',
+                  style: TBTypography.labelMedium.copyWith(
+                    color: TBColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: TBSpacing.sm),
           Row(
@@ -361,6 +381,14 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     return localImages['documentFront'] == null && 
            localImages['documentBack'] == null && 
            localImages['clientPhoto'] == null;
+  }
+
+  int _getImageCount() {
+    int count = 0;
+    if (localImages['documentFront'] != null) count++;
+    if (localImages['documentBack'] != null) count++;
+    if (localImages['clientPhoto'] != null) count++;
+    return count;
   }
 
   void _showUploadDialog(BuildContext context) {
