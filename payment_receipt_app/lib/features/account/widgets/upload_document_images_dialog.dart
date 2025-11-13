@@ -30,10 +30,12 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text('Subir Documentos', style: TBTypography.titleLarge),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
             _buildImageUpload(
               'Documento Frontal',
               _documentFront,
@@ -54,7 +56,8 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
               () => _pickImage('photo'),
               Icons.person,
             ),
-          ],
+            ],
+          ),
         ),
       ),
       actions: [
