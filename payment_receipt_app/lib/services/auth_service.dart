@@ -52,9 +52,18 @@ class AuthService {
   }
 
   static Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
-    await prefs.remove(_userKey);
+    try {
+      // Intentar cerrar sesión en el servidor
+      await ApiService.logout();
+    } catch (e) {
+      // Si hay error (como token inválido), continuar con logout local
+      print('Error en logout del servidor: $e');
+    } finally {
+      // Siempre limpiar datos locales
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_tokenKey);
+      await prefs.remove(_userKey);
+    }
   }
 
   static Future<bool> isLoggedIn() async {

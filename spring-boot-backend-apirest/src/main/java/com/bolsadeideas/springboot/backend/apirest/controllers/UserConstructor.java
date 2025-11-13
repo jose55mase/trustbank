@@ -199,8 +199,22 @@ public class UserConstructor {
         }
     }
     
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Sesión cerrada exitosamente");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
+        UserEntity user = this.usuarioService.findByid(id);
+        if (user != null) {
+            return new ResponseEntity<>(user, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }y> getUserById(@PathVariable Long id) {
         try {
             UserEntity user = this.usuarioService.findByid(id);
             if (user != null) {

@@ -465,4 +465,25 @@ class ApiService {
       throw Exception('Failed to get user stats');
     }
   }
+
+  static Future<Map<String, dynamic>> logout() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/user/logout'),
+        headers: await headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to logout');
+      }
+    } catch (e) {
+      // Si hay error de token inválido, considerarlo como logout exitoso
+      if (e.toString().contains('invalid_token')) {
+        return {'success': true, 'message': 'Sesión cerrada'};
+      }
+      throw e;
+    }
+  }
 }
