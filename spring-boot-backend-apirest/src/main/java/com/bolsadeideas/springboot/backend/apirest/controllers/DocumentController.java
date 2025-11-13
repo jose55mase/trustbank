@@ -106,6 +106,7 @@ public class DocumentController {
         return new RestResponse(HttpStatus.OK.value(), "Documentos por estado", documents);
     }
     
+    @CrossOrigin(origins = "*")
     @PostMapping("/users/{userId}/images")
     public ResponseEntity<?> uploadUserDocuments(
             @PathVariable Long userId,
@@ -152,6 +153,7 @@ public class DocumentController {
         }
     }
 
+    @CrossOrigin(origins = "*")
     @PutMapping("/users/{userId}/status")
     public ResponseEntity<?> updateDocumentStatus(
             @PathVariable Long userId,
@@ -195,6 +197,7 @@ public class DocumentController {
         }
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/users/{userId}/images")
     public ResponseEntity<?> getUserDocuments(@PathVariable Long userId) {
         try {
@@ -217,6 +220,7 @@ public class DocumentController {
         }
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/admin/users")
     public ResponseEntity<?> getAllUsersWithDocuments() {
         try {
