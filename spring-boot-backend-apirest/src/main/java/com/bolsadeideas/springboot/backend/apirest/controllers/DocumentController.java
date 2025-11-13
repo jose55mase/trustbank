@@ -1,8 +1,10 @@
 package com.bolsadeideas.springboot.backend.apirest.controllers;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.DocumentEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IDocumentService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUploadFileService;
+import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUserService;
 import com.bolsadeideas.springboot.backend.apirest.utils.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +29,9 @@ public class DocumentController {
 
     @Autowired
     private IUploadFileService uploadService;
+    
+    @Autowired
+    private IUserService userService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadDocument(
@@ -99,5 +105,126 @@ public class DocumentController {
     public RestResponse getDocumentsByStatus(@PathVariable String status) {
         List<DocumentEntity> documents = documentService.findByStatus(status);
         return new RestResponse(HttpStatus.OK.value(), "Documentos por estado", documents);
+    }
+    
+    @PostMapping("/users/{userId}/images")
+    public ResponseEntity<?> uploadUserDocuments(
+            @PathVariable Long userId,
+            @RequestParam(required = false) MultipartFile documentFrom,
+            @RequestParam(required = false) MultipartFile documentBack,
+            @RequestParam(required = false) MultipartFile foto) {
+        
+        try {
+            UserEntity user = userService.findById(userId);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            if (documentFrom != null) {
+                String base64Front = Base64.getEncoder().encodeToString(documentFrom.getBytes());
+                user.setDocumentFrom(base64Front);
+                user.setDocumentFromStatus("PENDING");
+            }
+
+            if (documentBack != null) {
+                String base64Back = Base64.getEncoder().encodeToString(documentBack.getBytes());
+                user.setDocumentBack(base64Back);
+                user.setDocumentBackStatus("PENDING");
+            }
+
+            if (foto != null) {
+                String base64Photo = Base64.getEncoder().encodeToString(foto.getBytes());
+                user.setFoto(base64Photo);
+                user.setFotoStatus("PENDING");
+            }
+
+            userService.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Documentos subidos exitosamente");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error al subir documentos: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PutMapping("/users/{userId}/status")
+    public ResponseEntity<?> updateDocumentStatus(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        
+        try {
+            UserEntity user = userService.findById(userId);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            String documentType = request.get("documentType");
+            String status = request.get("status");
+
+            switch (documentType) {
+                case "documentFront":
+                    user.setDocumentFromStatus(status);
+                    break;
+                case "documentBack":
+                    user.setDocumentBackStatus(status);
+                    break;
+                case "clientPhoto":
+                    user.setFotoStatus(status);
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body("Tipo de documento inválido");
+            }
+
+            userService.save(user);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Estado actualizado exitosamente");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error al actualizar estado: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/users/{userId}/images")
+    public ResponseEntity<?> getUserDocuments(@PathVariable Long userId) {
+        try {
+            UserEntity user = userService.findById(userId);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("documentFrom", user.getDocumentFrom());
+            response.put("documentBack", user.getDocumentBack());
+            response.put("foto", user.getFoto());
+            response.put("documentFromStatus", user.getDocumentFromStatus());
+            response.put("documentBackStatus", user.getDocumentBackStatus());
+            response.put("fotoStatus", user.getFotoStatus());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener documentos: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/admin/users")
+    public ResponseEntity<?> getAllUsersWithDocuments() {
+        try {
+            List<UserEntity> users = userService.findUsersWithDocuments();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error al obtener usuarios: " + e.getMessage());
+        }
     }
 }

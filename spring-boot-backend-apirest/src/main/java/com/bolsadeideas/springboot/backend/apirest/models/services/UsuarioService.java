@@ -121,4 +121,16 @@ public class UsuarioService implements IUserService, UserDetailsService {
         }
         return null;
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserEntity> findUsersWithDocuments() {
+        return this.userDao.findUsersWithDocuments();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public UserEntity findById(Long id) {
+        return this.userDao.findByid(id);
+    }
 }

@@ -65,6 +65,16 @@ public class UserEntity implements Serializable {
     private String foto;
     private String documentFrom;
     private String documentBack;
+    
+    @Column(length = 20)
+    private String documentFromStatus = "PENDING";
+    
+    @Column(length = 20)
+    private String documentBackStatus = "PENDING";
+    
+    @Column(length = 20)
+    private String fotoStatus = "PENDING";
+    
     @Column(length = 10)
     private Integer administratorManager;
 
@@ -222,6 +232,30 @@ public class UserEntity implements Serializable {
 
     public void setAdministratorManager(Integer administratorManager) {
         this.administratorManager = administratorManager;
+    }
+    
+    public String getDocumentFromStatus() {
+        return documentFromStatus;
+    }
+    
+    public void setDocumentFromStatus(String documentFromStatus) {
+        this.documentFromStatus = documentFromStatus;
+    }
+    
+    public String getDocumentBackStatus() {
+        return documentBackStatus;
+    }
+    
+    public void setDocumentBackStatus(String documentBackStatus) {
+        this.documentBackStatus = documentBackStatus;
+    }
+    
+    public String getFotoStatus() {
+        return fotoStatus;
+    }
+    
+    public void setFotoStatus(String fotoStatus) {
+        this.fotoStatus = fotoStatus;
     }
     
     // Getters y setters para nuevos campos

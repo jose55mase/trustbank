@@ -11,6 +11,7 @@ import '../widgets/admin_stats.dart';
 import '../widgets/filter_chips.dart';
 import 'document_management_screen.dart';
 import 'users_management_screen.dart';
+import 'document_approval_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -98,6 +99,17 @@ class AdminDashboardScreen extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: TBSpacing.sm),
+                    TBButton(
+                      text: 'Aprobar Documentos de Imágenes',
+                      type: TBButtonType.primary,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DocumentApprovalScreen(),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     FilterChips(

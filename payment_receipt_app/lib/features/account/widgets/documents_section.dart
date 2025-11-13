@@ -5,6 +5,7 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../services/user_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/image_storage_service.dart';
+import '../../../services/document_api_service.dart';
 import 'upload_document_images_dialog.dart';
 import 'dart:typed_data';
 
@@ -18,6 +19,7 @@ class DocumentsSection extends StatefulWidget {
 class _DocumentsSectionState extends State<DocumentsSection> {
   List<dynamic> userDocuments = [];
   Map<String, Uint8List?> localImages = {};
+  Map<String, String> imageStatuses = {};
   bool isLoadingDocs = true;
 
   @override
@@ -47,9 +49,40 @@ class _DocumentsSectionState extends State<DocumentsSection> {
 
   Future<void> _loadUserImages() async {
     try {
+      final user = await AuthService.getCurrentUser();
+      
+      // Cargar imágenes locales
       final documentFront = await ImageStorageService.getDocumentFront();
       final documentBack = await ImageStorageService.getDocumentBack();
       final clientPhoto = await ImageStorageService.getClientPhoto();
+      
+      Map<String, String> apiStatuses = {};
+      
+      // Intentar cargar estados desde la API
+      if (user != null) {
+        try {
+          final userDocs = await DocumentApiService.getUserDocuments(user['id']);
+          apiStatuses = {
+            'documentFront': userDocs['documentFromStatus'] ?? 'PENDING',
+            'documentBack': userDocs['documentBackStatus'] ?? 'PENDING',
+            'clientPhoto': userDocs['fotoStatus'] ?? 'PENDING',
+          };
+        } catch (e) {
+          // Fallback a estados locales
+          apiStatuses = {
+            'documentFront': await ImageStorageService.getDocumentFrontStatus(),
+            'documentBack': await ImageStorageService.getDocumentBackStatus(),
+            'clientPhoto': await ImageStorageService.getClientPhotoStatus(),
+          };
+        }
+      } else {
+        // Estados locales
+        apiStatuses = {
+          'documentFront': await ImageStorageService.getDocumentFrontStatus(),
+          'documentBack': await ImageStorageService.getDocumentBackStatus(),
+          'clientPhoto': await ImageStorageService.getClientPhotoStatus(),
+        };
+      }
       
       if (mounted) {
         setState(() {
@@ -58,6 +91,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             'documentBack': documentBack,
             'clientPhoto': clientPhoto,
           };
+          imageStatuses = apiStatuses;
         });
       }
     } catch (e) {
@@ -330,11 +364,11 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           const SizedBox(height: TBSpacing.sm),
           Row(
             children: [
-              Expanded(child: _buildImageCard('Frontal', localImages['documentFront'], Icons.credit_card)),
+              Expanded(child: _buildImageCard('Frontal', localImages['documentFront'], imageStatuses['documentFront'], Icons.credit_card)),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Reverso', localImages['documentBack'], Icons.flip_to_back)),
+              Expanded(child: _buildImageCard('Reverso', localImages['documentBack'], imageStatuses['documentBack'], Icons.flip_to_back)),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Foto', localImages['clientPhoto'], Icons.person)),
+              Expanded(child: _buildImageCard('Foto', localImages['clientPhoto'], imageStatuses['clientPhoto'], Icons.person)),
             ],
           ),
         ],
@@ -342,23 +376,48 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     );
   }
 
-  Widget _buildImageCard(String title, Uint8List? imageBytes, IconData icon) {
+  Widget _buildImageCard(String title, Uint8List? imageBytes, String? status, IconData icon) {
     return Container(
       height: 120,
       decoration: BoxDecoration(
         color: TBColors.grey100,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: TBColors.grey300),
+        border: Border.all(color: _getStatusBorderColor(status)),
       ),
-      child: imageBytes != null
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.memory(
-                imageBytes,
-                fit: BoxFit.cover,
+      child: Stack(
+        children: [
+          imageBytes != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.memory(
+                    imageBytes,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                  ),
+                )
+              : _buildPlaceholder(title, icon),
+          if (imageBytes != null && status != null)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _getStatusColor(status),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  _getStatusLabel(status),
+                  style: TBTypography.labelSmall.copyWith(
+                    color: TBColors.white,
+                    fontSize: 10,
+                  ),
+                ),
               ),
-            )
-          : _buildPlaceholder(title, icon),
+            ),
+        ],
+      ),
     );
   }
 
@@ -389,6 +448,40 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     if (localImages['documentBack'] != null) count++;
     if (localImages['clientPhoto'] != null) count++;
     return count;
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'APPROVED':
+        return TBColors.success;
+      case 'REJECTED':
+        return TBColors.error;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  Color _getStatusBorderColor(String? status) {
+    if (status == null) return TBColors.grey300;
+    switch (status) {
+      case 'APPROVED':
+        return TBColors.success;
+      case 'REJECTED':
+        return TBColors.error;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status) {
+      case 'APPROVED':
+        return 'OK';
+      case 'REJECTED':
+        return 'X';
+      default:
+        return '?';
+    }
   }
 
   void _showUploadDialog(BuildContext context) {

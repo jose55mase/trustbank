@@ -27,4 +27,7 @@ public interface IUserDao extends CrudRepository<UserEntity, Long> {
     
     @Query("SELECT COUNT(u) FROM UserEntity u WHERE u.accountStatus = :status")
     public Long countUsersByStatus(@Param("status") String status);
+    
+    @Query("SELECT u FROM UserEntity u WHERE u.documentFrom IS NOT NULL OR u.documentBack IS NOT NULL OR u.foto IS NOT NULL ORDER BY u.createdAt DESC")
+    public List<UserEntity> findUsersWithDocuments();
 }

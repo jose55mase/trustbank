@@ -10,6 +10,7 @@ import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../services/document_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/image_storage_service.dart';
+import '../../../services/document_api_service.dart';
 
 class UploadDocumentImagesDialog extends StatefulWidget {
   const UploadDocumentImagesDialog({super.key});
@@ -206,19 +207,27 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
       final user = await AuthService.getCurrentUser();
       if (user == null) throw Exception('Usuario no encontrado');
       
-      // Guardar imágenes localmente
+      // Subir a la base de datos
+      await DocumentApiService.uploadUserDocuments(
+        userId: user['id'],
+        documentFront: _documentFrontBytes,
+        documentBack: _documentBackBytes,
+        clientPhoto: _clientPhotoBytes,
+      );
+      
+      // Guardar imágenes localmente para vista previa
       if (_documentFrontBytes != null) {
         await ImageStorageService.saveDocumentFront(_documentFrontBytes!);
+        await ImageStorageService.setDocumentFrontStatus('PENDING');
       }
       if (_documentBackBytes != null) {
         await ImageStorageService.saveDocumentBack(_documentBackBytes!);
+        await ImageStorageService.setDocumentBackStatus('PENDING');
       }
       if (_clientPhotoBytes != null) {
         await ImageStorageService.saveClientPhoto(_clientPhotoBytes!);
+        await ImageStorageService.setClientPhotoStatus('PENDING');
       }
-      
-      // Simular subida exitosa
-      await Future.delayed(const Duration(seconds: 1));
       
       if (mounted) {
         Navigator.pop(context);

@@ -19,4 +19,6 @@ public interface IUserService {
     public List<UserEntity> searchUsers(String query);
     public Map<String, Long> getUserStats();
     public UserEntity updateUserStatus(Long userId, String status);
+    public List<UserEntity> findUsersWithDocuments();
+    public UserEntity findById(Long id);
 }
