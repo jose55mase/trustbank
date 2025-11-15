@@ -3,12 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/components/organisms/login_card.dart';
 import '../bloc/auth_bloc.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/admin_setup_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../home/screens/home_screen.dart';
 import '../../register/screens/register_screen.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
+import '../../../widgets/admin_credentials_info.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -56,8 +60,27 @@ class LoginScreen extends StatelessWidget {
                       children: [
                         LoginCard(
                           onLogin: (email, password) async {
+                            // Crear admin por defecto si no existe
+                            await AdminSetupService.createDefaultAdmin();
+                            
+                            // Verificar si es el admin por defecto
+                            final isDefaultAdmin = await AdminSetupService.isDefaultAdmin(email, password);
+                            
+                            if (isDefaultAdmin) {
+                              final admin = await AdminSetupService.getDefaultAdmin();
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('user_data', json.encode(admin));
+                              await prefs.setBool('is_logged_in', true);
+                              
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                              );
+                              return;
+                            }
+                            
+                            // Login normal para otros usuarios
                             final result = await AuthService.login(email, password);
-                            print('Response ----------> ${result}');
+                            print('Response ----------> $result');
                             if (result['success']) {
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(builder: (context) => const HomeScreen()),
@@ -103,6 +126,8 @@ class LoginScreen extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: TBSpacing.lg),
+                        const AdminCredentialsInfo(),
                       ],
                     ),
                   ),
