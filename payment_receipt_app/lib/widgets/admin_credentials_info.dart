@@ -22,11 +22,11 @@ class AdminCredentialsInfo extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.admin_panel_settings, color: TBColors.primary, size: 20),
+              const Icon(Icons.admin_panel_settings, color: TBColors.primary, size: 20),
               const SizedBox(width: TBSpacing.xs),
               Text(
                 'Credenciales de Administrador',
-                style: TBTypography.titleSmall.copyWith(
+                style: TBTypography.titleMedium.copyWith(
                   color: TBColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
