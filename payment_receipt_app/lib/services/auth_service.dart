@@ -1,92 +1,66 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'api_service.dart';
+import '../models/user_role.dart';
 
 class AuthService {
-  static const String _tokenKey = 'auth_token';
-  static const String _userKey = 'user_data';
-
-  static Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await ApiService.login(email, password);
-
-      if (response['access_token'] != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(_tokenKey, response['access_token']);
-        
-        // Obtener datos del usuario
-        final userData = await ApiService.getUserByEmail(email);
-        print('Getting userData --> ${userData}');
-        
-        // Validar estado de la cuenta
-        final accountStatus = userData['accountStatus']?.toString().toUpperCase();
-        if (accountStatus == 'SUSPENDED') {
-          return {
-            'success': false, 
-            'error': 'Tu cuenta ha sido suspendida. Contacta al administrador para más información.',
-            'suspended': true
-          };
-        }
-        
-        if (accountStatus == 'INACTIVE') {
-          return {
-            'success': false, 
-            'error': 'Tu cuenta está inactiva. Contacta al administrador.',
-            'inactive': true
-          };
-        }
-        
-        // Asegurar que tenemos el nombre del usuario
-        if (userData['firstName'] == null && userData['name'] != null) {
-          userData['firstName'] = userData['name'];
-        }
-        
-        await prefs.setString(_userKey, json.encode(userData));
-        
-        return {'success': true, 'user': userData};
-      }
-      return {'success': false, 'error': 'Token no recibido'};
-    } catch (e) {
-      return {'success': false, 'error': e.toString()};
-    }
-  }
-
-  static Future<void> logout() async {
-    try {
-      // Intentar cerrar sesión en el servidor
-      await ApiService.logout();
-    } catch (e) {
-      // Si hay error (como token inválido), continuar con logout local
-      print('Error en logout del servidor: $e');
-    } finally {
-      // Siempre limpiar datos locales
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_userKey);
-    }
-  }
+  static const String _userDataKey = 'user_data';
+  static const String _isLoggedInKey = 'is_logged_in';
 
   static Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey) != null;
+    return prefs.getBool(_isLoggedInKey) ?? false;
   }
 
-  static Future<String?> getToken() async {
+  static Future<UserRole> getCurrentUserRole() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    final userDataString = prefs.getString(_userDataKey);
+    
+    if (userDataString != null) {
+      final userData = json.decode(userDataString);
+      final roleString = userData['role'] ?? 'USER';
+      return UserRole.fromString(roleString);
+    }
+    
+    return UserRole.user;
   }
 
   static Future<Map<String, dynamic>?> getCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
-    final userString = prefs.getString(_userKey);
-    if (userString != null) {
-      return json.decode(userString);
+    final userDataString = prefs.getString(_userDataKey);
+    
+    if (userDataString != null) {
+      return json.decode(userDataString);
     }
+    
     return null;
   }
 
-  static Future<int?> getCurrentUserId() async {
-    final user = await getCurrentUser();
-    return user?['id'];
+  static Future<bool> hasPermission(Permission permission) async {
+    final role = await getCurrentUserRole();
+    return RolePermissions.hasPermission(role, permission);
+  }
+
+  static Future<List<Permission>> getCurrentUserPermissions() async {
+    final role = await getCurrentUserRole();
+    return RolePermissions.getPermissions(role);
+  }
+
+  static Future<void> updateUserRole(int userId, UserRole newRole) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userDataString = prefs.getString(_userDataKey);
+    
+    if (userDataString != null) {
+      final userData = json.decode(userDataString);
+      if (userData['id'] == userId) {
+        userData['role'] = newRole.value;
+        await prefs.setString(_userDataKey, json.encode(userData));
+      }
+    }
+  }
+
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_userDataKey);
+    await prefs.setBool(_isLoggedInKey, false);
   }
 }

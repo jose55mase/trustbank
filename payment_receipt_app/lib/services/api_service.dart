@@ -486,4 +486,19 @@ class ApiService {
       throw e;
     }
   }
+
+  // Role management endpoints
+  static Future<Map<String, dynamic>> updateUserRole(int userId, String role) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/updateRole/$userId'),
+      headers: await headers,
+      body: json.encode({'role': role}),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to update user role');
+    }
+  }
 }

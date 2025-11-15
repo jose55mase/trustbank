@@ -4,6 +4,8 @@ import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
+import '../../../models/user_role.dart';
+import '../../../widgets/role_guard.dart';
 import '../bloc/admin_bloc.dart';
 
 import '../widgets/request_card.dart';
@@ -18,29 +20,55 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AdminBloc()..add(LoadRequests()),
-      child: Scaffold(
-        backgroundColor: TBColors.background,
+    return RoleGuard(
+      requiredPermission: Permission.viewAdminPanel,
+      fallback: Scaffold(
         appBar: AppBar(
-          title: Text('Panel Administrador', style: TBTypography.headlineMedium),
+          title: const Text('Acceso Denegado'),
           backgroundColor: TBColors.primary,
           foregroundColor: TBColors.white,
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.people),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const UsersManagementScreen(),
-                  ),
-                );
-              },
-            ),
-          ],
         ),
+        body: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.block, size: 64, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'No tienes permisos para acceder al panel administrativo',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16),
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: BlocProvider(
+        create: (context) => AdminBloc()..add(LoadRequests()),
+        child: Scaffold(
+          backgroundColor: TBColors.background,
+          appBar: AppBar(
+            title: Text('Panel Administrador', style: TBTypography.headlineMedium),
+            backgroundColor: TBColors.primary,
+            foregroundColor: TBColors.white,
+            elevation: 0,
+            actions: [
+              RoleGuard(
+                requiredPermission: Permission.manageUsers,
+                child: IconButton(
+                  icon: const Icon(Icons.people),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const UsersManagementScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         body: BlocBuilder<AdminBloc, AdminState>(
           builder: (context, state) {
             if (state is AdminLoading) {
@@ -86,14 +114,17 @@ class AdminDashboardScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: TBSpacing.sm),
-                        Expanded(
-                          child: TBButton(
-                            text: 'Gestionar Usuarios',
-                            type: TBButtonType.secondary,
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const UsersManagementScreen(),
+                        RoleGuard(
+                          requiredPermission: Permission.manageUsers,
+                          child: Expanded(
+                            child: TBButton(
+                              text: 'Gestionar Usuarios',
+                              type: TBButtonType.secondary,
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const UsersManagementScreen(),
+                                ),
                               ),
                             ),
                           ),
@@ -146,6 +177,7 @@ class AdminDashboardScreen extends StatelessWidget {
             
             return const Center(child: CircularProgressIndicator());
           },
+          ),
         ),
       ),
     );

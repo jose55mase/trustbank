@@ -16,6 +16,9 @@ import '../../notifications/bloc/notifications_bloc.dart';
 import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../account/screens/account_screen.dart';
 import '../../../services/auth_service.dart';
+import '../../../models/user_role.dart';
+import '../../../widgets/role_guard.dart';
+import '../../admin/screens/role_management_screen.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
@@ -158,6 +161,71 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _navigateToRoles() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const RoleManagementScreen()),
+    );
+  }
+
+  Future<List<PopupMenuEntry<String>>> _buildMenuItems() async {
+    final hasAdminAccess = await AuthService.hasPermission(Permission.viewAdminPanel);
+    final hasRoleManagement = await AuthService.hasPermission(Permission.manageRoles);
+    
+    List<PopupMenuEntry<String>> items = [];
+    
+    if (hasAdminAccess) {
+      items.add(const PopupMenuItem(
+        value: 'admin',
+        child: Row(
+          children: [
+            Icon(Icons.admin_panel_settings, size: 20),
+            SizedBox(width: 8),
+            Text('Panel Admin'),
+          ],
+        ),
+      ));
+    }
+    
+    if (hasRoleManagement) {
+      items.add(const PopupMenuItem(
+        value: 'roles',
+        child: Row(
+          children: [
+            Icon(Icons.people, size: 20),
+            SizedBox(width: 8),
+            Text('Gestión de Roles'),
+          ],
+        ),
+      ));
+    }
+    
+    items.addAll([
+      const PopupMenuItem(
+        value: 'account',
+        child: Row(
+          children: [
+            Icon(Icons.person, size: 20),
+            SizedBox(width: 8),
+            Text('Mi Cuenta'),
+          ],
+        ),
+      ),
+      const PopupMenuItem(
+        value: 'logout',
+        child: Row(
+          children: [
+            Icon(Icons.logout, size: 20),
+            SizedBox(width: 8),
+            Text('Cerrar sesión'),
+          ],
+        ),
+      ),
+    ]);
+    
+    return items;
+  }
+
   void _navigateToAccount() async {
     await Navigator.push(
       context,
@@ -291,52 +359,28 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: TBColors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: PopupMenuButton<String>(
-                            icon: const Icon(
-                              Icons.person_outline,
-                              color: TBColors.white,
-                            ),
-                            onSelected: (value) {
-                              if (value == 'logout') {
-                                _logout();
-                              } else if (value == 'admin') {
-                                _navigateToAdmin();
-                              } else if (value == 'account') {
-                                _navigateToAccount();
-                              }
+                          child: FutureBuilder<List<PopupMenuEntry<String>>>(
+                            future: _buildMenuItems(),
+                            builder: (context, snapshot) {
+                              return PopupMenuButton<String>(
+                                icon: const Icon(
+                                  Icons.person_outline,
+                                  color: TBColors.white,
+                                ),
+                                onSelected: (value) {
+                                  if (value == 'logout') {
+                                    _logout();
+                                  } else if (value == 'admin') {
+                                    _navigateToAdmin();
+                                  } else if (value == 'roles') {
+                                    _navigateToRoles();
+                                  } else if (value == 'account') {
+                                    _navigateToAccount();
+                                  }
+                                },
+                                itemBuilder: (context) => snapshot.data ?? [],
+                              );
                             },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'admin',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.admin_panel_settings, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Panel Admin'),
-                                  ],
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'account',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.person, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Mi Cuenta'),
-                                  ],
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'logout',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.logout, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Cerrar sesión'),
-                                  ],
-                                ),
-                              ),
-                            ],
                           ),
                         ),
                       ],

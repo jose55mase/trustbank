@@ -35,12 +35,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return;
         }
         
+        // Determinar rol según email (en producción vendría de la base de datos)
+        final userRole = _getUserRole(event.email);
+        
         emit(AuthAuthenticated(
           user: User(
             id: '1',
             email: event.email,
             name: 'Usuario TrustBank',
             accountStatus: accountStatus,
+            role: userRole,
           ),
         ));
       } else {
@@ -56,6 +60,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (email.contains('suspended')) return 'suspended';
     if (email.contains('inactive')) return 'inactive';
     return 'active';
+  }
+  
+  String _getUserRole(String email) {
+    // Simular roles según email (en producción vendría de la base de datos)
+    if (email.contains('superadmin')) return 'SUPER_ADMIN';
+    if (email.contains('admin')) return 'ADMIN';
+    if (email.contains('moderator')) return 'MODERATOR';
+    return 'USER';
   }
 
   Future<void> _onLogoutRequested(
