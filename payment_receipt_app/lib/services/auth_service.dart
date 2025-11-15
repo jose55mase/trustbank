@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_role.dart';
+import 'api_service.dart';
 
 class AuthService {
   static const String _userDataKey = 'user_data';
@@ -70,7 +71,26 @@ class AuthService {
   }
 
   static Future<Map<String, dynamic>> login(String email, String password) async {
-    // Implementación básica - en producción usar ApiService
-    return {'success': true, 'user': {'id': 1, 'email': email}};
+    try {
+      // Usar ApiService para login real con backend
+      final response = await ApiService.login(email, password);
+      
+      if (response['access_token'] != null) {
+        // Guardar token
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('auth_token', response['access_token']);
+        
+        // Obtener datos del usuario
+        final userData = await ApiService.getUserByEmail(email);
+        await prefs.setString(_userDataKey, json.encode(userData));
+        await prefs.setBool(_isLoggedInKey, true);
+        
+        return {'success': true, 'user': userData};
+      } else {
+        return {'success': false, 'error': 'Credenciales inválidas'};
+      }
+    } catch (e) {
+      return {'success': false, 'error': e.toString()};
+    }
   }
 }

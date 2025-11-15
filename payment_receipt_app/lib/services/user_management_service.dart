@@ -1,120 +1,77 @@
-import '../features/admin/models/user_model.dart';
 import 'api_service.dart';
+import '../models/user_role.dart';
 
 class UserManagementService {
-  static Future<List<AdminUser>> getAllUsers() async {
+  static Future<List<dynamic>> getAllUsers() async {
     try {
-      final response = await ApiService.getAllUsers();
-      return response.map((data) => AdminUser.fromJson(data)).toList();
+      return await ApiService.getAllUsers();
     } catch (e) {
-      throw Exception('Error al obtener usuarios: ${e.toString()}');
+      throw Exception('Error obteniendo usuarios: $e');
     }
   }
 
-  static Future<AdminUser> getUserById(int userId) async {
+  static Future<List<dynamic>> getUsersByRole(UserRole role) async {
     try {
-      final response = await ApiService.getUserById(userId);
-      return AdminUser.fromJson(response);
+      return await ApiService.getUsersByStatus(role.value);
     } catch (e) {
-      throw Exception('Error al obtener usuario: ${e.toString()}');
+      throw Exception('Error obteniendo usuarios por rol: $e');
     }
   }
 
-  static Future<bool> updateUserStatus(int userId, UserStatus status) async {
+  static Future<Map<String, dynamic>> updateUserRole(int userId, UserRole newRole) async {
     try {
-      await ApiService.updateUserStatus(userId, status.name.toUpperCase());
-      return true;
+      return await ApiService.updateUserRole(userId, newRole.value);
     } catch (e) {
-      throw Exception('Error al actualizar estado: ${e.toString()}');
+      throw Exception('Error actualizando rol: $e');
     }
   }
 
-  static Future<List<AdminUser>> getUsersByStatus(UserStatus status) async {
+  static Future<List<dynamic>> getAdminUsers() async {
     try {
-      final response = await ApiService.getUsersByStatus(status.name.toUpperCase());
-      return response.map((data) => AdminUser.fromJson(data)).toList();
+      final allUsers = await getAllUsers();
+      return allUsers.where((user) {
+        final role = user['role']?.toString().toUpperCase() ?? 'USER';
+        return role == 'ADMIN' || role == 'SUPER_ADMIN' || role == 'MODERATOR';
+      }).toList();
     } catch (e) {
-      throw Exception('Error al filtrar usuarios: ${e.toString()}');
+      throw Exception('Error obteniendo administradores: $e');
     }
   }
 
-  static Future<List<AdminUser>> searchUsers(String query) async {
+  static Future<bool> isUserAdmin(int userId) async {
     try {
-      final response = await ApiService.searchUsers(query);
-      return response.map((data) => AdminUser.fromJson(data)).toList();
+      final user = await ApiService.getUserById(userId);
+      final role = user['role']?.toString().toUpperCase() ?? 'USER';
+      return role == 'ADMIN' || role == 'SUPER_ADMIN' || role == 'MODERATOR';
     } catch (e) {
-      throw Exception('Error al buscar usuarios: ${e.toString()}');
+      return false;
     }
   }
 
-  static Future<Map<String, int>> getUserStats() async {
-    try {
-      final response = await ApiService.getUserStats();
-      return {
-        'total': response['total'] ?? 0,
-        'active': response['active'] ?? 0,
-        'inactive': response['inactive'] ?? 0,
-        'pending': response['pending'] ?? 0,
-        'suspended': response['suspended'] ?? 0,
-      };
-    } catch (e) {
-      throw Exception('Error al obtener estadísticas: ${e.toString()}');
-    }
-  }
-
-  static Future<List<AdminUser>> filterUsers({
-    UserStatus? status,
-    String? searchQuery,
+  static Future<Map<String, dynamic>> createAdminUser({
+    required String name,
+    required String email,
+    required String password,
+    required UserRole role,
   }) async {
     try {
-      List<AdminUser> users;
+      final userData = {
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role.value,
+        'accountStatus': 'ACTIVE',
+        'moneyclean': 0.0,
+        'balance': 0.0,
+        'phone': '',
+        'address': '',
+        'documentType': 'CC',
+        'documentNumber': '',
+      };
 
-      if (searchQuery != null && searchQuery.isNotEmpty) {
-        users = await searchUsers(searchQuery);
-      } else if (status != null) {
-        users = await getUsersByStatus(status);
-      } else {
-        users = await getAllUsers();
-      }
-
-      // Aplicar filtros adicionales si es necesario
-      if (status != null && searchQuery != null && searchQuery.isNotEmpty) {
-        users = users.where((user) => 
-          user.accountStatus.toLowerCase() == status.name.toLowerCase()
-        ).toList();
-      }
-
-      return users;
+      return await ApiService.registerUser(userData);
     } catch (e) {
-      throw Exception('Error al filtrar usuarios: ${e.toString()}');
-    }
-  }
-
-  static String getStatusDisplayName(UserStatus status) {
-    switch (status) {
-      case UserStatus.active:
-        return 'Activo';
-      case UserStatus.inactive:
-        return 'Inactivo';
-      case UserStatus.pending:
-        return 'Pendiente';
-      case UserStatus.suspended:
-        return 'Suspendido';
-    }
-  }
-
-  static UserStatus? parseStatus(String status) {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return UserStatus.active;
-      case 'inactive':
-        return UserStatus.inactive;
-      case 'pending':
-        return UserStatus.pending;
-      case 'suspended':
-        return UserStatus.suspended;
-      default:
-        return null;
+      throw Exception('Error creando usuario admin: $e');
     }
   }
 }
