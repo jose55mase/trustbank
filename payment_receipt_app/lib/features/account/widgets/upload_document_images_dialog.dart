@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
-import '../../../services/document_service.dart';
+
 import '../../../services/auth_service.dart';
 import '../../../services/image_storage_service.dart';
 import '../../../services/document_api_service.dart';

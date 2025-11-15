@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../design_system/colors/tb_colors.dart';
+
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../models/request_model.dart';

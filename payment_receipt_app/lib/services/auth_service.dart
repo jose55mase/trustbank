@@ -63,4 +63,14 @@ class AuthService {
     await prefs.remove(_userDataKey);
     await prefs.setBool(_isLoggedInKey, false);
   }
+
+  static Future<int?> getCurrentUserId() async {
+    final user = await getCurrentUser();
+    return user?['id'];
+  }
+
+  static Future<Map<String, dynamic>> login(String email, String password) async {
+    // Implementación básica - en producción usar ApiService
+    return {'success': true, 'user': {'id': 1, 'email': email}};
+  }
 }

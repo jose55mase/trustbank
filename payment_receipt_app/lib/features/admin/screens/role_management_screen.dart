@@ -14,7 +14,7 @@ class RoleManagementScreen extends StatefulWidget {
 }
 
 class _RoleManagementScreenState extends State<RoleManagementScreen> {
-  List<Map<String, dynamic>> users = [];
+  List<dynamic> users = [];
   bool isLoading = true;
 
   @override
@@ -73,7 +73,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     );
   }
 
-  Widget _buildUserCard(Map<String, dynamic> user) {
+  Widget _buildUserCard(dynamic user) {
     final currentRole = UserRole.fromString(user['role'] ?? 'USER');
     
     return Card(
@@ -181,7 +181,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     }
   }
 
-  void _showRoleDialog(Map<String, dynamic> user) {
+  void _showRoleDialog(dynamic user) {
     final currentRole = UserRole.fromString(user['role'] ?? 'USER');
     UserRole selectedRole = currentRole;
 
@@ -236,7 +236,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     }
   }
 
-  Future<void> _updateUserRole(Map<String, dynamic> user, UserRole newRole) async {
+  Future<void> _updateUserRole(dynamic user, UserRole newRole) async {
     try {
       await ApiService.updateUserRole(user['id'], newRole.value);
       

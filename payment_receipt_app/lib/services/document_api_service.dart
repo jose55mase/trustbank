@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'auth_service.dart';
+
 
 class DocumentApiService {
   static const String baseUrl = 'http://localhost:8080/api';
