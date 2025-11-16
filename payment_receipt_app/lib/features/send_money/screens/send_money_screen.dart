@@ -11,6 +11,7 @@ import '../../../design_system/components/molecules/tb_dialog.dart';
 
 import '../../recharge/screens/recharge_screen.dart';
 import '../../../utils/currency_formatter.dart';
+import '../../../utils/currency_input_formatter.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class SendMoneyScreen extends StatefulWidget {
@@ -136,10 +137,11 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   const SizedBox(height: TBSpacing.lg),
                   TBInput(
                     label: 'Monto',
-                    hint: '0.00',
+                    hint: '\$0.00',
                     controller: _amountController,
                     keyboardType: TextInputType.number,
                     prefixIcon: const Icon(Icons.attach_money),
+                    isCurrency: true,
                     onChanged: (value) {
                       setState(() {});
                     },
@@ -150,7 +152,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                       padding: const EdgeInsets.only(top: TBSpacing.xs),
                       child: Builder(
                         builder: (context) {
-                          final amount = double.tryParse(_amountController.text) ?? 0;
+                          final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                           final isValid = amount > 0 && amount <= _currentBalance;
                           return Row(
                             children: [
@@ -200,7 +202,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               text: 'Enviar dinero',
               fullWidth: true,
               onPressed: () async {
-                final amount = double.tryParse(_amountController.text) ?? 0;
+                final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                 final description = _descriptionController.text;
                 final bank = _bankController.text;
                 final type = _typeController.text;

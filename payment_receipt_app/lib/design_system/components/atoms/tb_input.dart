@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../colors/tb_colors.dart';
 import '../../typography/tb_typography.dart';
 import '../../spacing/tb_spacing.dart';
+import '../../../utils/currency_input_formatter.dart';
 
 class TBInput extends StatefulWidget {
   final String? label;
@@ -13,6 +14,7 @@ class TBInput extends StatefulWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
+  final bool isCurrency;
 
   const TBInput({
     super.key,
@@ -25,6 +27,7 @@ class TBInput extends StatefulWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.onChanged,
+    this.isCurrency = false,
   });
 
   @override
@@ -84,6 +87,7 @@ class _TBInputState extends State<TBInput> {
             focusNode: _focusNode,
             obscureText: widget.obscureText,
             keyboardType: widget.keyboardType,
+            inputFormatters: widget.isCurrency ? [CurrencyInputFormatter()] : null,
             onChanged: widget.onChanged,
             style: TBTypography.bodyMedium,
             decoration: InputDecoration(

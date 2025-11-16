@@ -12,6 +12,7 @@ import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../../utils/currency_formatter.dart';
+import '../../../utils/currency_input_formatter.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class CreditSimulationScreen extends StatefulWidget {
@@ -36,13 +37,13 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
   @override
   void initState() {
     super.initState();
-    _amountController.text = widget.creditOption.minAmount.toString();
+    _amountController.text = CurrencyFormatter.format(widget.creditOption.minAmount);
     _selectedMonths = widget.creditOption.minTermMonths;
     _calculatePayment();
   }
 
   void _calculatePayment() {
-    final amount = double.tryParse(_amountController.text) ?? 0;
+    final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
     if (amount > 0) {
       final monthlyRate = widget.creditOption.interestRate / 100 / 12;
       final payment = amount * (monthlyRate * math.pow(1 + monthlyRate, _selectedMonths)) / 
@@ -93,9 +94,10 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                   const SizedBox(height: TBSpacing.lg),
                   TBInput(
                     label: 'Monto del crédito (USD)',
-                    hint: 'Ingresa el monto',
+                    hint: '\$0.00',
                     controller: _amountController,
                     keyboardType: TextInputType.number,
+                    isCurrency: true,
                     onChanged: (value) => _calculatePayment(),
                   ),
                   const SizedBox(height: TBSpacing.lg),
@@ -170,7 +172,7 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               text: 'Solicitar crédito',
               fullWidth: true,
               onPressed: () async {
-                final amount = double.tryParse(_amountController.text) ?? 0;
+                final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                 
                 try {
                   final response = await TBLoadingOverlay.showWithDelay(

@@ -9,6 +9,7 @@ import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../../utils/currency_formatter.dart';
+import '../../../utils/currency_input_formatter.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class RechargeScreen extends StatefulWidget {
@@ -60,10 +61,11 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 children: [
                   TBInput(
                     label: 'Monto a recargar',
-                    hint: '0.00',
+                    hint: '\$0.00',
                     controller: _amountController,
                     keyboardType: TextInputType.number,
                     prefixIcon: const Icon(Icons.attach_money),
+                    isCurrency: true,
                   ),
                   const SizedBox(height: TBSpacing.lg),
                   Text(
@@ -90,7 +92,7 @@ class _RechargeScreenState extends State<RechargeScreen> {
               text: 'Recargar saldo',
               fullWidth: true,
               onPressed: () async {
-                final amount = double.tryParse(_amountController.text) ?? 0;
+                final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                 
                 if (amount > 0) {
                   try {
