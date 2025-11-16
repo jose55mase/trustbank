@@ -103,6 +103,88 @@ class NotificationsScreen extends StatelessWidget {
                 color: TBColors.grey600,
               ),
             ),
+            if (notification.userName != null || notification.userEmail != null) ...[
+              const SizedBox(height: TBSpacing.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: TBSpacing.sm,
+                  vertical: TBSpacing.xs,
+                ),
+                decoration: BoxDecoration(
+                  color: TBColors.grey100,
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusSm),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (notification.userName != null)
+                      Row(
+                        children: [
+                          Icon(Icons.person, size: 14, color: TBColors.grey600),
+                          const SizedBox(width: TBSpacing.xs),
+                          Text(
+                            notification.userName!,
+                            style: TBTypography.labelMedium.copyWith(
+                              color: TBColors.grey700,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (notification.userEmail != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.email, size: 14, color: TBColors.grey600),
+                          const SizedBox(width: TBSpacing.xs),
+                          Expanded(
+                            child: Text(
+                              notification.userEmail!,
+                              style: TBTypography.labelMedium.copyWith(
+                                color: TBColors.grey600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (notification.userPhone != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.phone, size: 14, color: TBColors.grey600),
+                          const SizedBox(width: TBSpacing.xs),
+                          Text(
+                            notification.userPhone!,
+                            style: TBTypography.labelMedium.copyWith(
+                              color: TBColors.grey600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (notification.additionalInfo != null) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 14, color: TBColors.grey600),
+                          const SizedBox(width: TBSpacing.xs),
+                          Expanded(
+                            child: Text(
+                              notification.additionalInfo!,
+                              style: TBTypography.labelMedium.copyWith(
+                                color: TBColors.grey600,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: TBSpacing.xs),
             Text(
               DateFormat('dd/MM/yyyy HH:mm').format(notification.date),
