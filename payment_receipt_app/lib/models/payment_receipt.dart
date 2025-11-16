@@ -10,6 +10,16 @@ class PaymentReceipt extends Equatable {
   final String concept;
   final String reference;
   final String status;
+  
+  // Client information
+  final String senderName;
+  final String senderAccount;
+  final String senderEmail;
+  final String senderPhone;
+  final String senderAddress;
+  final String transactionType;
+  final String bankName;
+  final String authorizationCode;
 
   const PaymentReceipt({
     required this.id,
@@ -21,6 +31,14 @@ class PaymentReceipt extends Equatable {
     required this.concept,
     required this.reference,
     required this.status,
+    required this.senderName,
+    required this.senderAccount,
+    required this.senderEmail,
+    required this.senderPhone,
+    required this.senderAddress,
+    required this.transactionType,
+    required this.bankName,
+    required this.authorizationCode,
   });
 
   @override
@@ -34,5 +52,13 @@ class PaymentReceipt extends Equatable {
         concept,
         reference,
         status,
+        senderName,
+        senderAccount,
+        senderEmail,
+        senderPhone,
+        senderAddress,
+        transactionType,
+        bankName,
+        authorizationCode,
       ];
 }

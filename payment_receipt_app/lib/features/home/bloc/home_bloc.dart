@@ -102,14 +102,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         'id': 'sample_1',
         'type': 'INCOME',
         'amount': 500.0,
-        'description': 'Recarga aprobada por administrador',
+        'description': 'Recarga aprobada',
+        'fromUser': 'TrustBank Admin',
+        'toUser': 'Mi Cuenta',
         'date': now.subtract(const Duration(hours: 2)).toIso8601String(),
       },
       {
         'id': 'sample_2', 
         'type': 'EXPENSE',
         'amount': 150.0,
-        'description': 'Envío de dinero a Juan Pérez',
+        'description': 'Envío de dinero',
+        'fromUser': 'Mi Cuenta',
+        'toUser': 'Juan Pérez',
         'date': now.subtract(const Duration(hours: 5)).toIso8601String(),
       },
       {
@@ -117,6 +121,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         'type': 'INCOME', 
         'amount': 1000.0,
         'description': 'Depósito inicial',
+        'fromUser': 'TrustBank',
+        'toUser': 'Mi Cuenta',
         'date': now.subtract(const Duration(days: 1)).toIso8601String(),
       },
       {
@@ -124,6 +130,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         'type': 'EXPENSE',
         'amount': 75.0,
         'description': 'Pago de servicios',
+        'fromUser': 'Mi Cuenta',
+        'toUser': 'Servicios Públicos',
         'date': now.subtract(const Duration(days: 2)).toIso8601String(),
       },
       {
@@ -131,6 +139,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         'type': 'INCOME',
         'amount': 250.0,
         'description': 'Transferencia recibida',
+        'fromUser': 'María González',
+        'toUser': 'Mi Cuenta',
         'date': now.subtract(const Duration(days: 3)).toIso8601String(),
       },
     ];

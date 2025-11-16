@@ -570,29 +570,39 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Determinar icono y título según tipo de transacción
                       IconData icon = Icons.swap_horiz;
                       String title = description;
+                      String subtitle = dateStr;
                       
-                      if (description.toLowerCase().contains('recarga') || description.toLowerCase().contains('aprobada por administrador')) {
-                        if (isIncome) {
+                      // Mostrar nombres de usuarios en lugar de IDs
+                      final fromUser = transaction['fromUser'] ?? 'Usuario';
+                      final toUser = transaction['toUser'] ?? 'Destinatario';
+                      
+                      if (isIncome) {
+                        title = 'De: $fromUser';
+                        if (description.toLowerCase().contains('recarga')) {
                           icon = Icons.add_circle;
-                          title = 'Recarga aprobada';
+                        } else if (description.toLowerCase().contains('transferencia')) {
+                          icon = Icons.arrow_downward;
                         } else {
-                          icon = Icons.send;
-                          title = 'Envío de dinero';
+                          icon = Icons.account_balance;
                         }
-                      } else if (description.toLowerCase().contains('envío')) {
-                        icon = Icons.send;
-                        title = 'Envío de dinero';
-                      } else if (description.toLowerCase().contains('pago')) {
-                        icon = Icons.payment;
                       } else {
-                        icon = isIncome ? Icons.arrow_downward : Icons.arrow_upward;
+                        title = 'Para: $toUser';
+                        if (description.toLowerCase().contains('envío')) {
+                          icon = Icons.send;
+                        } else if (description.toLowerCase().contains('pago')) {
+                          icon = Icons.payment;
+                        } else {
+                          icon = Icons.arrow_upward;
+                        }
                       }
+                      
+                      subtitle = '$description • $dateStr';
                       
                       return Padding(
                         padding: const EdgeInsets.only(bottom: TBSpacing.sm),
                         child: _buildTransactionItem(
                           title,
-                          dateStr,
+                          subtitle,
                           CurrencyFormatter.format(amount),
                           icon,
                           isIncome,

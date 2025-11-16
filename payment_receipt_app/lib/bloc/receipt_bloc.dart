@@ -36,7 +36,7 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
       try {
         final backendTransactions = await ApiService.getUserTransactions(userId);
         for (final transaction in backendTransactions) {
-          receipts.add(_mapTransactionToReceipt(transaction));
+          receipts.add(await _mapTransactionToReceipt(transaction));
         }
       } catch (e) {
         // Error loading backend transactions logged
@@ -49,7 +49,7 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
       final localTransactions = List<dynamic>.from(json.decode(localTransactionsString));
       
       for (final transaction in localTransactions) {
-        receipts.add(_mapTransactionToReceipt(transaction));
+        receipts.add(await _mapTransactionToReceipt(transaction));
       }
       
       // Ordenar por fecha descendente
@@ -61,18 +61,30 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
     }
   }
   
-  PaymentReceipt _mapTransactionToReceipt(Map<String, dynamic> transaction) {
+  Future<PaymentReceipt> _mapTransactionToReceipt(Map<String, dynamic> transaction) async {
     final isIncome = transaction['type'] == 'INCOME';
+    final user = await AuthService.getCurrentUser();
+    
     return PaymentReceipt(
       id: transaction['id'].toString(),
-      recipientName: isIncome ? 'TrustBank' : 'Destinatario',
-      recipientAccount: 'N/A',
+      recipientName: transaction['toUser'] ?? (isIncome ? 'Mi Cuenta' : 'Destinatario'),
+      recipientAccount: isIncome ? '****1234' : '****5678',
       amount: (transaction['amount'] ?? 0.0).toDouble(),
       currency: 'USD',
       date: DateTime.parse(transaction['date'] ?? DateTime.now().toIso8601String()),
       concept: transaction['description'] ?? 'Transacción',
-      reference: 'REF${transaction['id']}',
+      reference: 'TB${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
       status: 'Completado',
+      
+      // Client information
+      senderName: user?['fistName'] ?? user?['name'] ?? 'Usuario TrustBank',
+      senderAccount: '****1234',
+      senderEmail: user?['email'] ?? 'usuario@trustbank.com',
+      senderPhone: user?['phone'] ?? '+1 (555) 123-4567',
+      senderAddress: user?['address'] ?? 'Ciudad, País',
+      transactionType: isIncome ? 'Depósito' : 'Transferencia',
+      bankName: 'TrustBank',
+      authorizationCode: 'AUTH${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
     );
   }
 
