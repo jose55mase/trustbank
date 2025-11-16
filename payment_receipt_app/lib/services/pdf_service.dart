@@ -23,7 +23,9 @@ class PdfService {
                 padding: const pw.EdgeInsets.all(20),
                 decoration: pw.BoxDecoration(
                   gradient: pw.LinearGradient(
+
                     colors: [PdfColor.fromHex('#6C63FF'), PdfColor.fromHex('#9C96FF')],
+
                   ),
                   borderRadius: pw.BorderRadius.circular(12),
                 ),
