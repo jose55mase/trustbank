@@ -1,7 +1,9 @@
 package com.bolsadeideas.springboot.backend.apirest.controllers;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.AdminRequestEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IAdminRequestService;
+import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUserService;
 import com.bolsadeideas.springboot.backend.apirest.utils.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,9 @@ public class AdminRequestController {
 
     @Autowired
     private IAdminRequestService adminRequestService;
+    
+    @Autowired
+    private IUserService userService;
 
     @PostMapping("/create")
     public RestResponse createRequest(@RequestBody AdminRequestEntity request) {
@@ -59,14 +64,51 @@ public class AdminRequestController {
             return new RestResponse(HttpStatus.NOT_FOUND.value(), "Solicitud no encontrada", null);
         }
 
+        // Actualizar estado de la solicitud
         request.setStatus(status);
         request.setProcessedAt(new Date());
         if (adminNotes != null) {
             request.setAdminNotes(adminNotes);
         }
 
+        // Si la solicitud es aprobada, actualizar saldo del usuario
+        if ("APPROVED".equals(status)) {
+            updateUserBalance(request);
+        }
+
         AdminRequestEntity updatedRequest = adminRequestService.save(request);
         return new RestResponse(HttpStatus.OK.value(), "Solicitud procesada", updatedRequest);
+    }
+    
+    private void updateUserBalance(AdminRequestEntity request) {
+        try {
+            UserEntity user = userService.findById(request.getUserId());
+            if (user != null) {
+                Integer currentBalance = user.getMoneyclean() != null ? user.getMoneyclean() : 0;
+                
+                switch (request.getRequestType()) {
+                    case "RECHARGE":
+                    case "BALANCE_RECHARGE":
+                        // Agregar dinero al saldo
+                        user.setMoneyclean(currentBalance + request.getAmount().intValue());
+                        break;
+                        
+                    case "SEND_MONEY":
+                        // Restar dinero del saldo
+                        user.setMoneyclean(currentBalance - request.getAmount().intValue());
+                        break;
+                        
+                    default:
+                        // Para otros tipos de solicitud, no modificar saldo
+                        return;
+                }
+                
+                userService.save(user);
+            }
+        } catch (Exception e) {
+            // Log error pero no fallar la transacción principal
+            System.err.println("Error actualizando saldo del usuario: " + e.getMessage());
+        }
     }
 
     @GetMapping("/status/{status}")
