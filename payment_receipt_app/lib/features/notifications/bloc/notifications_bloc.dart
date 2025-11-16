@@ -185,7 +185,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     final notification = NotificationModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: 'Recarga Exitosa 💳',
-      message: 'Has recargado ${CurrencyFormatter.format(event.amount)} usando ${event.method}.';
+      message: 'Has recargado ${CurrencyFormatter.format(event.amount)} usando ${event.method}.',
       date: DateTime.now(),
       type: NotificationType.recharge,
     );
