@@ -27,16 +27,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       _notifications.clear();
       
       // Siempre agregar notificaciones de ejemplo primero
-      await _addSampleNotifications();
+      _addSampleNotifications();
       
       try {
         final response = await ApiService.getUserNotifications(userId);
         if (response.isNotEmpty) {
-          final currentUser = await AuthService.getCurrentUser();
-          final userName = currentUser?['name'] ?? 'Usuario';
-          final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
-          final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
-          
           final notifications = response.map<NotificationModel>((data) => 
             NotificationModel.fromJson(data)
           ).toList();
@@ -46,7 +41,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         }
       } catch (e) {
         // Backend no disponible, agregar notificaciones de transacciones de ejemplo
-        await _addTransactionNotifications();
+        _addTransactionNotifications();
       }
       
       // También cargar solicitudes del usuario
@@ -55,7 +50,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       } catch (e) {
         // Error silencioso para requests - agregar notificaciones de ejemplo si no hay backend
         if (_notifications.length <= 1) {
-          await _addTransactionNotifications();
+          _addTransactionNotifications();
         }
       }
       
@@ -66,16 +61,15 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     } catch (e) {
       // En caso de error total, asegurar que hay notificaciones de ejemplo
       _notifications.clear();
-      await _addSampleNotifications();
+      _addSampleNotifications();
       emit(NotificationsLoaded(_notifications));
     }
   }
   
-  void _addSampleNotifications() async {
-    final currentUser = await AuthService.getCurrentUser();
-    final userName = currentUser?['name'] ?? 'Usuario';
-    final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
-    final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+  void _addSampleNotifications() {
+    const userName = 'Usuario';
+    const userEmail = 'usuario@trustbank.com';
+    const userPhone = '+1 234 567 8900';
     
     final sampleNotifications = [
       NotificationModel(
@@ -95,11 +89,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     _notifications.addAll(sampleNotifications);
   }
   
-  void _addTransactionNotifications() async {
-    final currentUser = await AuthService.getCurrentUser();
-    final userName = currentUser?['name'] ?? 'Usuario';
-    final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
-    final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+  void _addTransactionNotifications() {
+    const userName = 'Usuario';
+    const userEmail = 'usuario@trustbank.com';
+    const userPhone = '+1 234 567 8900';
     
     final transactionNotifications = [
       NotificationModel(
