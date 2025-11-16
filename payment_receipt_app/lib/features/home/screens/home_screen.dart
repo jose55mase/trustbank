@@ -23,6 +23,8 @@ import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
 import '../widgets/loading_home.dart';
+import '../../../utils/currency_formatter.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -121,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Text(
-            '${isIncome ? '+' : '-'}\$${amount}',
+            '${isIncome ? '+' : '-'}${amount}',
             style: TBTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
               color: isIncome ? TBColors.success : TBColors.error,
@@ -447,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 balance = state.balance.toStringAsFixed(2);
                               }
                               return Text(
-                                _showBalance ? balance : '••••••',
+                                _showBalance ? CurrencyFormatter.format(double.tryParse(balance) ?? 0.0) : '••••••',
                                 style: TBTypography.headlineMedium.copyWith(
                                   color: TBColors.white,
                                   fontWeight: FontWeight.w700,
@@ -462,7 +464,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       IconButton(
-                        onPressed: () {
+                        onPressed: () async {
+                          await TBLoadingOverlay.showWithDelay(
+                            context,
+                            Future.delayed(const Duration(milliseconds: 500)),
+                            message: 'Actualizando saldo...',
+                            minDelayMs: 1500,
+                          );
                           _homeBloc.add(RefreshData());
                         },
                         icon: Icon(
@@ -585,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: _buildTransactionItem(
                           title,
                           dateStr,
-                          amount.toStringAsFixed(2),
+                          CurrencyFormatter.format(amount),
                           icon,
                           isIncome,
                         ),

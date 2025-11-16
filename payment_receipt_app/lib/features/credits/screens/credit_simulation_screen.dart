@@ -1,4 +1,4 @@
-import 'dart:math' as Math;
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
@@ -11,6 +11,8 @@ import '../../notifications/bloc/notifications_bloc.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../utils/currency_formatter.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class CreditSimulationScreen extends StatefulWidget {
   final CreditOption creditOption;
@@ -43,8 +45,8 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
     final amount = double.tryParse(_amountController.text) ?? 0;
     if (amount > 0) {
       final monthlyRate = widget.creditOption.interestRate / 100 / 12;
-      final payment = amount * (monthlyRate * Math.pow(1 + monthlyRate, _selectedMonths)) / 
-                     (Math.pow(1 + monthlyRate, _selectedMonths) - 1);
+      final payment = amount * (monthlyRate * math.pow(1 + monthlyRate, _selectedMonths)) / 
+                     (math.pow(1 + monthlyRate, _selectedMonths) - 1);
       
       setState(() {
         _monthlyPayment = payment;
@@ -136,7 +138,7 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                   ),
                   const SizedBox(height: TBSpacing.sm),
                   Text(
-                    '\$${_monthlyPayment.toStringAsFixed(2)}',
+                    CurrencyFormatter.format(_monthlyPayment),
                     style: TBTypography.displayLarge.copyWith(
                       color: TBColors.white,
                       fontWeight: FontWeight.w700,
@@ -155,9 +157,9 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               ),
               child: Column(
                 children: [
-                  _buildDetailRow('Total a pagar:', '\$${_totalPayment.toStringAsFixed(2)}'),
+                  _buildDetailRow('Total a pagar:', CurrencyFormatter.format(_totalPayment)),
                   const SizedBox(height: TBSpacing.sm),
-                  _buildDetailRow('Total intereses:', '\$${_totalInterest.toStringAsFixed(2)}'),
+                  _buildDetailRow('Total intereses:', CurrencyFormatter.format(_totalInterest)),
                   const SizedBox(height: TBSpacing.sm),
                   _buildDetailRow('Tasa de interés:', '${widget.creditOption.interestRate}% EA'),
                 ],
@@ -171,15 +173,12 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                 final amount = double.tryParse(_amountController.text) ?? 0;
                 
                 try {
-                  final userId = await AuthService.getCurrentUserId() ?? 1;
-                  final response = await ApiService.applyForCredit({
-                    'userId': userId,
-                    'creditType': widget.creditOption.title,
-                    'amount': amount,
-                    'termMonths': _selectedMonths,
-                    'interestRate': widget.creditOption.interestRate,
-                    'monthlyPayment': _monthlyPayment,
-                  });
+                  final response = await TBLoadingOverlay.showWithDelay(
+                    context,
+                    _processCreditApplication(amount),
+                    message: 'Procesando solicitud de crédito...',
+                    minDelayMs: 3000,
+                  );
                   
                   if (response['status'] == 201) {
                     NotificationsBloc().add(AddCreditNotification(
@@ -229,5 +228,17 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
         ),
       ],
     );
+  }
+  
+  Future<Map<String, dynamic>> _processCreditApplication(double amount) async {
+    final userId = await AuthService.getCurrentUserId() ?? 1;
+    return await ApiService.applyForCredit({
+      'userId': userId,
+      'creditType': widget.creditOption.title,
+      'amount': amount,
+      'termMonths': _selectedMonths,
+      'interestRate': widget.creditOption.interestRate,
+      'monthlyPayment': _monthlyPayment,
+    });
   }
 }

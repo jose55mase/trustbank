@@ -10,6 +10,8 @@ import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 
 import '../../recharge/screens/recharge_screen.dart';
+import '../../../utils/currency_formatter.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class SendMoneyScreen extends StatefulWidget {
   const SendMoneyScreen({super.key});
@@ -89,7 +91,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                         ),
                       ),
                       Text(
-                        '\$${_currentBalance.toStringAsFixed(2)}',
+                        CurrencyFormatter.format(_currentBalance),
                         style: TBTypography.headlineMedium.copyWith(
                           color: TBColors.primary,
                           fontWeight: FontWeight.w700,
@@ -218,7 +220,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   TBDialogHelper.showError(
                     context,
                     title: 'Saldo insuficiente',
-                    message: 'No tienes suficiente saldo para realizar este envío.\n\nSaldo disponible: \$${_currentBalance.toStringAsFixed(2)}\nMonto a enviar: \$${amount.toStringAsFixed(2)}\n\n¿Deseas hacer una recarga?',
+                    message: 'No tienes suficiente saldo para realizar este envío.\n\nSaldo disponible: ${CurrencyFormatter.format(_currentBalance)}\nMonto a enviar: ${CurrencyFormatter.format(amount)}\n\n¿Deseas hacer una recarga?',
                     buttonText: 'Recargar ahora',
                     onPressed: () {
                       Navigator.of(context).pop();
@@ -232,13 +234,12 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 }
                 
                 try {
-                  final userId = await AuthService.getCurrentUserId() ?? 1;
-                  await ApiService.createAdminRequest({
-                    'requestType': 'SEND_MONEY',
-                    'userId': userId,
-                    'amount': amount,
-                    'details': 'Descripción: $description. Banco: $bank. Tipo: $type',
-                  });
+                  await TBLoadingOverlay.showWithDelay(
+                    context,
+                    _processSendMoney(amount, description, bank, type),
+                    message: 'Procesando envío...',
+                    minDelayMs: 2500,
+                  );
                   
                   TBDialogHelper.showSuccess(
                     context,
@@ -262,5 +263,15 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
         ),
       ),
     );
+  }
+  
+  Future<void> _processSendMoney(double amount, String description, String bank, String type) async {
+    final userId = await AuthService.getCurrentUserId() ?? 1;
+    await ApiService.createAdminRequest({
+      'requestType': 'SEND_MONEY',
+      'userId': userId,
+      'amount': amount,
+      'details': 'Descripción: $description. Banco: $bank. Tipo: $type',
+    });
   }
 }

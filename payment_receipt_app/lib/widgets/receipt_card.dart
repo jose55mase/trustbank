@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/payment_receipt.dart';
+import '../utils/currency_formatter.dart';
 
 class ReceiptCard extends StatelessWidget {
   final PaymentReceipt receipt;
@@ -50,7 +51,7 @@ class ReceiptCard extends StatelessWidget {
             const SizedBox(height: 12),
             _buildInfoRow('Beneficiario:', receipt.recipientName),
             _buildInfoRow('Cuenta:', receipt.recipientAccount),
-            _buildInfoRow('Monto:', '${receipt.currency} ${NumberFormat('#,##0.00').format(receipt.amount)}'),
+            _buildInfoRow('Monto:', CurrencyFormatter.format(receipt.amount)),
             _buildInfoRow('Fecha:', DateFormat('dd/MM/yyyy HH:mm').format(receipt.date)),
             _buildInfoRow('Concepto:', receipt.concept),
             const SizedBox(height: 16),

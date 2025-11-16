@@ -3,6 +3,7 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_input.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 import '../../../services/register_service.dart';
 
 class RegisterForm extends StatefulWidget {
@@ -130,13 +131,18 @@ class _RegisterFormState extends State<RegisterForm> {
     });
 
     try {
-      final result = await RegisterService.registerUser(
-        firstName: _firstNameController.text.trim(),
-        lastName: _lastNameController.text.trim(),
-        username: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        password: _passwordController.text,
+      final result = await TBLoadingOverlay.showWithDelay(
+        context,
+        RegisterService.registerUser(
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          username: _usernameController.text.trim(),
+          email: _emailController.text.trim(),
+          phone: _phoneController.text.trim(),
+          password: _passwordController.text,
+        ),
+        message: 'Creando tu cuenta...',
+        minDelayMs: 2500,
       );
 
       if (mounted) {

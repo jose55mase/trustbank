@@ -8,6 +8,8 @@ import '../../notifications/bloc/notifications_bloc.dart';
 import '../../../services/api_service.dart';
 import '../../../services/auth_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../utils/currency_formatter.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class RechargeScreen extends StatefulWidget {
   const RechargeScreen({super.key});
@@ -92,22 +94,12 @@ class _RechargeScreenState extends State<RechargeScreen> {
                 
                 if (amount > 0) {
                   try {
-                    final userId = await AuthService.getCurrentUserId();
-                    print('User ID: $userId');
-                    if (userId == null) throw Exception('Usuario no encontrado');
-                    
-                    final requestData = {
-                      'requestType': 'RECHARGE',
-                      'userId': userId,
-                      'amount': amount,
-                      'description': 'Solicitud de recarga de saldo',
-                      'details': 'Método: $_selectedMethod - Monto: \$${amount.toStringAsFixed(2)}',
-                      'status': 'PENDING'
-                    };
-                    print('Request data: $requestData');
-                    
-                    final response = await ApiService.createAdminRequest(requestData);
-                    print('Response: $response');
+                    await TBLoadingOverlay.showWithDelay(
+                      context,
+                      _processRecharge(amount),
+                      message: 'Procesando recarga...',
+                      minDelayMs: 2000,
+                    );
                     
                     // Actualizar notificaciones
                     NotificationsBloc().add(LoadNotifications());
@@ -141,5 +133,21 @@ class _RechargeScreenState extends State<RechargeScreen> {
         ),
       ),
     );
+  }
+  
+  Future<void> _processRecharge(double amount) async {
+    final userId = await AuthService.getCurrentUserId();
+    if (userId == null) throw Exception('Usuario no encontrado');
+    
+    final requestData = {
+      'requestType': 'RECHARGE',
+      'userId': userId,
+      'amount': amount,
+      'description': 'Solicitud de recarga de saldo',
+      'details': 'Método: $_selectedMethod - Monto: ${CurrencyFormatter.format(amount)}',
+      'status': 'PENDING'
+    };
+    
+    await ApiService.createAdminRequest(requestData);
   }
 }

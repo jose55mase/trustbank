@@ -7,6 +7,7 @@ import '../../../services/admin_setup_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 import '../../home/screens/home_screen.dart';
 import '../../register/screens/register_screen.dart';
 import '../../../design_system/colors/tb_colors.dart';
@@ -60,36 +61,30 @@ class LoginScreen extends StatelessWidget {
                       children: [
                         LoginCard(
                           onLogin: (email, password) async {
-                            // Crear admin por defecto si no existe
-                            await AdminSetupService.createDefaultAdmin();
-                            
-                            // Verificar si es el admin por defecto
-                            final isDefaultAdmin = await AdminSetupService.isDefaultAdmin(email, password);
-                            
-                            if (isDefaultAdmin) {
-                              final admin = await AdminSetupService.getDefaultAdmin();
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('user_data', json.encode(admin));
-                              await prefs.setBool('is_logged_in', true);
+                            try {
+                              final result = await TBLoadingOverlay.showWithDelay(
+                                context,
+                                _performLogin(email, password),
+                                message: 'Iniciando sesión...',
+                                minDelayMs: 2000,
+                              );
                               
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) => const HomeScreen()),
-                              );
-                              return;
-                            }
-                            
-                            // Login normal para otros usuarios
-                            final result = await AuthService.login(email, password);
-                            // Login response logged
-                            if (result['success']) {
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) => const HomeScreen()),
-                              );
-                            } else {
+                              if (result['success']) {
+                                Navigator.of(context).pushReplacement(
+                                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                                );
+                              } else {
+                                TBDialogHelper.showError(
+                                  context,
+                                  title: 'Error de autenticación',
+                                  message: result['error'] ?? 'Error desconocido',
+                                );
+                              }
+                            } catch (e) {
                               TBDialogHelper.showError(
                                 context,
-                                title: 'Error de autenticación',
-                                message: result['error'] ?? 'Error desconocido',
+                                title: 'Error de conexión',
+                                message: 'No se pudo conectar con el servidor',
                               );
                             }
                           },
@@ -138,5 +133,24 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  Future<Map<String, dynamic>> _performLogin(String email, String password) async {
+    // Crear admin por defecto si no existe
+    await AdminSetupService.createDefaultAdmin();
+    
+    // Verificar si es el admin por defecto
+    final isDefaultAdmin = await AdminSetupService.isDefaultAdmin(email, password);
+    
+    if (isDefaultAdmin) {
+      final admin = await AdminSetupService.getDefaultAdmin();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_data', json.encode(admin));
+      await prefs.setBool('is_logged_in', true);
+      return {'success': true};
+    }
+    
+    // Login normal para otros usuarios
+    return await AuthService.login(email, password);
   }
 }
