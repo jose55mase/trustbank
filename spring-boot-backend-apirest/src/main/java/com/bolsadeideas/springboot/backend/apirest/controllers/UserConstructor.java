@@ -168,6 +168,14 @@ public class UserConstructor {
         if (userEntity.getAccountStatus() == null) {
             userEntity.setAccountStatus("ACTIVE");
         }
+        
+        // Asegurar que firstName y lastName se guarden correctamente
+        // Los campos ya vienen en userEntity del @RequestBody, no necesitan asignación adicional
+        
+        // Inicializar saldo en 0 si no se especifica
+        if (userEntity.getMoneyclean() == null) {
+            userEntity.setMoneyclean(0);
+        }
 
         // Validar email único
         UserEntity existingUserByEmail = this.usuarioService.findByemail(userEntity.getEmail());

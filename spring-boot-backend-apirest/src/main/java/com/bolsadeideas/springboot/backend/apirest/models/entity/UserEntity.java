@@ -19,10 +19,10 @@ public class UserEntity implements Serializable {
     @Column(unique = true, length = 40)
     private String email;
 
-    @Column(length = 50)
+    @Column(name = "fist_name", length = 50)
     private String fistName;
 
-    @Column(length = 50)
+    @Column(name = "last_name", length = 50)
     private String lastName;
 
     private String documentsAprov;
