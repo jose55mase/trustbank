@@ -45,14 +45,18 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           _notifications.addAll(notifications);
         }
       } catch (e) {
-        // Backend no disponible, pero ya tenemos notificaciones de ejemplo
+        // Backend no disponible, agregar notificaciones de transacciones de ejemplo
+        _addTransactionNotifications();
       }
       
       // También cargar solicitudes del usuario
       try {
-        add(LoadUserRequests());
+        await _loadUserRequestsDirectly();
       } catch (e) {
-        // Error silencioso para requests
+        // Error silencioso para requests - agregar notificaciones de ejemplo si no hay backend
+        if (_notifications.length <= 1) {
+          _addTransactionNotifications();
+        }
       }
       
       // Ordenar todas las notificaciones por fecha
@@ -70,51 +74,47 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   void _addSampleNotifications() {
     final sampleNotifications = [
       NotificationModel(
-        id: 'sample_1',
+        id: 'welcome_1',
         title: 'Bienvenido a TrustBank 🎉',
         message: 'Gracias por unirte a nuestra familia financiera. Explora todos nuestros servicios.',
         date: DateTime.now().subtract(const Duration(minutes: 30)),
         type: NotificationType.general,
         isRead: false,
       ),
-      NotificationModel(
-        id: 'sample_2',
-        title: 'Transacción Exitosa 💸',
-        message: 'Has enviado ${CurrencyFormatter.format(250.0)} exitosamente. La transacción ha sido completada.',
-        date: DateTime.now().subtract(const Duration(hours: 2)),
-        type: NotificationType.sendMoney,
-        isRead: false,
-      ),
-      NotificationModel(
-        id: 'sample_3',
-        title: 'Recarga Aprobada ✅',
-        message: 'Tu recarga de ${CurrencyFormatter.format(500.0)} ha sido aprobada y tu saldo actualizado.',
-        date: DateTime.now().subtract(const Duration(hours: 4)),
-        type: NotificationType.recharge,
-        isRead: true,
-      ),
-      NotificationModel(
-        id: 'sample_4',
-        title: 'Crédito Pre-aprobado 💰',
-        message: 'Tienes un crédito pre-aprobado de ${CurrencyFormatter.format(10000.0)}. ¡Solicítalo ahora!',
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        type: NotificationType.creditApproved,
-        isRead: true,
-      ),
-      NotificationModel(
-        id: 'sample_5',
-        title: 'Solicitud en Revisión ⏳',
-        message: 'Tu solicitud de crédito personal por ${CurrencyFormatter.format(7500.0)} está siendo evaluada.',
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        type: NotificationType.creditPending,
-        isRead: true,
-      ),
     ];
     
     _notifications.addAll(sampleNotifications);
   }
   
+  void _addTransactionNotifications() {
+    final transactionNotifications = [
+      NotificationModel(
+        id: 'trans_1',
+        title: 'Recarga Aprobada ✅',
+        message: 'Tu recarga de ${CurrencyFormatter.format(500.0)} ha sido aprobada y tu saldo actualizado.',
+        date: DateTime.now().subtract(const Duration(hours: 2)),
+        type: NotificationType.recharge,
+        isRead: false,
+      ),
+      NotificationModel(
+        id: 'trans_2',
+        title: 'Envío Completado 💸',
+        message: 'Tu envío de ${CurrencyFormatter.format(150.0)} a Juan Pérez ha sido completado.',
+        date: DateTime.now().subtract(const Duration(hours: 5)),
+        type: NotificationType.sendMoney,
+        isRead: true,
+      ),
+    ];
+    
+    _notifications.addAll(transactionNotifications);
+  }
+  
   void _onLoadUserRequests(LoadUserRequests event, Emitter<NotificationsState> emit) async {
+    await _loadUserRequestsDirectly();
+    emit(NotificationsLoaded(_notifications));
+  }
+  
+  Future<void> _loadUserRequestsDirectly() async {
     try {
       final userId = await AuthService.getCurrentUserId();
       if (userId == null) return;
@@ -145,6 +145,16 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
             message = 'Tu solicitud de recarga por ${CurrencyFormatter.format(double.tryParse(amount) ?? 0.0)} ha sido rechazada.';
             notifType = NotificationType.recharge;
           }
+        } else if (type == 'SEND_MONEY') {
+          if (status == 'PENDING') {
+            title = 'Envío Pendiente ⏳';
+            message = 'Tu envío de ${CurrencyFormatter.format(double.tryParse(amount) ?? 0.0)} está siendo procesado.';
+            notifType = NotificationType.sendMoney;
+          } else if (status == 'APPROVED') {
+            title = 'Envío Completado ✅';
+            message = 'Tu envío de ${CurrencyFormatter.format(double.tryParse(amount) ?? 0.0)} ha sido completado exitosamente.';
+            notifType = NotificationType.sendMoney;
+          }
         }
         
         if (title.isNotEmpty) {
@@ -164,8 +174,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           }
         }
       }
-      
-      // No emitir estado aquí, solo agregar a la lista
     } catch (e) {
       // Error silencioso - no afecta las notificaciones principales
     }
