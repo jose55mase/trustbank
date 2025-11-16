@@ -258,10 +258,19 @@ class ApiService {
 
   // Notification endpoints
   static Future<Map<String, dynamic>> createNotification(Map<String, dynamic> notificationData) async {
+    // Enriquecer con datos del usuario actual
+    final currentUser = await AuthService.getCurrentUser();
+    final enrichedData = {
+      ...notificationData,
+      'userName': currentUser?['name'] ?? 'Usuario',
+      'userEmail': currentUser?['email'] ?? 'usuario@trustbank.com',
+      'userPhone': currentUser?['phone'] ?? '+1 234 567 8900',
+    };
+    
     final response = await http.post(
       Uri.parse('$baseUrl/notifications/create'),
       headers: await headers,
-      body: json.encode(notificationData),
+      body: json.encode(enrichedData),
     );
 
     if (response.statusCode == 201) {
@@ -279,7 +288,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['data'] ?? [];
+      return data['data'] ?? data ?? [];
     } else {
       throw Exception('Failed to get notifications');
     }

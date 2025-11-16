@@ -27,26 +27,26 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       _notifications.clear();
       
       // Siempre agregar notificaciones de ejemplo primero
-      _addSampleNotifications();
+      await _addSampleNotifications();
       
       try {
         final response = await ApiService.getUserNotifications(userId);
         if (response.isNotEmpty) {
-          final notifications = response.map<NotificationModel>((data) => NotificationModel(
-            id: data['id'].toString(),
-            title: data['title'],
-            message: data['message'],
-            date: DateTime.parse(data['createdAt']),
-            type: _mapNotificationType(data['type']),
-            isRead: data['isRead'] ?? false,
-          )).toList();
+          final currentUser = await AuthService.getCurrentUser();
+          final userName = currentUser?['name'] ?? 'Usuario';
+          final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+          final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+          
+          final notifications = response.map<NotificationModel>((data) => 
+            NotificationModel.fromJson(data)
+          ).toList();
           
           notifications.sort((a, b) => b.date.compareTo(a.date));
           _notifications.addAll(notifications);
         }
       } catch (e) {
         // Backend no disponible, agregar notificaciones de transacciones de ejemplo
-        _addTransactionNotifications();
+        await _addTransactionNotifications();
       }
       
       // También cargar solicitudes del usuario
@@ -55,7 +55,7 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       } catch (e) {
         // Error silencioso para requests - agregar notificaciones de ejemplo si no hay backend
         if (_notifications.length <= 1) {
-          _addTransactionNotifications();
+          await _addTransactionNotifications();
         }
       }
       
@@ -66,43 +66,65 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     } catch (e) {
       // En caso de error total, asegurar que hay notificaciones de ejemplo
       _notifications.clear();
-      _addSampleNotifications();
+      await _addSampleNotifications();
       emit(NotificationsLoaded(_notifications));
     }
   }
   
-  void _addSampleNotifications() {
+  void _addSampleNotifications() async {
+    final currentUser = await AuthService.getCurrentUser();
+    final userName = currentUser?['name'] ?? 'Usuario';
+    final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+    final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+    
     final sampleNotifications = [
       NotificationModel(
         id: 'welcome_1',
         title: 'Bienvenido a TrustBank 🎉',
-        message: 'Gracias por unirte a nuestra familia financiera. Explora todos nuestros servicios.',
+        message: 'Hola $userName, gracias por unirte a nuestra familia financiera. Explora todos nuestros servicios.',
         date: DateTime.now().subtract(const Duration(minutes: 30)),
         type: NotificationType.general,
         isRead: false,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Cuenta creada exitosamente',
       ),
     ];
     
     _notifications.addAll(sampleNotifications);
   }
   
-  void _addTransactionNotifications() {
+  void _addTransactionNotifications() async {
+    final currentUser = await AuthService.getCurrentUser();
+    final userName = currentUser?['name'] ?? 'Usuario';
+    final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+    final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+    
     final transactionNotifications = [
       NotificationModel(
         id: 'trans_1',
         title: 'Recarga Aprobada ✅',
-        message: 'Tu recarga de ${CurrencyFormatter.format(500.0)} ha sido aprobada y tu saldo actualizado.',
+        message: 'Hola $userName, tu recarga de ${CurrencyFormatter.format(500.0)} ha sido aprobada y tu saldo actualizado.',
         date: DateTime.now().subtract(const Duration(hours: 2)),
         type: NotificationType.recharge,
         isRead: false,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Método: Tarjeta de crédito **** 1234',
       ),
       NotificationModel(
         id: 'trans_2',
         title: 'Envío Completado 💸',
-        message: 'Tu envío de ${CurrencyFormatter.format(150.0)} a Juan Pérez ha sido completado.',
+        message: 'Hola $userName, tu envío de ${CurrencyFormatter.format(150.0)} a Juan Pérez ha sido completado exitosamente.',
         date: DateTime.now().subtract(const Duration(hours: 5)),
         type: NotificationType.sendMoney,
         isRead: true,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Destinatario: Juan Pérez - Banco Nacional',
       ),
     ];
     
@@ -158,6 +180,11 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         }
         
         if (title.isNotEmpty) {
+          final currentUser = await AuthService.getCurrentUser();
+          final userName = currentUser?['name'] ?? 'Usuario';
+          final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+          final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+          
           final notification = NotificationModel(
             id: 'req_${request['id']}',
             title: title,
@@ -165,6 +192,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
             date: DateTime.parse(request['createdAt']),
             type: notifType,
             isRead: status != 'PENDING',
+            userName: userName,
+            userEmail: userEmail,
+            userPhone: userPhone,
+            additionalInfo: request['details'] ?? 'Solicitud procesada',
           );
           
           // Evitar duplicados
@@ -182,60 +213,138 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   void _onAddCreditNotification(AddCreditNotification event, Emitter<NotificationsState> emit) async {
     try {
       final userId = await AuthService.getCurrentUserId() ?? 1;
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      
       final response = await ApiService.createNotification({
         'userId': userId,
         'title': 'Solicitud Enviada ✉️',
-        'message': 'Tu solicitud de ${event.creditType} por ${CurrencyFormatter.format(event.amount)} ha sido enviada y está en proceso de validación.',
-        'type': 'credit',
+        'message': 'Hola $userName, tu solicitud de ${event.creditType} por ${CurrencyFormatter.format(event.amount)} ha sido enviada y está en proceso de validación.',
+        'type': 'creditPending',
+        'additionalInfo': 'Tipo de crédito: ${event.creditType} - Monto: ${CurrencyFormatter.format(event.amount)}',
       });
       
-      if (response['status'] == 201) {
+      if (response['status'] == 201 || response.containsKey('id')) {
         add(LoadNotifications());
       } else {
         throw Exception('Error al crear notificación');
       }
     } catch (e) {
-      // Error al crear notificación en backend
+      // Error al crear notificación en backend - agregar localmente
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+      final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+      
+      final notification = NotificationModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: 'Solicitud Enviada ✉️',
+        message: 'Hola $userName, tu solicitud de ${event.creditType} por ${CurrencyFormatter.format(event.amount)} ha sido enviada.',
+        date: DateTime.now(),
+        type: NotificationType.creditPending,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Tipo de crédito: ${event.creditType}',
+      );
+      
+      _notifications.insert(0, notification);
+      emit(NotificationsLoaded(_notifications));
       print('Error creating notification: $e');
     }
   }
 
-  void _onAddSendMoneyNotification(AddSendMoneyNotification event, Emitter<NotificationsState> emit) {
-    final notification = NotificationModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Envío Exitoso 💸',
-      message: 'Has enviado ${CurrencyFormatter.format(event.amount)} a ${event.recipient} exitosamente.',
-      date: DateTime.now(),
-      type: NotificationType.sendMoney,
-    );
-    
-    _notifications.insert(0, notification);
-    emit(NotificationsLoaded(_notifications));
+  void _onAddSendMoneyNotification(AddSendMoneyNotification event, Emitter<NotificationsState> emit) async {
+    try {
+      final userId = await AuthService.getCurrentUserId() ?? 1;
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      
+      await ApiService.createNotification({
+        'userId': userId,
+        'title': 'Envío Exitoso 💸',
+        'message': 'Hola $userName, has enviado ${CurrencyFormatter.format(event.amount)} a ${event.recipient} exitosamente.',
+        'type': 'sendMoney',
+        'additionalInfo': 'Destinatario: ${event.recipient} - Monto: ${CurrencyFormatter.format(event.amount)}',
+      });
+      
+      add(LoadNotifications());
+    } catch (e) {
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+      final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+      
+      final notification = NotificationModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: 'Envío Exitoso 💸',
+        message: 'Hola $userName, has enviado ${CurrencyFormatter.format(event.amount)} a ${event.recipient} exitosamente.',
+        date: DateTime.now(),
+        type: NotificationType.sendMoney,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Destinatario: ${event.recipient}',
+      );
+      
+      _notifications.insert(0, notification);
+      emit(NotificationsLoaded(_notifications));
+    }
   }
 
-  void _onAddRechargeNotification(AddRechargeNotification event, Emitter<NotificationsState> emit) {
-    final notification = NotificationModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: 'Recarga Exitosa 💳',
-      message: 'Has recargado ${CurrencyFormatter.format(event.amount)} usando ${event.method}.',
-      date: DateTime.now(),
-      type: NotificationType.recharge,
-    );
-    
-    _notifications.insert(0, notification);
-    emit(NotificationsLoaded(_notifications));
+  void _onAddRechargeNotification(AddRechargeNotification event, Emitter<NotificationsState> emit) async {
+    try {
+      final userId = await AuthService.getCurrentUserId() ?? 1;
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      
+      await ApiService.createNotification({
+        'userId': userId,
+        'title': 'Recarga Exitosa 💳',
+        'message': 'Hola $userName, has recargado ${CurrencyFormatter.format(event.amount)} usando ${event.method}.',
+        'type': 'recharge',
+        'additionalInfo': 'Método de pago: ${event.method} - Monto: ${CurrencyFormatter.format(event.amount)}',
+      });
+      
+      add(LoadNotifications());
+    } catch (e) {
+      final currentUser = await AuthService.getCurrentUser();
+      final userName = currentUser?['name'] ?? 'Usuario';
+      final userEmail = currentUser?['email'] ?? 'usuario@trustbank.com';
+      final userPhone = currentUser?['phone'] ?? '+1 234 567 8900';
+      
+      final notification = NotificationModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: 'Recarga Exitosa 💳',
+        message: 'Hola $userName, has recargado ${CurrencyFormatter.format(event.amount)} usando ${event.method}.',
+        date: DateTime.now(),
+        type: NotificationType.recharge,
+        userName: userName,
+        userEmail: userEmail,
+        userPhone: userPhone,
+        additionalInfo: 'Método de pago: ${event.method}',
+      );
+      
+      _notifications.insert(0, notification);
+      emit(NotificationsLoaded(_notifications));
+    }
   }
 
   void _onMarkAsRead(MarkAsRead event, Emitter<NotificationsState> emit) {
     final index = _notifications.indexWhere((n) => n.id == event.notificationId);
     if (index != -1) {
+      final oldNotification = _notifications[index];
       _notifications[index] = NotificationModel(
-        id: _notifications[index].id,
-        title: _notifications[index].title,
-        message: _notifications[index].message,
-        date: _notifications[index].date,
-        type: _notifications[index].type,
+        id: oldNotification.id,
+        title: oldNotification.title,
+        message: oldNotification.message,
+        date: oldNotification.date,
+        type: oldNotification.type,
         isRead: true,
+        userName: oldNotification.userName,
+        userEmail: oldNotification.userEmail,
+        userPhone: oldNotification.userPhone,
+        additionalInfo: oldNotification.additionalInfo,
       );
     }
     emit(NotificationsLoaded(_notifications));

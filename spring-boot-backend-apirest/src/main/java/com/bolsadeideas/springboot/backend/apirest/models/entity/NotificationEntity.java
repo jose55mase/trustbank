@@ -27,6 +27,18 @@ public class NotificationEntity implements Serializable {
     @Column(name = "is_read")
     private Boolean isRead = false;
 
+    @Column(name = "user_name")
+    private String userName;
+
+    @Column(name = "user_email")
+    private String userEmail;
+
+    @Column(name = "user_phone")
+    private String userPhone;
+
+    @Column(name = "additional_info", columnDefinition = "TEXT")
+    private String additionalInfo;
+
     @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdAt;
@@ -58,4 +70,16 @@ public class NotificationEntity implements Serializable {
 
     public Date getCreatedAt() { return createdAt; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
+
+    public String getUserName() { return userName; }
+    public void setUserName(String userName) { this.userName = userName; }
+
+    public String getUserEmail() { return userEmail; }
+    public void setUserEmail(String userEmail) { this.userEmail = userEmail; }
+
+    public String getUserPhone() { return userPhone; }
+    public void setUserPhone(String userPhone) { this.userPhone = userPhone; }
+
+    public String getAdditionalInfo() { return additionalInfo; }
+    public void setAdditionalInfo(String additionalInfo) { this.additionalInfo = additionalInfo; }
 }
