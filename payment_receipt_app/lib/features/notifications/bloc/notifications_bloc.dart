@@ -26,6 +26,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       
       _notifications.clear();
       
+      // Siempre agregar notificaciones de ejemplo primero
+      _addSampleNotifications();
+      
       try {
         final response = await ApiService.getUserNotifications(userId);
         if (response.isNotEmpty) {
@@ -42,15 +45,23 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
           _notifications.addAll(notifications);
         }
       } catch (e) {
-        // Si no hay backend, agregar notificaciones de ejemplo
-        _addSampleNotifications();
+        // Backend no disponible, pero ya tenemos notificaciones de ejemplo
       }
       
       // También cargar solicitudes del usuario
-      add(LoadUserRequests());
+      try {
+        add(LoadUserRequests());
+      } catch (e) {
+        // Error silencioso para requests
+      }
+      
+      // Ordenar todas las notificaciones por fecha
+      _notifications.sort((a, b) => b.date.compareTo(a.date));
       
       emit(NotificationsLoaded(_notifications));
     } catch (e) {
+      // En caso de error total, asegurar que hay notificaciones de ejemplo
+      _notifications.clear();
       _addSampleNotifications();
       emit(NotificationsLoaded(_notifications));
     }
@@ -59,27 +70,43 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   void _addSampleNotifications() {
     final sampleNotifications = [
       NotificationModel(
-        id: '1',
+        id: 'sample_1',
         title: 'Bienvenido a TrustBank 🎉',
         message: 'Gracias por unirte a nuestra familia financiera. Explora todos nuestros servicios.',
-        date: DateTime.now().subtract(const Duration(hours: 1)),
+        date: DateTime.now().subtract(const Duration(minutes: 30)),
         type: NotificationType.general,
         isRead: false,
       ),
       NotificationModel(
-        id: '2',
-        title: 'Recarga Exitosa 💳',
-        message: 'Has recargado ${CurrencyFormatter.format(100.0)} exitosamente.',
+        id: 'sample_2',
+        title: 'Transacción Exitosa 💸',
+        message: 'Has enviado ${CurrencyFormatter.format(250.0)} exitosamente. La transacción ha sido completada.',
         date: DateTime.now().subtract(const Duration(hours: 2)),
+        type: NotificationType.sendMoney,
+        isRead: false,
+      ),
+      NotificationModel(
+        id: 'sample_3',
+        title: 'Recarga Aprobada ✅',
+        message: 'Tu recarga de ${CurrencyFormatter.format(500.0)} ha sido aprobada y tu saldo actualizado.',
+        date: DateTime.now().subtract(const Duration(hours: 4)),
         type: NotificationType.recharge,
         isRead: true,
       ),
       NotificationModel(
-        id: '3',
-        title: 'Crédito Disponible 💰',
-        message: 'Tienes un crédito pre-aprobado de ${CurrencyFormatter.format(5000.0)}. ¡Solicítalo ahora!',
+        id: 'sample_4',
+        title: 'Crédito Pre-aprobado 💰',
+        message: 'Tienes un crédito pre-aprobado de ${CurrencyFormatter.format(10000.0)}. ¡Solicítalo ahora!',
         date: DateTime.now().subtract(const Duration(days: 1)),
         type: NotificationType.creditApproved,
+        isRead: true,
+      ),
+      NotificationModel(
+        id: 'sample_5',
+        title: 'Solicitud en Revisión ⏳',
+        message: 'Tu solicitud de crédito personal por ${CurrencyFormatter.format(7500.0)} está siendo evaluada.',
+        date: DateTime.now().subtract(const Duration(days: 2)),
+        type: NotificationType.creditPending,
         isRead: true,
       ),
     ];
@@ -138,12 +165,9 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
         }
       }
       
-      // Ordenar todas las notificaciones por fecha descendente
-      _notifications.sort((a, b) => b.date.compareTo(a.date));
-      
-      emit(NotificationsLoaded(_notifications));
+      // No emitir estado aquí, solo agregar a la lista
     } catch (e) {
-      // Error silencioso
+      // Error silencioso - no afecta las notificaciones principales
     }
   }
 

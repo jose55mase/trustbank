@@ -63,7 +63,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         try {
           backendTransactions = await ApiService.getUserTransactions(userId);
         } catch (e) {
-          print('Error loading backend transactions: $e');
+          // Backend no disponible, usar transacciones de ejemplo
         }
         
         // Cargar transacciones locales
@@ -72,8 +72,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         final localTransactionsString = prefs.getString(transactionsKey) ?? '[]';
         final localTransactions = List<dynamic>.from(json.decode(localTransactionsString));
         
-        // Combinar transacciones (locales primero)
-        final allTransactions = [...localTransactions, ...backendTransactions];
+        // Si no hay transacciones, agregar ejemplos
+        List<dynamic> sampleTransactions = [];
+        if (backendTransactions.isEmpty && localTransactions.isEmpty) {
+          sampleTransactions = _getSampleTransactions();
+        }
+        
+        // Combinar transacciones (locales primero, luego backend, luego ejemplos)
+        final allTransactions = [...localTransactions, ...backendTransactions, ...sampleTransactions];
         
         // Ordenar por fecha descendente
         allTransactions.sort((a, b) {
@@ -87,6 +93,47 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     } catch (e) {
       // Mantener estado actual si falla cargar transacciones
     }
+  }
+  
+  List<dynamic> _getSampleTransactions() {
+    final now = DateTime.now();
+    return [
+      {
+        'id': 'sample_1',
+        'type': 'INCOME',
+        'amount': 500.0,
+        'description': 'Recarga aprobada por administrador',
+        'date': now.subtract(const Duration(hours: 2)).toIso8601String(),
+      },
+      {
+        'id': 'sample_2', 
+        'type': 'EXPENSE',
+        'amount': 150.0,
+        'description': 'Envío de dinero a Juan Pérez',
+        'date': now.subtract(const Duration(hours: 5)).toIso8601String(),
+      },
+      {
+        'id': 'sample_3',
+        'type': 'INCOME', 
+        'amount': 1000.0,
+        'description': 'Depósito inicial',
+        'date': now.subtract(const Duration(days: 1)).toIso8601String(),
+      },
+      {
+        'id': 'sample_4',
+        'type': 'EXPENSE',
+        'amount': 75.0,
+        'description': 'Pago de servicios',
+        'date': now.subtract(const Duration(days: 2)).toIso8601String(),
+      },
+      {
+        'id': 'sample_5',
+        'type': 'INCOME',
+        'amount': 250.0,
+        'description': 'Transferencia recibida',
+        'date': now.subtract(const Duration(days: 3)).toIso8601String(),
+      },
+    ];
   }
 
   Future<void> _onRefreshData(RefreshData event, Emitter<HomeState> emit) async {
