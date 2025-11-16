@@ -11,7 +11,7 @@ part 'receipt_event.dart';
 part 'receipt_state.dart';
 
 class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
-  ReceiptBloc() : super(ReceiptInitial()) {
+  ReceiptBloc() : super(const ReceiptInitial()) {
     on<LoadReceipts>(_onLoadReceipts);
     on<GeneratePdf>(_onGeneratePdf);
   }
@@ -39,7 +39,7 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
           receipts.add(_mapTransactionToReceipt(transaction));
         }
       } catch (e) {
-        print('Error loading backend transactions: $e');
+        // Error loading backend transactions logged
       }
       
       // Cargar transacciones locales

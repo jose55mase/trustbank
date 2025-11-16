@@ -80,7 +80,7 @@ class LoginScreen extends StatelessWidget {
                             
                             // Login normal para otros usuarios
                             final result = await AuthService.login(email, password);
-                            print('Response ----------> $result');
+                            // Login response logged
                             if (result['success']) {
                               Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(builder: (context) => const HomeScreen()),

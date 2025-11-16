@@ -258,11 +258,10 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Scaffold(
           backgroundColor: TBColors.background,
           appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120),
-        child: Container(
-          child: CustomPaint(
-            painter: CustomHeaderPainter(),
-            child: SafeArea(
+            preferredSize: const Size.fromHeight(120),
+            child: CustomPaint(
+              painter: CustomHeaderPainter(),
+              child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: TBSpacing.screenPadding,
@@ -388,11 +387,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
+              ),
             ),
           ),
-        ),
-      ),
-      body: BlocBuilder<HomeBloc, HomeState>(
+          body: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
           if (state is HomeLoading) {
             return const SingleChildScrollView(

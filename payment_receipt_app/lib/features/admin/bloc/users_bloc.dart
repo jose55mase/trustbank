@@ -28,7 +28,8 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
 
   void _onUpdateUserStatus(UpdateUserStatus event, Emitter<UsersState> emit) async {
     try {
-      await UserManagementService.updateUserStatus(event.userId, event.status);
+      final statusString = event.status.name.toUpperCase();
+      await UserManagementService.updateUserStatus(event.userId, statusString);
       add(LoadUsers()); // Recargar usuarios
     } catch (e) {
       emit(UsersError(e.toString()));
@@ -38,8 +39,9 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   void _onFilterUsers(FilterUsers event, Emitter<UsersState> emit) async {
     try {
       emit(UsersLoading());
+      final statusString = event.status?.name.toUpperCase();
       final users = await UserManagementService.filterUsers(
-        status: event.status,
+        status: statusString,
         searchQuery: event.searchQuery,
       );
       

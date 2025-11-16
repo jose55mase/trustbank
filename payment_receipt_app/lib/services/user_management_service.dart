@@ -1,18 +1,21 @@
 import 'api_service.dart';
 import '../models/user_role.dart';
+import '../features/admin/models/user_model.dart';
 
 class UserManagementService {
-  static Future<List<dynamic>> getAllUsers() async {
+  static Future<List<AdminUser>> getAllUsers() async {
     try {
-      return await ApiService.getAllUsers();
+      final response = await ApiService.getAllUsers();
+      return response.map<AdminUser>((json) => AdminUser.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Error obteniendo usuarios: $e');
     }
   }
 
-  static Future<List<dynamic>> getUsersByRole(UserRole role) async {
+  static Future<List<AdminUser>> getUsersByRole(UserRole role) async {
     try {
-      return await ApiService.getUsersByStatus(role.value);
+      final response = await ApiService.getUsersByStatus(role.value);
+      return response.map<AdminUser>((json) => AdminUser.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Error obteniendo usuarios por rol: $e');
     }
@@ -26,15 +29,49 @@ class UserManagementService {
     }
   }
 
-  static Future<List<dynamic>> getAdminUsers() async {
+  static Future<List<AdminUser>> getAdminUsers() async {
     try {
-      final allUsers = await getAllUsers();
-      return allUsers.where((user) {
+      final response = await ApiService.getAllUsers();
+      final adminUsers = response.where((user) {
         final role = user['role']?.toString().toUpperCase() ?? 'USER';
         return role == 'ADMIN' || role == 'SUPER_ADMIN' || role == 'MODERATOR';
       }).toList();
+      return adminUsers.map<AdminUser>((json) => AdminUser.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Error obteniendo administradores: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateUserStatus(int userId, String status) async {
+    try {
+      return await ApiService.updateUserStatus(userId, status);
+    } catch (e) {
+      throw Exception('Error actualizando estado: $e');
+    }
+  }
+
+  static Future<List<AdminUser>> filterUsers({
+    String? status,
+    String? searchQuery,
+  }) async {
+    try {
+      final allUsers = await getAllUsers();
+      var filteredUsers = allUsers;
+      
+      if (status != null && status.isNotEmpty) {
+        filteredUsers = filteredUsers.where((user) => 
+          user.accountStatus.toLowerCase() == status.toLowerCase()).toList();
+      }
+      
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        filteredUsers = filteredUsers.where((user) => 
+          user.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().contains(searchQuery.toLowerCase())).toList();
+      }
+      
+      return filteredUsers;
+    } catch (e) {
+      throw Exception('Error filtrando usuarios: $e');
     }
   }
 

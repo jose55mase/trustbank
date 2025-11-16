@@ -209,27 +209,27 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
 
   Widget _getDocumentStatusIcon() {
     if (userDocuments.isEmpty) {
-      return Icon(Icons.warning_amber, color: Colors.orange, size: 20);
+      return const Icon(Icons.warning_amber, color: Colors.orange, size: 20);
     }
     
     final approvedDocs = userDocuments.where((doc) => doc['status']?.toString().toUpperCase() == 'APPROVED').length;
     final totalDocs = userDocuments.length;
     
     if (approvedDocs == totalDocs) {
-      return Icon(Icons.check_circle, color: TBColors.success, size: 20);
+      return const Icon(Icons.check_circle, color: TBColors.success, size: 20);
     } else {
-      return Icon(Icons.pending, color: Colors.orange, size: 20);
+      return const Icon(Icons.pending, color: Colors.orange, size: 20);
     }
   }
 
   Widget _getVerificationIcon() {
     switch (widget.account.status) {
       case AccountStatus.verified:
-        return Icon(Icons.verified, color: TBColors.success, size: 20);
+        return const Icon(Icons.verified, color: TBColors.success, size: 20);
       case AccountStatus.pending:
-        return Icon(Icons.pending, color: Colors.orange, size: 20);
+        return const Icon(Icons.pending, color: Colors.orange, size: 20);
       case AccountStatus.rejected:
-        return Icon(Icons.cancel, color: TBColors.error, size: 20);
+        return const Icon(Icons.cancel, color: TBColors.error, size: 20);
       case AccountStatus.suspended:
         return Icon(Icons.block, color: Colors.red.shade700, size: 20);
     }

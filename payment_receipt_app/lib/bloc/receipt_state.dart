@@ -7,7 +7,9 @@ abstract class ReceiptState extends Equatable {
   List<Object> get props => [];
 }
 
-class ReceiptInitial extends ReceiptState {}
+class ReceiptInitial extends ReceiptState {
+  const ReceiptInitial();
+}
 
 class ReceiptLoading extends ReceiptState {}
 

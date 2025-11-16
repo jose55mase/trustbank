@@ -62,7 +62,7 @@ class ApiService {
       Uri.parse('$baseUrl/user/getUserByEmail/$email'),
       headers: await headers,
     );
-    print('Response get user ----> ${response.body}');
+    // Response logged for debugging
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -174,8 +174,7 @@ class ApiService {
       body: json.encode(requestData),
     );
 
-    print('Create request response status: ${response.statusCode}');
-    print('Create request response body: ${response.body}');
+    // Request logged for debugging
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
