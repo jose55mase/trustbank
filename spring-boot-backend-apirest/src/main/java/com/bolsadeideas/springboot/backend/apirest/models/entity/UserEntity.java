@@ -325,6 +325,21 @@ public class UserEntity implements Serializable {
     protected void onUpdate() {
         updatedAt = new java.util.Date();
     }
+    
+    // Método helper para obtener nombre completo
+    public String getFullName() {
+        String fullName = "";
+        if (fistName != null && !fistName.trim().isEmpty()) {
+            fullName += fistName.trim();
+        }
+        if (lastName != null && !lastName.trim().isEmpty()) {
+            if (!fullName.isEmpty()) {
+                fullName += " ";
+            }
+            fullName += lastName.trim();
+        }
+        return fullName.isEmpty() ? "Usuario" : fullName;
+    }
 
     @Override
     public String toString() {

@@ -74,7 +74,7 @@ public class NotificationServiceImpl implements INotificationService {
         // Obtener datos del usuario para enriquecer la notificación
         UserEntity user = userDao.findById(userId).orElse(null);
         if (user != null) {
-            notification.setUserName(user.getName());
+            notification.setUserName(user.getFullName());
             notification.setUserEmail(user.getEmail());
             notification.setUserPhone(user.getPhone());
         }
