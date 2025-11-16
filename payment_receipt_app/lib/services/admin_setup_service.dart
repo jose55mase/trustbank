@@ -8,15 +8,23 @@ class AdminSetupService {
     final hasDefaultAdmin = prefs.getBool('has_default_admin') ?? false;
     
     if (!hasDefaultAdmin) {
-      // Crear admin por defecto
+      // Crear admin por defecto con estructura backend
       final adminUser = {
         'id': 999,
-        'name': 'Administrador',
+        'fistName': 'Administrador', // Backend uses 'fistName'
         'email': 'admin@trustbank.com',
-        'role': 'SUPER_ADMIN',
+        'username': 'admin',
         'password': 'admin123',
         'accountStatus': 'ACTIVE',
+        'status': true,
+        'moneyclean': 0,
         'createdAt': DateTime.now().toIso8601String(),
+        'rols': [
+          {
+            'id': 2,
+            'name': 'ROLE_ADMIN'
+          }
+        ],
       };
       
       await prefs.setString('default_admin', json.encode(adminUser));

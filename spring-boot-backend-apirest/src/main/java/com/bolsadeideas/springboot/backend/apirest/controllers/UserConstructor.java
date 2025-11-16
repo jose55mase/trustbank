@@ -272,5 +272,32 @@ public class UserConstructor {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @CrossOrigin(origins = "*")
+    @PutMapping("/updateRole/{id}")
+    public ResponseEntity<UserEntity> updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String roleName = request.get("role");
+            UserEntity updatedUser = this.usuarioService.updateUserRole(id, roleName);
+            if (updatedUser != null) {
+                return new ResponseEntity<>(updatedUser, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    @CrossOrigin(origins = "*")
+    @GetMapping("/roles")
+    public ResponseEntity<List<RolEntity>> getAllRoles() {
+        try {
+            List<RolEntity> roles = this.usuarioService.getAllRoles();
+            return new ResponseEntity<>(roles, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }

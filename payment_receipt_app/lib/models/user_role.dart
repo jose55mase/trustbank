@@ -1,17 +1,35 @@
 enum UserRole {
-  user('USER'),
-  admin('ADMIN'),
-  superAdmin('SUPER_ADMIN'),
-  moderator('MODERATOR');
+  user('ROLE_USER'),
+  admin('ROLE_ADMIN'),
+  superAdmin('ROLE_SUPER_ADMIN'),
+  moderator('ROLE_MODERATOR');
 
   const UserRole(this.value);
   final String value;
 
   static UserRole fromString(String value) {
+    final normalizedValue = value.toUpperCase();
+    // Handle both formats: with and without ROLE_ prefix
+    final roleValue = normalizedValue.startsWith('ROLE_') ? normalizedValue : 'ROLE_$normalizedValue';
+    
     return UserRole.values.firstWhere(
-      (role) => role.value == value.toUpperCase(),
+      (role) => role.value == roleValue,
       orElse: () => UserRole.user,
     );
+  }
+  
+  static UserRole fromBackendRoles(List<dynamic> roles) {
+    if (roles.isEmpty) return UserRole.user;
+    
+    // Check for highest privilege role first
+    for (final role in roles) {
+      final roleName = role['name']?.toString() ?? '';
+      if (roleName == 'ROLE_SUPER_ADMIN') return UserRole.superAdmin;
+      if (roleName == 'ROLE_ADMIN') return UserRole.admin;
+      if (roleName == 'ROLE_MODERATOR') return UserRole.moderator;
+    }
+    
+    return UserRole.user;
   }
 }
 

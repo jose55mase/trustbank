@@ -1,7 +1,9 @@
 package com.bolsadeideas.springboot.backend.apirest.models.services;
 
 import com.bolsadeideas.springboot.backend.apirest.models.dao.IUserDao;
+import com.bolsadeideas.springboot.backend.apirest.models.dao.RolDao;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.RolEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +29,9 @@ public class UsuarioService implements IUserService, UserDetailsService {
 
     @Autowired
     private IUserDao userDao;
+    
+    @Autowired
+    private RolDao rolDao;
 
     @Override
     @Transactional(readOnly = true)
@@ -132,5 +137,37 @@ public class UsuarioService implements IUserService, UserDetailsService {
     @Transactional(readOnly = true)
     public UserEntity findById(Long id) {
         return this.userDao.findByid(id);
+    }
+    
+    // Role management methods
+    @Override
+    public UserEntity updateUserRole(Long userId, String roleName) {
+        UserEntity user = this.userDao.findByid(userId);
+        if (user != null) {
+            RolEntity role = findRoleByName(roleName);
+            if (role != null) {
+                // Clear existing roles and add new one
+                user.getRols().clear();
+                user.getRols().add(role);
+                return this.userDao.save(user);
+            }
+        }
+        return null;
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<RolEntity> getAllRoles() {
+        return (List<RolEntity>) this.rolDao.findAll();
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public RolEntity findRoleByName(String roleName) {
+        List<RolEntity> roles = getAllRoles();
+        return roles.stream()
+                .filter(role -> role.getName().equals(roleName))
+                .findFirst()
+                .orElse(null);
     }
 }

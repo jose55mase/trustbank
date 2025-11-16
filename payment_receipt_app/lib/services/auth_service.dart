@@ -18,7 +18,14 @@ class AuthService {
     
     if (userDataString != null) {
       final userData = json.decode(userDataString);
-      final roleString = userData['role'] ?? 'USER';
+      
+      // Handle backend role structure - UserEntity has List<RolEntity> rols
+      if (userData['rols'] != null && userData['rols'] is List) {
+        return UserRole.fromBackendRoles(userData['rols']);
+      }
+      
+      // Fallback to single role field if exists
+      final roleString = userData['role'] ?? 'ROLE_USER';
       return UserRole.fromString(roleString);
     }
     
@@ -47,15 +54,24 @@ class AuthService {
   }
 
   static Future<void> updateUserRole(int userId, UserRole newRole) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userDataString = prefs.getString(_userDataKey);
-    
-    if (userDataString != null) {
-      final userData = json.decode(userDataString);
-      if (userData['id'] == userId) {
-        userData['role'] = newRole.value;
-        await prefs.setString(_userDataKey, json.encode(userData));
+    try {
+      // Update role in backend
+      await ApiService.updateUserRole(userId, newRole.value);
+      
+      // Update local storage
+      final prefs = await SharedPreferences.getInstance();
+      final userDataString = prefs.getString(_userDataKey);
+      
+      if (userDataString != null) {
+        final userData = json.decode(userDataString);
+        if (userData['id'] == userId) {
+          // Update the rols array to match backend structure
+          userData['rols'] = [{'id': 1, 'name': newRole.value}];
+          await prefs.setString(_userDataKey, json.encode(userData));
+        }
       }
+    } catch (e) {
+      throw Exception('Error updating user role: $e');
     }
   }
 

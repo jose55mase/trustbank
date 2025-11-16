@@ -1,3 +1,5 @@
+import '../../../models/user_role.dart';
+
 class AdminUser {
   final int id;
   final String name;
@@ -13,6 +15,7 @@ class AdminUser {
   final double balance;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final List<Map<String, dynamic>> roles; // Backend RolEntity list
 
   AdminUser({
     required this.id,
@@ -29,12 +32,13 @@ class AdminUser {
     required this.balance,
     required this.createdAt,
     this.updatedAt,
+    this.roles = const [],
   });
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
     return AdminUser(
       id: json['id'] ?? 0,
-      name: json['name'] ?? json['firstName'] ?? json['username'] ?? 'Usuario',
+      name: json['name'] ?? json['fistName'] ?? json['firstName'] ?? json['username'] ?? 'Usuario',
       email: json['email'] ?? '',
       phone: json['phone'],
       address: json['address'],
@@ -47,6 +51,7 @@ class AdminUser {
       balance: _parseBalance(json),
       createdAt: _parseDate(json['createdAt']) ?? DateTime.now(),
       updatedAt: _parseDate(json['updatedAt']),
+      roles: _parseRoles(json['rols']),
     );
   }
 
@@ -71,24 +76,35 @@ class AdminUser {
       return null;
     }
   }
+  
+  static List<Map<String, dynamic>> _parseRoles(dynamic rolesValue) {
+    if (rolesValue == null) return [];
+    if (rolesValue is List) {
+      return rolesValue.map((role) => {
+        'id': role['id'],
+        'name': role['name'],
+      }).toList().cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'fistName': name, // Backend uses 'fistName'
       'email': email,
       'phone': phone,
       'address': address,
       'documentType': documentType,
       'documentNumber': documentNumber,
-      'documentFront': documentFront,
+      'documentFrom': documentFront,
       'documentBack': documentBack,
-      'clientPhoto': clientPhoto,
+      'foto': clientPhoto,
       'accountStatus': accountStatus,
-      'moneyclean': balance,
-      'balance': balance,
+      'moneyclean': balance.toInt(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      'rols': roles,
     };
   }
 
@@ -107,6 +123,7 @@ class AdminUser {
     double? balance,
     DateTime? createdAt,
     DateTime? updatedAt,
+    List<Map<String, dynamic>>? roles,
   }) {
     return AdminUser(
       id: id ?? this.id,
@@ -123,7 +140,25 @@ class AdminUser {
       balance: balance ?? this.balance,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      roles: roles ?? this.roles,
     );
+  }
+  
+  // Role-related helper methods
+  UserRole get primaryRole {
+    return UserRole.fromBackendRoles(roles);
+  }
+  
+  bool hasRole(UserRole role) {
+    return roles.any((r) => r['name'] == role.value);
+  }
+  
+  List<String> get roleNames {
+    return roles.map((r) => r['name']?.toString() ?? '').toList();
+  }
+  
+  bool get isAdmin {
+    return hasRole(UserRole.admin) || hasRole(UserRole.superAdmin) || hasRole(UserRole.moderator);
   }
 }
 

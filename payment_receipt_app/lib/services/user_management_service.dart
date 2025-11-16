@@ -14,8 +14,12 @@ class UserManagementService {
 
   static Future<List<AdminUser>> getUsersByRole(UserRole role) async {
     try {
-      final response = await ApiService.getUsersByStatus(role.value);
-      return response.map<AdminUser>((json) => AdminUser.fromJson(json)).toList();
+      // Get all users and filter by role locally since backend doesn't have role-specific endpoint
+      final allUsers = await getAllUsers();
+      return allUsers.where((user) {
+        // Check if user has the specified role in their rols array
+        return _userHasRole(user, role);
+      }).toList();
     } catch (e) {
       throw Exception('Error obteniendo usuarios por rol: $e');
     }
@@ -31,12 +35,12 @@ class UserManagementService {
 
   static Future<List<AdminUser>> getAdminUsers() async {
     try {
-      final response = await ApiService.getAllUsers();
-      final adminUsers = response.where((user) {
-        final role = user['role']?.toString().toUpperCase() ?? 'USER';
-        return role == 'ADMIN' || role == 'SUPER_ADMIN' || role == 'MODERATOR';
+      final allUsers = await getAllUsers();
+      return allUsers.where((user) {
+        return _userHasRole(user, UserRole.admin) || 
+               _userHasRole(user, UserRole.superAdmin) || 
+               _userHasRole(user, UserRole.moderator);
       }).toList();
-      return adminUsers.map<AdminUser>((json) => AdminUser.fromJson(json)).toList();
     } catch (e) {
       throw Exception('Error obteniendo administradores: $e');
     }
@@ -78,8 +82,10 @@ class UserManagementService {
   static Future<bool> isUserAdmin(int userId) async {
     try {
       final user = await ApiService.getUserById(userId);
-      final role = user['role']?.toString().toUpperCase() ?? 'USER';
-      return role == 'ADMIN' || role == 'SUPER_ADMIN' || role == 'MODERATOR';
+      final adminUser = AdminUser.fromJson(user);
+      return _userHasRole(adminUser, UserRole.admin) || 
+             _userHasRole(adminUser, UserRole.superAdmin) || 
+             _userHasRole(adminUser, UserRole.moderator);
     } catch (e) {
       return false;
     }
@@ -93,22 +99,34 @@ class UserManagementService {
   }) async {
     try {
       final userData = {
-        'name': name,
+        'fistName': name, // Backend uses 'fistName' (typo in backend)
         'email': email,
         'password': password,
-        'role': role.value,
         'accountStatus': 'ACTIVE',
-        'moneyclean': 0.0,
-        'balance': 0.0,
+        'moneyclean': 0,
+        'status': true,
         'phone': '',
         'address': '',
         'documentType': 'CC',
         'documentNumber': '',
+        'username': email.split('@')[0],
       };
 
-      return await ApiService.registerUser(userData);
+      final response = await ApiService.registerUser(userData);
+      
+      // After user creation, assign role
+      if (response['id'] != null) {
+        await ApiService.updateUserRole(response['id'], role.value);
+      }
+      
+      return response;
     } catch (e) {
       throw Exception('Error creando usuario admin: $e');
     }
+  }
+  
+  // Helper method to check if user has specific role
+  static bool _userHasRole(AdminUser user, UserRole role) {
+    return user.hasRole(role);
   }
 }

@@ -1,6 +1,7 @@
 package com.bolsadeideas.springboot.backend.apirest.models.services.intefaces;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.RolEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -21,4 +22,9 @@ public interface IUserService {
     public UserEntity updateUserStatus(Long userId, String status);
     public List<UserEntity> findUsersWithDocuments();
     public UserEntity findById(Long id);
+    
+    // Role management methods
+    public UserEntity updateUserRole(Long userId, String roleName);
+    public List<RolEntity> getAllRoles();
+    public RolEntity findRoleByName(String roleName);
 }
