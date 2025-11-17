@@ -25,6 +25,13 @@ public class AdminRequestController {
 
     @PostMapping("/create")
     public RestResponse createRequest(@RequestBody AdminRequestEntity request) {
+        // Validar campos requeridos para transferencias bancarias
+        if ("SEND_MONEY".equals(request.getRequestType())) {
+            if (request.getBankName() == null || request.getAccountNumber() == null) {
+                return new RestResponse(HttpStatus.BAD_REQUEST.value(), "Banco y número de cuenta son requeridos para transferencias", null);
+            }
+        }
+        
         AdminRequestEntity savedRequest = adminRequestService.save(request);
         return new RestResponse(HttpStatus.CREATED.value(), "Solicitud creada", savedRequest);
     }

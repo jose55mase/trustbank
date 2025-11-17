@@ -37,6 +37,19 @@ public class AdminRequestEntity implements Serializable {
 
     @Column(name = "admin_notes")
     private String adminNotes;
+    
+    // Campos específicos para transferencias bancarias
+    @Column(name = "bank_name")
+    private String bankName;
+    
+    @Column(name = "account_number")
+    private String accountNumber;
+    
+    @Column(name = "transfer_type")
+    private String transferType;
+    
+    @Column(name = "description")
+    private String description;
 
     private static final long serialVersionUID = 1L;
 
@@ -72,4 +85,16 @@ public class AdminRequestEntity implements Serializable {
 
     public String getAdminNotes() { return adminNotes; }
     public void setAdminNotes(String adminNotes) { this.adminNotes = adminNotes; }
+    
+    public String getBankName() { return bankName; }
+    public void setBankName(String bankName) { this.bankName = bankName; }
+    
+    public String getAccountNumber() { return accountNumber; }
+    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+    
+    public String getTransferType() { return transferType; }
+    public void setTransferType(String transferType) { this.transferType = transferType; }
+    
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 }
