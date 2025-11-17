@@ -25,6 +25,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   final _bankController = TextEditingController();
+  final _accountNumberController = TextEditingController();
   final _typeController = TextEditingController();
   double _currentBalance = 0.0;
   
@@ -189,6 +190,14 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   ),
                   const SizedBox(height: TBSpacing.lg),
                   TBInput(
+                    label: 'Número de cuenta',
+                    hint: 'Número de cuenta destino',
+                    controller: _accountNumberController,
+                    keyboardType: TextInputType.number,
+                    prefixIcon: const Icon(Icons.credit_card),
+                  ),
+                  const SizedBox(height: TBSpacing.lg),
+                  TBInput(
                     label: 'Tipo',
                     hint: 'Tipo de transferencia',
                     controller: _typeController,
@@ -205,9 +214,10 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                 final description = _descriptionController.text;
                 final bank = _bankController.text;
+                final accountNumber = _accountNumberController.text;
                 final type = _typeController.text;
                 
-                if (amount <= 0 || description.isEmpty || bank.isEmpty || type.isEmpty) {
+                if (amount <= 0 || description.isEmpty || bank.isEmpty || accountNumber.isEmpty || type.isEmpty) {
                   TBDialogHelper.showWarning(
                     context,
                     title: 'Campos incompletos',
@@ -238,7 +248,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 try {
                   await TBLoadingOverlay.showWithDelay(
                     context,
-                    _processSendMoney(amount, description, bank, type),
+                    _processSendMoney(amount, description, bank, accountNumber, type),
                     message: 'Procesando envío...',
                     minDelayMs: 2500,
                   );
@@ -267,13 +277,13 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     );
   }
   
-  Future<void> _processSendMoney(double amount, String description, String bank, String type) async {
+  Future<void> _processSendMoney(double amount, String description, String bank, String accountNumber, String type) async {
     final userId = await AuthService.getCurrentUserId() ?? 1;
     await ApiService.createAdminRequest({
       'requestType': 'SEND_MONEY',
       'userId': userId,
       'amount': amount,
-      'details': 'Descripción: $description. Banco: $bank. Tipo: $type',
+      'details': 'Descripción: $description. Banco: $bank. Cuenta: $accountNumber. Tipo: $type',
     });
   }
 }

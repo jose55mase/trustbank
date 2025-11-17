@@ -3,7 +3,7 @@ import '../../colors/tb_colors.dart';
 import '../../typography/tb_typography.dart';
 import '../../spacing/tb_spacing.dart';
 
-enum TBButtonType { primary, secondary, outline }
+enum TBButtonType { primary, secondary, accent, outline }
 
 class TBButton extends StatelessWidget {
   final String text;
@@ -56,6 +56,8 @@ class TBButton extends StatelessWidget {
         return TBColors.primary;
       case TBButtonType.secondary:
         return TBColors.secondary;
+      case TBButtonType.accent:
+        return TBColors.accent;
       case TBButtonType.outline:
         return Colors.transparent;
     }
@@ -66,6 +68,8 @@ class TBButton extends StatelessWidget {
       case TBButtonType.primary:
       case TBButtonType.secondary:
         return TBColors.white;
+      case TBButtonType.accent:
+        return TBColors.black;
       case TBButtonType.outline:
         return TBColors.primary;
     }

@@ -21,7 +21,7 @@ class BalanceCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(TBSpacing.lg),
       decoration: BoxDecoration(
-        gradient: TBColors.primaryGradient,
+        gradient: TBColors.primaryAccentGradient,
         borderRadius: BorderRadius.circular(TBSpacing.radiusLg),
         boxShadow: [
           BoxShadow(
