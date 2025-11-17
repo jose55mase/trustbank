@@ -55,12 +55,6 @@ class PdfService {
                         ),
                       ],
                     ),
-                    pw.Image(
-                      logo,
-                      width: 80,
-                      height: 60,
-                      fit: pw.BoxFit.contain,
-                    ),
                   ],
                 ),
               ),
@@ -78,20 +72,35 @@ class PdfService {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(
-                      'DETALLES DE LA TRANSACCIÓN',
-                      style: pw.TextStyle(
-                        fontSize: 14,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColor.fromHex('#6C63FF'),
-                      ),
+                    pw.Row(
+                      children: [
+                        pw.Column(
+                          children: [
+                            pw.Text(
+                              'DETALLES DE LA TRANSACCIÓN',
+                              style: pw.TextStyle(
+                                fontSize: 14,
+                                fontWeight: pw.FontWeight.bold,
+                                color: PdfColor.fromHex('#6C63FF'),
+                              ),
+                            ),
+                            pw.SizedBox(height: 15),
+                            _buildInfoRow('ID de Transacción:', receipt.id),
+                            _buildInfoRow('Tipo:', receipt.transactionType),
+                            _buildInfoRow('Fecha y Hora:', DateFormat('dd/MM/yyyy - HH:mm:ss').format(receipt.date)),
+                            _buildInfoRow('Estado:', receipt.status),
+                            _buildInfoRow('Código de Autorización:', receipt.authorizationCode),
+                          ]
+                        ),
+                        pw.Image(
+                          logo,
+                          width: 80,
+                          height: 60,
+                          fit: pw.BoxFit.contain,
+                        ),
+                      ]
                     ),
-                    pw.SizedBox(height: 15),
-                    _buildInfoRow('ID de Transacción:', receipt.id),
-                    _buildInfoRow('Tipo:', receipt.transactionType),
-                    _buildInfoRow('Fecha y Hora:', DateFormat('dd/MM/yyyy - HH:mm:ss').format(receipt.date)),
-                    _buildInfoRow('Estado:', receipt.status),
-                    _buildInfoRow('Código de Autorización:', receipt.authorizationCode),
+
                     
                     pw.SizedBox(height: 20),
                     pw.Container(

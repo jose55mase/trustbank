@@ -15,14 +15,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     emit(AuthLoading());
-    
+    print('-------------------------------> ');
     try {
       await Future.delayed(const Duration(seconds: 2));
       
       if (event.email.isNotEmpty && event.password.length >= 6) {
         // Simular consulta de usuario con estado
         final accountStatus = _getUserAccountStatus(event.email);
-        
+
         if (accountStatus == 'suspended') {
           emit(const AccountSuspended(
             'Tu cuenta ha sido suspendida. Contacta al administrador para más información.',
