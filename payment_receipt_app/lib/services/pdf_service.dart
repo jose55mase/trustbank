@@ -29,31 +29,25 @@ class PdfService {
                   ),
                   borderRadius: pw.BorderRadius.circular(12),
                 ),
-                child: pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        pw.Text(
-                          'TrustBank',
-                          style: pw.TextStyle(
-                            fontSize: 28,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.white,
-                          ),
-                        ),
-                        pw.SizedBox(height: 8),
-                        pw.Text(
-                          'COMPROBANTE DE TRANSACCIÓN',
-                          style: pw.TextStyle(
-                            fontSize: 16,
-                            color: PdfColors.white,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
+                    pw.Text(
+                      'TrustBank',
+                      style: pw.TextStyle(
+                        fontSize: 28,
+                        fontWeight: pw.FontWeight.bold,
+                        color: PdfColors.white,
+                      ),
+                    ),
+                    pw.SizedBox(height: 8),
+                    pw.Text(
+                      'COMPROBANTE DE TRANSACCIÓN',
+                      style: pw.TextStyle(
+                        fontSize: 16,
+                        color: PdfColors.white,
+                        letterSpacing: 1.2,
+                      ),
                     ),
                   ],
                 ),
@@ -73,24 +67,29 @@ class PdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
-                        pw.Column(
-                          children: [
-                            pw.Text(
-                              'DETALLES DE LA TRANSACCIÓN',
-                              style: pw.TextStyle(
-                                fontSize: 14,
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColor.fromHex('#6C63FF'),
+                        pw.Expanded(
+                          child: pw.Column(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text(
+                                'DETALLES DE LA TRANSACCIÓN',
+                                style: pw.TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: pw.FontWeight.bold,
+                                  color: PdfColor.fromHex('#6C63FF'),
+                                ),
                               ),
-                            ),
-                            pw.SizedBox(height: 15),
-                            _buildInfoRow('ID de Transacción:', receipt.id),
-                            _buildInfoRow('Tipo:', receipt.transactionType),
-                            _buildInfoRow('Fecha y Hora:', DateFormat('dd/MM/yyyy - HH:mm:ss').format(receipt.date)),
-                            _buildInfoRow('Estado:', receipt.status),
-                            _buildInfoRow('Código de Autorización:', receipt.authorizationCode),
-                          ]
+                              pw.SizedBox(height: 15),
+                              _buildInfoRow('ID de Transacción:', receipt.id),
+                              _buildInfoRow('Tipo:', receipt.transactionType),
+                              _buildInfoRow('Fecha y Hora:', DateFormat('dd/MM/yyyy - HH:mm:ss').format(receipt.date)),
+                              _buildInfoRow('Estado:', receipt.status),
+                              _buildInfoRow('Código de Autorización:', receipt.authorizationCode),
+                            ],
+                          ),
                         ),
                         pw.Image(
                           logo,
@@ -98,7 +97,7 @@ class PdfService {
                           height: 60,
                           fit: pw.BoxFit.contain,
                         ),
-                      ]
+                      ],
                     ),
 
                     
