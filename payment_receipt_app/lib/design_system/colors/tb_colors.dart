@@ -10,6 +10,11 @@ class TBColors {
   static const Color secondary = Color(0xFF00D4AA);
   static const Color secondaryLight = Color(0xFF4DFFCD);
   
+  // Accent Colors - Yellow tones to complement logo
+  static const Color accent = Color(0xFFFFC107);
+  static const Color accentLight = Color(0xFFFFD54F);
+  static const Color accentDark = Color(0xFFFF8F00);
+  
   // Neutral Colors
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF1A1A1A);
@@ -30,6 +35,18 @@ class TBColors {
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [primary, primaryLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient accentGradient = LinearGradient(
+    colors: [accent, accentLight],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
+  static const LinearGradient primaryAccentGradient = LinearGradient(
+    colors: [primary, accent],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

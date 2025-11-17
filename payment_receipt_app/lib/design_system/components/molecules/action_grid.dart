@@ -37,6 +37,10 @@ class ActionGrid extends StatelessWidget {
       itemCount: actions.length,
       itemBuilder: (context, index) {
         final action = actions[index];
+        final isAccent = index % 3 == 1; // Every third item uses accent color
+        final bgColor = isAccent ? TBColors.accent.withOpacity(0.1) : TBColors.primary.withOpacity(0.1);
+        final iconColor = isAccent ? TBColors.accentDark : TBColors.primary;
+        
         return GestureDetector(
           onTap: action.onTap,
           child: Container(
@@ -58,12 +62,12 @@ class ActionGrid extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: TBColors.primary.withOpacity(0.1),
+                    color: bgColor,
                     borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
                   ),
                   child: Icon(
                     action.icon,
-                    color: TBColors.primary,
+                    color: iconColor,
                     size: 24,
                   ),
                 ),
