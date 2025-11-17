@@ -9,6 +9,7 @@ import '../utils/currency_formatter.dart';
 class PdfService {
   static Future<void> generateAndDownloadReceipt(PaymentReceipt receipt) async {
     final pdf = pw.Document();
+    final logo = await _loadLogo();
 
     pdf.addPage(
       pw.Page(
@@ -54,19 +55,11 @@ class PdfService {
                         ),
                       ],
                     ),
-                    pw.FutureBuilder<pw.ImageProvider>(
-                      future: _loadLogo(),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          return pw.Image(
-                            snapshot.data!,
-                            width: 80,
-                            height: 60,
-                            fit: pw.BoxFit.contain,
-                          );
-                        }
-                        return pw.SizedBox(width: 80, height: 60);
-                      },
+                    pw.Image(
+                      logo,
+                      width: 80,
+                      height: 60,
+                      fit: pw.BoxFit.contain,
                     ),
                   ],
                 ),

@@ -13,7 +13,7 @@ import '../../register/screens/register_screen.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
-import '../../../widgets/admin_credentials_info.dart';
+
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
