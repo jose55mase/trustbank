@@ -122,7 +122,7 @@ class LoginScreen extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: TBSpacing.lg),
-                        const AdminCredentialsInfo(),
+                        //const AdminCredentialsInfo(),
                       ],
                     ),
                   ),
