@@ -2,6 +2,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import '../models/payment_receipt.dart';
 import '../utils/currency_formatter.dart';
 
@@ -17,37 +18,55 @@ class PdfService {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              // Header with TrustBank branding
+              // Header with TrustBank branding and logo
               pw.Container(
                 width: double.infinity,
                 padding: const pw.EdgeInsets.all(20),
                 decoration: pw.BoxDecoration(
                   gradient: pw.LinearGradient(
-
                     colors: [PdfColor.fromHex('#6C63FF'), PdfColor.fromHex('#9C96FF')],
-
                   ),
                   borderRadius: pw.BorderRadius.circular(12),
                 ),
-                child: pw.Column(
+                child: pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text(
-                      'TrustBank',
-                      style: pw.TextStyle(
-                        fontSize: 28,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.white,
-                      ),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'TrustBank',
+                          style: pw.TextStyle(
+                            fontSize: 28,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.white,
+                          ),
+                        ),
+                        pw.SizedBox(height: 8),
+                        pw.Text(
+                          'COMPROBANTE DE TRANSACCIÓN',
+                          style: pw.TextStyle(
+                            fontSize: 16,
+                            color: PdfColors.white,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
-                    pw.SizedBox(height: 8),
-                    pw.Text(
-                      'COMPROBANTE DE TRANSACCIÓN',
-                      style: pw.TextStyle(
-                        fontSize: 16,
-                        color: PdfColors.white,
-                        letterSpacing: 1.2,
-                      ),
+                    pw.FutureBuilder<pw.ImageProvider>(
+                      future: _loadLogo(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          return pw.Image(
+                            snapshot.data!,
+                            width: 80,
+                            height: 60,
+                            fit: pw.BoxFit.contain,
+                          );
+                        }
+                        return pw.SizedBox(width: 80, height: 60);
+                      },
                     ),
                   ],
                 ),
@@ -280,5 +299,10 @@ class PdfService {
         ],
       ),
     );
+  }
+  
+  static Future<pw.ImageProvider> _loadLogo() async {
+    final ByteData data = await rootBundle.load('assets/images/logobanklettersblak.png');
+    return pw.MemoryImage(data.buffer.asUint8List());
   }
 }
