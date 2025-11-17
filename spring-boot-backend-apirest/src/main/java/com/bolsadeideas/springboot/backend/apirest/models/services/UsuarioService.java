@@ -39,9 +39,21 @@ public class UsuarioService implements IUserService, UserDetailsService {
 
         UserEntity userEntity = this.userDao.findByemail(s);
 
-        if(s == null) {
+        if(userEntity == null) {
             logger.error("Error en el login: no existe el usuario '"+s+"' en el sistema!");
             throw new UsernameNotFoundException("Error en el login: no existe el usuario '"+s+"' en el sistema!");
+        }
+        
+        // Verificar si el usuario está suspendido
+        if("SUSPENDED".equals(userEntity.getAccountStatus())) {
+            logger.error("Error en el login: el usuario '"+s+"' está suspendido!");
+            throw new UsernameNotFoundException("Error en el login: el usuario '"+s+"' está suspendido!");
+        }
+        
+        // Verificar si el usuario está inactivo
+        if("INACTIVE".equals(userEntity.getAccountStatus())) {
+            logger.error("Error en el login: el usuario '"+s+"' está inactivo!");
+            throw new UsernameNotFoundException("Error en el login: el usuario '"+s+"' está inactivo!");
         }
 
         List<GrantedAuthority> authorityLis = userEntity.getRols()
@@ -49,7 +61,11 @@ public class UsuarioService implements IUserService, UserDetailsService {
                 .map(rol -> new SimpleGrantedAuthority(rol.getName()))
                 .collect(Collectors.toList());
 
-        return new User(userEntity.getEmail(), userEntity.getPassword(), userEntity.getStatus(),true, true, true,authorityLis);
+        // Solo permitir login si el accountStatus es ACTIVE
+        boolean isAccountEnabled = "ACTIVE".equals(userEntity.getAccountStatus()) && 
+                                  (userEntity.getStatus() == null || userEntity.getStatus());
+
+        return new User(userEntity.getEmail(), userEntity.getPassword(), isAccountEnabled, true, true, true, authorityLis);
     }
 
     @Transactional(readOnly = true)

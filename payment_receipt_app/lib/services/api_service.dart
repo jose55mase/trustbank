@@ -510,4 +510,30 @@ class ApiService {
       throw Exception('Failed to update user role');
     }
   }
+  
+  // Change password endpoint
+  static Future<Map<String, dynamic>> changePassword({
+    required String email,
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/changePassword'),
+      headers: await headers,
+      body: json.encode({
+        'email': email,
+        'currentPassword': currentPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 400 || response.statusCode == 404) {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Error al cambiar contraseña');
+    } else {
+      throw Exception('Error del servidor');
+    }
+  }
 }

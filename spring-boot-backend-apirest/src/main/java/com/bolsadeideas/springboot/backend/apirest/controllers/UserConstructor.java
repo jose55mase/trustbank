@@ -307,5 +307,43 @@ public class UserConstructor {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    
+    @CrossOrigin(origins = "*")
+    @PutMapping("/changePassword")
+    public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String email = request.get("email");
+            String currentPassword = request.get("currentPassword");
+            String newPassword = request.get("newPassword");
+            
+            UserEntity user = this.usuarioService.findByemail(email);
+            if (user == null) {
+                response.put("success", false);
+                response.put("message", "Usuario no encontrado");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+            
+            // Verificar contraseña actual
+            if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+                response.put("success", false);
+                response.put("message", "Contraseña actual incorrecta");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+            
+            // Actualizar contraseña
+            user.setPassword(passwordEncoder.encode(newPassword));
+            this.usuarioService.save(user);
+            
+            response.put("success", true);
+            response.put("message", "Contraseña actualizada exitosamente");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+            
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error interno del servidor");
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 }
