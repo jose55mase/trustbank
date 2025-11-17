@@ -41,19 +41,25 @@ public class UsuarioService implements IUserService, UserDetailsService {
 
         if(userEntity == null) {
             logger.error("Error en el login: no existe el usuario '"+s+"' en el sistema!");
-            throw new UsernameNotFoundException("Error en el login: no existe el usuario '"+s+"' en el sistema!");
+            throw new UsernameNotFoundException("Credenciales inválidas");
         }
         
         // Verificar si el usuario está suspendido
         if("SUSPENDED".equals(userEntity.getAccountStatus())) {
             logger.error("Error en el login: el usuario '"+s+"' está suspendido!");
-            throw new UsernameNotFoundException("Error en el login: el usuario '"+s+"' está suspendido!");
+            throw new UsernameNotFoundException("Tu cuenta ha sido suspendida. Contacta al administrador para más información.");
         }
         
         // Verificar si el usuario está inactivo
         if("INACTIVE".equals(userEntity.getAccountStatus())) {
             logger.error("Error en el login: el usuario '"+s+"' está inactivo!");
-            throw new UsernameNotFoundException("Error en el login: el usuario '"+s+"' está inactivo!");
+            throw new UsernameNotFoundException("Tu cuenta está inactiva. Contacta al administrador para activarla.");
+        }
+        
+        // Verificar si el usuario está pendiente de aprobación
+        if("PENDING".equals(userEntity.getAccountStatus())) {
+            logger.error("Error en el login: el usuario '"+s+"' está pendiente de aprobación!");
+            throw new UsernameNotFoundException("Tu cuenta está pendiente de aprobación. Espera la confirmación del administrador.");
         }
 
         List<GrantedAuthority> authorityLis = userEntity.getRols()
