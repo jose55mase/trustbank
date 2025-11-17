@@ -175,12 +175,11 @@ class ApiService {
       body: json.encode(requestData),
     );
 
-    // Request logged for debugging
-
     if (response.statusCode == 201 || response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Server error: ${response.statusCode} - ${response.body}');
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Server error: ${response.statusCode}');
     }
   }
 

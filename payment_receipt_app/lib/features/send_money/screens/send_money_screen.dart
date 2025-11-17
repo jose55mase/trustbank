@@ -283,7 +283,11 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       'requestType': 'SEND_MONEY',
       'userId': userId,
       'amount': amount,
-      'details': 'Descripción: $description. Banco: $bank. Cuenta: $accountNumber. Tipo: $type',
+      'description': description,
+      'bankName': bank,
+      'accountNumber': accountNumber,
+      'transferType': type,
+      'details': 'Transferencia bancaria - $description',
     });
   }
 }
