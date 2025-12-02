@@ -481,9 +481,17 @@ class ApiService {
     );
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final data = json.decode(response.body);
+      return {
+        'status': response.statusCode,
+        'data': data,
+        'message': 'Success'
+      };
     } else {
-      throw Exception('Failed to get user');
+      return {
+        'status': response.statusCode,
+        'message': 'Failed to get user'
+      };
     }
   }
 

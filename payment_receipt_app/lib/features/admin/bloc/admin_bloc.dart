@@ -107,7 +107,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _updateUserBalance(int userId, double amount, RequestType requestType) async {
     try {
-      // Starting balance update for user $userId with amount $amount
+      print('Starting balance update for user $userId with amount $amount for ${requestType.name}');
       
       // 1. Actualizar saldo en base de datos
       await _updateBackendBalance(userId, amount);
@@ -135,61 +135,61 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
             break;
         }
         
-        await ApiService.createTransaction({
+        final transactionData = {
           'userId': userId,
           'type': transactionType,
           'amount': amount.abs(),
           'description': description,
           'date': DateTime.now().toIso8601String(),
           'category': requestType == RequestType.credit ? 'CREDIT_DISBURSEMENT' : 'ADMIN_APPROVAL',
-        });
-        // Transaction created successfully
+        };
+        
+        print('Creating transaction: $transactionData');
+        await ApiService.createTransaction(transactionData);
+        print('Transaction created successfully for user $userId');
       } catch (e) {
-        // Error creating transaction: silently continue
+        print('Error creating transaction for user $userId: $e');
       }
       
-      // Balance update process completed
+      print('Balance update process completed for user $userId');
       
     } catch (e) {
-      // Error updating balance: silently continue
+      print('Error updating balance for user $userId: $e');
     }
   }
   
   Future<void> _updateBackendBalance(int userId, double amount) async {
     try {
-      // Obtener datos completos del usuario
-      final prefs = await SharedPreferences.getInstance();
-      final userDataString = prefs.getString('user_data');
+      // Obtener datos del usuario específico desde el backend
+      final userResponse = await ApiService.getUserById(userId);
       
-      if (userDataString != null) {
-        final userData = json.decode(userDataString);
-        if (userData['id'] == userId) {
-          final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
-          final newBalance = currentBalance + amount;
-          
-          // Crear objeto UserEntity completo
-          final userEntity = {
-            'id': userData['id'],
-            'name': userData['name'],
-            'email': userData['email'],
-            'password': userData['password'],
-            'moneyclean': newBalance,
-            'balance': newBalance,
-            'phone': userData['phone'],
-            'address': userData['address'],
-            'documentType': userData['documentType'],
-            'documentNumber': userData['documentNumber'],
-            'accountStatus': userData['accountStatus'] ?? 'ACTIVE',
-            'createdAt': userData['createdAt'],
-            'updatedAt': DateTime.now().toIso8601String(),
-          };
-          
-          await ApiService.updateUser(userEntity);
-          // Backend balance updated successfully
-        }
+      if (userResponse['status'] == 200) {
+        final userData = userResponse['data'];
+        final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
+        final newBalance = currentBalance + amount;
+        
+        // Crear objeto UserEntity completo con saldo actualizado
+        final userEntity = {
+          'id': userData['id'],
+          'name': userData['name'],
+          'email': userData['email'],
+          'password': userData['password'],
+          'moneyclean': newBalance,
+          'balance': newBalance,
+          'phone': userData['phone'],
+          'address': userData['address'],
+          'documentType': userData['documentType'],
+          'documentNumber': userData['documentNumber'],
+          'accountStatus': userData['accountStatus'] ?? 'ACTIVE',
+          'createdAt': userData['createdAt'],
+          'updatedAt': DateTime.now().toIso8601String(),
+        };
+        
+        await ApiService.updateUser(userEntity);
+        print('Backend balance updated for user $userId: $newBalance');
       }
     } catch (e) {
-      // Error updating backend balance: continue with local update
+      print('Error updating backend balance for user $userId: $e');
     }
   }
   
@@ -200,25 +200,28 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       final prefs = await SharedPreferences.getInstance();
       final userDataString = prefs.getString('user_data');
       
+      // Solo actualizar localmente si es el usuario actual
       if (userDataString != null) {
         final userData = json.decode(userDataString);
         if (userData['id'] == userId) {
-          // Actualizar saldo
+          // Actualizar saldo del usuario actual
           final currentBalance = (userData['moneyclean'] ?? userData['balance'] ?? 0.0).toDouble();
           userData['moneyclean'] = currentBalance + amount;
           
           await prefs.setString('user_data', json.encode(userData));
-          // Local balance updated successfully
+          print('Local balance updated for current user $userId: ${userData['moneyclean']}');
           
           // Notificar actualización de saldo globalmente
           BalanceService().updateBalance(userId, userData['moneyclean']);
           
           // Agregar transacción local a movimientos recientes
           await _addLocalTransaction(userId, amount, requestType);
+        } else {
+          print('Skipping local update - user $userId is not current user');
         }
       }
     } catch (e) {
-      // Error updating local balance: silently continue
+      print('Error updating local balance: $e');
     }
   }
   
