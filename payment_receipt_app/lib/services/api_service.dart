@@ -183,7 +183,7 @@ class ApiService {
     }
   }
 
-  static Future<List<dynamic>> getAllAdminRequests() async {
+  static Future<Map<String, dynamic>> getAllAdminRequests() async {
     final response = await http.get(
       Uri.parse('$baseUrl/admin-requests/all?sort=createdAt,desc'),
       headers: await headers,
@@ -191,9 +191,16 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['data'] ?? [];
+      return {
+        'status': response.statusCode,
+        'data': data['data'] ?? [],
+        'message': 'Success'
+      };
     } else {
-      throw Exception('Failed to get requests');
+      return {
+        'status': response.statusCode,
+        'message': 'Failed to get requests'
+      };
     }
   }
 

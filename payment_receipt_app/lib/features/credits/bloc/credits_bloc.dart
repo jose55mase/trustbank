@@ -12,6 +12,12 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
     on<CheckApplicationStatus>(_onCheckApplicationStatus);
   }
 
+  int _safeParseInt(dynamic value, int defaultValue) {
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? defaultValue;
+    return defaultValue;
+  }
+
   Future<void> _onLoadCreditApplications(
     LoadCreditApplications event,
     Emitter<CreditsState> emit,
@@ -24,13 +30,13 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
       final response = await ApiService.getAllAdminRequests();
       
       if (response['status'] == 200) {
-        final allRequests = response['data'] as List;
+        final allRequests = (response['data'] as List).cast<Map<String, dynamic>>();
         
         // Filtrar solo las solicitudes de crédito del usuario actual
         final creditRequests = allRequests
             .where((request) => 
                 request['requestType'] == 'CREDIT' && 
-                (request['userId'] as int) == userId)
+                _safeParseInt(request['userId'], 0) == userId)
             .toList();
         
         // Convertir AdminRequest a CreditApplication
@@ -96,9 +102,12 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
         status = CreditStatus.pending;
     }
     
+    final requestId = _safeParseInt(request['id'], DateTime.now().millisecondsSinceEpoch);
+    final requestUserId = _safeParseInt(request['userId'], 1);
+    
     return CreditApplication(
-      id: (request['id'] as int?) ?? DateTime.now().millisecondsSinceEpoch,
-      userId: (request['userId'] as int?) ?? 1,
+      id: requestId,
+      userId: requestUserId,
       creditType: creditType,
       amount: (request['amount'] ?? 0.0).toDouble(),
       termMonths: termMonths,
@@ -143,8 +152,9 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
       if (response['status'] == 201 || response['status'] == 200) {
         // Crear aplicación local basada en la respuesta del AdminRequest
         final adminRequest = response['data'];
+        final requestId = _safeParseInt(adminRequest['id'], DateTime.now().millisecondsSinceEpoch);
         final application = CreditApplication(
-          id: (adminRequest['id'] as int?) ?? DateTime.now().millisecondsSinceEpoch,
+          id: requestId,
           userId: userId,
           creditType: event.creditType,
           amount: event.amount,
@@ -183,11 +193,11 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
       final response = await ApiService.getAllAdminRequests();
       
       if (response['status'] == 200) {
-        final allRequests = response['data'] as List;
+        final allRequests = (response['data'] as List).cast<Map<String, dynamic>>();
         
         // Buscar la solicitud específica
-        final requestData = allRequests.cast<Map<String, dynamic>>().firstWhere(
-          (request) => (request['id'] as int) == event.applicationId,
+        final requestData = allRequests.firstWhere(
+          (request) => _safeParseInt(request['id'], 0) == event.applicationId,
           orElse: () => <String, dynamic>{},
         );
         
