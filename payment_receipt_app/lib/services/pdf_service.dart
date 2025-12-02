@@ -93,8 +93,8 @@ class PdfService {
                         ),
                         pw.Image(
                           logo,
-                          width: 80,
-                          height: 60,
+                          width: 180,
+                          height: 130,
                           fit: pw.BoxFit.contain,
                         ),
                       ],
