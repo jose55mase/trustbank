@@ -69,6 +69,24 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         }
       }
       
+      // Crear notificación específica para créditos aprobados
+      if (event.status == RequestStatus.approved && currentState is AdminLoaded) {
+        final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
+        if (request.type == RequestType.credit) {
+          try {
+            await ApiService.createNotification({
+              'userId': int.parse(request.userId),
+              'title': '🎉 Crédito Aprobado',
+              'message': 'Tu crédito por ${request.amount.toStringAsFixed(2)} USD ha sido aprobado y el dinero ya está disponible en tu cuenta.',
+              'type': 'creditApproved',
+              'additionalInfo': 'Monto desembolsado: \$${request.amount.toStringAsFixed(2)} USD',
+            });
+          } catch (e) {
+            // Error silencioso al crear notificación
+          }
+        }
+      }
+      
       // Recargar solicitudes y actualizar notificaciones
       add(LoadRequests());
       
@@ -96,10 +114,23 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       
       // 3. Crear transacción en base de datos
       try {
-        final transactionType = requestType == RequestType.sendMoney ? 'EXPENSE' : 'INCOME';
-        final description = requestType == RequestType.sendMoney 
-            ? 'Envío de dinero aprobado por Juzgado'
-            : 'Transacción aprobada por Juzgado';
+        String transactionType;
+        String description;
+        
+        switch (requestType) {
+          case RequestType.sendMoney:
+            transactionType = 'EXPENSE';
+            description = 'Envío de dinero aprobado por administrador';
+            break;
+          case RequestType.recharge:
+            transactionType = 'INCOME';
+            description = 'Recarga de saldo aprobada por administrador';
+            break;
+          case RequestType.credit:
+            transactionType = 'INCOME';
+            description = 'Crédito aprobado y desembolsado';
+            break;
+        }
         
         await ApiService.createTransaction({
           'userId': userId,
@@ -107,6 +138,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           'amount': amount.abs(),
           'description': description,
           'date': DateTime.now().toIso8601String(),
+          'category': requestType == RequestType.credit ? 'CREDIT_DISBURSEMENT' : 'ADMIN_APPROVAL',
         });
         // Transaction created successfully
       } catch (e) {
@@ -195,10 +227,23 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       final transactions = List<Map<String, dynamic>>.from(json.decode(transactionsString));
       
       // Agregar nueva transacción al inicio
-      final transactionType = requestType == RequestType.sendMoney ? 'EXPENSE' : 'INCOME';
-      final description = requestType == RequestType.sendMoney 
-          ? 'Envío de dinero aprobado por administrador'
-          : 'Transacción aprobada por administrador';
+      String transactionType;
+      String description;
+      
+      switch (requestType) {
+        case RequestType.sendMoney:
+          transactionType = 'EXPENSE';
+          description = 'Envío de dinero aprobado por administrador';
+          break;
+        case RequestType.recharge:
+          transactionType = 'INCOME';
+          description = 'Recarga de saldo aprobada por administrador';
+          break;
+        case RequestType.credit:
+          transactionType = 'INCOME';
+          description = 'Crédito aprobado y desembolsado';
+          break;
+      }
       
       final newTransaction = {
         'id': DateTime.now().millisecondsSinceEpoch,

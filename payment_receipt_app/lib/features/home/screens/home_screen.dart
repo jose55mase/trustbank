@@ -575,14 +575,22 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Mostrar nombres de usuarios en lugar de IDs
                       final fromUser = transaction['fromUser'] ?? 'Usuario';
                       final toUser = transaction['toUser'] ?? 'Destinatario';
+                      final category = transaction['category'] ?? '';
                       
                       if (isIncome) {
-                        title = 'De: $fromUser';
-                        if (description.toLowerCase().contains('recarga')) {
+                        // Manejar créditos específicamente
+                        if (description.toLowerCase().contains('crédito') || 
+                            category == 'CREDIT_DISBURSEMENT') {
+                          title = '🎉 Crédito Aprobado';
+                          icon = Icons.credit_card;
+                        } else if (description.toLowerCase().contains('recarga')) {
+                          title = 'Recarga de Saldo';
                           icon = Icons.add_circle;
                         } else if (description.toLowerCase().contains('transferencia')) {
+                          title = 'De: $fromUser';
                           icon = Icons.arrow_downward;
                         } else {
+                          title = 'Ingreso';
                           icon = Icons.account_balance;
                         }
                       } else {
