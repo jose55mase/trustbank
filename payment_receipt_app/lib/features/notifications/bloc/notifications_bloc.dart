@@ -134,7 +134,10 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       final userId = await AuthService.getCurrentUserId();
       if (userId == null) return;
       
-      final requests = await ApiService.getAllAdminRequests();
+      final response = await ApiService.getAllAdminRequests();
+      if (response['status'] != 200) return;
+      
+      final requests = (response['data'] as List).cast<Map<String, dynamic>>();
       final userRequests = requests.where((r) => r['userId'] == userId).toList();
       
       for (var request in userRequests) {
