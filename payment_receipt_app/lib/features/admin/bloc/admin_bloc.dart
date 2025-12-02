@@ -21,7 +21,14 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
     try {
       emit(AdminLoading());
       final response = await ApiService.getAllAdminRequests();
-      final requests = response.map((data) => AdminRequest(
+      
+      if (response['status'] != 200) {
+        emit(AdminError('Error al cargar solicitudes'));
+        return;
+      }
+      
+      final requestsData = (response['data'] as List).cast<Map<String, dynamic>>();
+      final requests = requestsData.map((data) => AdminRequest(
         id: data['id'].toString(),
         type: _mapRequestType(data['requestType']),
         status: _mapRequestStatus(data['status']),
