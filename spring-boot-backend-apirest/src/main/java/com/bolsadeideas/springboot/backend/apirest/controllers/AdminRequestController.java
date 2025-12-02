@@ -89,15 +89,24 @@ public class AdminRequestController {
     
     private void updateUserBalance(AdminRequestEntity request) {
         try {
+            System.out.println("Iniciando actualización de saldo para usuario: " + request.getUserId() + ", tipo: " + request.getRequestType() + ", monto: " + request.getAmount());
+            
             UserEntity user = userService.findById(request.getUserId());
             if (user != null) {
                 Integer currentBalance = user.getMoneyclean() != null ? user.getMoneyclean() : 0;
+                System.out.println("Usuario encontrado - ID: " + user.getId() + ", Saldo actual: " + currentBalance);
                 
                 switch (request.getRequestType()) {
                     case "RECHARGE":
                     case "BALANCE_RECHARGE":
                         // Agregar dinero al saldo
                         user.setMoneyclean(currentBalance + request.getAmount().intValue());
+                        break;
+                        
+                    case "CREDIT":
+                        // Agregar dinero del crédito al saldo
+                        user.setMoneyclean(currentBalance + request.getAmount().intValue());
+                        System.out.println("Crédito aprobado: Usuario " + user.getId() + " - Saldo anterior: " + currentBalance + " - Monto crédito: " + request.getAmount() + " - Nuevo saldo: " + (currentBalance + request.getAmount().intValue()));
                         break;
                         
                     case "SEND_MONEY":
@@ -107,14 +116,19 @@ public class AdminRequestController {
                         
                     default:
                         // Para otros tipos de solicitud, no modificar saldo
+                        System.out.println("Tipo de solicitud no reconocido para actualización de saldo: " + request.getRequestType());
                         return;
                 }
                 
                 userService.save(user);
+                System.out.println("Saldo actualizado exitosamente para usuario " + user.getId() + ": " + user.getMoneyclean());
+            } else {
+                System.err.println("Usuario no encontrado con ID: " + request.getUserId());
             }
         } catch (Exception e) {
             // Log error pero no fallar la transacción principal
             System.err.println("Error actualizando saldo del usuario: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
