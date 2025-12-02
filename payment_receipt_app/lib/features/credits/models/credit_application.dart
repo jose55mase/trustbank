@@ -8,6 +8,7 @@ enum CreditStatus {
 
 class CreditApplication {
   final int id;
+  final int userId;
   final String creditType;
   final double amount;
   final int termMonths;
@@ -21,6 +22,7 @@ class CreditApplication {
 
   CreditApplication({
     required this.id,
+    required this.userId,
     required this.creditType,
     required this.amount,
     required this.termMonths,
@@ -36,6 +38,7 @@ class CreditApplication {
   factory CreditApplication.fromJson(Map<String, dynamic> json) {
     return CreditApplication(
       id: json['id'],
+      userId: json['userId'] ?? 1,
       creditType: json['creditType'],
       amount: (json['amount'] ?? 0.0).toDouble(),
       termMonths: json['termMonths'],

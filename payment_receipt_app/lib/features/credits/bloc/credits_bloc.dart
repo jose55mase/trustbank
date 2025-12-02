@@ -48,16 +48,45 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
         'termMonths': event.termMonths,
         'interestRate': event.interestRate,
         'monthlyPayment': event.monthlyPayment,
+        'applicationDate': DateTime.now().toIso8601String(),
       });
       
-      if (response['status'] == 201) {
-        final application = CreditApplication.fromJson(response['data']);
-        emit(CreditApplicationSubmitted(application: application));
+      if (response['status'] == 201 || response['status'] == 200) {
+        // Si el backend devuelve los datos de la aplicación
+        if (response['data'] != null) {
+          final application = CreditApplication.fromJson(response['data']);
+          emit(CreditApplicationSubmitted(application: application));
+        } else {
+          // Crear aplicación local si el backend no devuelve datos completos
+          final application = CreditApplication(
+            id: DateTime.now().millisecondsSinceEpoch,
+            userId: userId,
+            creditType: event.creditType,
+            amount: event.amount,
+            termMonths: event.termMonths,
+            interestRate: event.interestRate,
+            monthlyPayment: event.monthlyPayment,
+            status: CreditStatus.pending,
+            applicationDate: DateTime.now(),
+          );
+          emit(CreditApplicationSubmitted(application: application));
+        }
       } else {
         emit(CreditsError(message: response['message'] ?? 'Error al enviar solicitud'));
       }
     } catch (e) {
-      emit(CreditsError(message: e.toString().replaceAll('Exception: ', '')));
+      String errorMessage = e.toString().replaceAll('Exception: ', '');
+      
+      // Personalizar mensajes de error comunes
+      if (errorMessage.contains('conexión')) {
+        errorMessage = 'Error de conexión. Verifica tu internet.';
+      } else if (errorMessage.contains('timeout')) {
+        errorMessage = 'La solicitud tomó demasiado tiempo. Inténtalo nuevamente.';
+      } else if (errorMessage.contains('server')) {
+        errorMessage = 'Error del servidor. Inténtalo más tarde.';
+      }
+      
+      emit(CreditsError(message: errorMessage));
     }
   }
 

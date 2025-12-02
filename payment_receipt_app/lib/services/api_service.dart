@@ -337,16 +337,43 @@ class ApiService {
   }
 
   static Future<Map<String, dynamic>> applyForCredit(Map<String, dynamic> creditData) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/credits/apply'),
-      headers: await headers,
-      body: json.encode(creditData),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/credits/apply'),
+        headers: await headers,
+        body: json.encode(creditData),
+      );
 
-    if (response.statusCode == 201) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to apply for credit');
+      final responseData = json.decode(response.body);
+      
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return {
+          'status': response.statusCode,
+          'data': responseData,
+          'message': 'Solicitud enviada exitosamente'
+        };
+      } else if (response.statusCode == 400) {
+        return {
+          'status': response.statusCode,
+          'message': responseData['message'] ?? 'Datos de solicitud inválidos'
+        };
+      } else if (response.statusCode == 409) {
+        return {
+          'status': response.statusCode,
+          'message': 'Ya tienes una solicitud de crédito pendiente'
+        };
+      } else {
+        return {
+          'status': response.statusCode,
+          'message': responseData['message'] ?? 'Error al procesar la solicitud'
+        };
+      }
+    } catch (e) {
+      if (e.toString().contains('SocketException') || e.toString().contains('TimeoutException')) {
+        throw Exception('Error de conexión. Verifica tu internet e inténtalo nuevamente.');
+      } else {
+        throw Exception('Error inesperado: ${e.toString()}');
+      }
     }
   }
 

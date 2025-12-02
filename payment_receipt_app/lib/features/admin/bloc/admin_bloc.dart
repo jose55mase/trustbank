@@ -94,7 +94,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
             ? 'Envío de dinero aprobado por Juzgado'
             : 'Transacción aprobada por Juzgado';
         
-        final transactionResponse = await ApiService.createTransaction({
+        await ApiService.createTransaction({
           'userId': userId,
           'type': transactionType,
           'amount': amount.abs(),

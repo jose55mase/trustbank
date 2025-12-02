@@ -224,42 +224,69 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               child: BlocConsumer<CreditsBloc, CreditsState>(
                 listener: (context, state) {
                   if (state is CreditApplicationSubmitted) {
+                    // Agregar notificación
                     NotificationsBloc().add(AddCreditNotification(
                       creditType: widget.creditOption.title,
                       amount: CurrencyInputFormatter.getNumericValue(_amountController.text),
                     ));
                     
-                    Navigator.pushReplacement(
+                    // Mostrar mensaje de éxito
+                    TBDialogHelper.showSuccess(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => CreditStatusScreen(
-                          application: state.application,
-                        ),
-                      ),
+                      title: '¡Solicitud enviada!',
+                      message: 'Tu solicitud de crédito ha sido enviada exitosamente. Te contactaremos pronto.',
                     );
+                    
+                    // Navegar a pantalla de estado
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted && context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CreditStatusScreen(
+                              application: state.application,
+                            ),
+                          ),
+                        );
+                      }
+                    });
                   } else if (state is CreditsError) {
                     TBDialogHelper.showError(
                       context,
                       title: 'Error en la solicitud',
-                      message: state.message,
+                      message: state.message.isEmpty ? 'No se pudo procesar tu solicitud. Inténtalo nuevamente.' : state.message,
                     );
                   }
                 },
                 builder: (context, state) {
                   return TBButton(
-                    text: state is CreditsSubmitting ? 'Procesando...' : 'Solicitar crédito',
+                    text: state is CreditsSubmitting ? 'Enviando solicitud...' : 'Solicitar crédito',
                     fullWidth: true,
                     isLoading: state is CreditsSubmitting,
                     onPressed: state is CreditsSubmitting ? null : () {
                       final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
                       
-                      context.read<CreditsBloc>().add(SubmitCreditApplication(
-                        creditType: widget.creditOption.title,
-                        amount: amount,
-                        termMonths: _selectedMonths,
-                        interestRate: widget.creditOption.interestRate,
-                        monthlyPayment: _monthlyPayment,
-                      ));
+                      // Validar monto mínimo y máximo
+                      if (amount < widget.creditOption.minAmount) {
+                        TBDialogHelper.showWarning(
+                          context,
+                          title: 'Monto inválido',
+                          message: 'El monto mínimo es \$${widget.creditOption.minAmount.toStringAsFixed(0)}',
+                        );
+                        return;
+                      }
+                      
+                      if (amount > widget.creditOption.maxAmount) {
+                        TBDialogHelper.showWarning(
+                          context,
+                          title: 'Monto inválido',
+                          message: 'El monto máximo es \$${widget.creditOption.maxAmount.toStringAsFixed(0)}',
+                        );
+                        return;
+                      }
+                      
+                      // Mostrar confirmación antes de enviar
+                      _showConfirmationDialog(context, amount);
                     },
                   );
                 },
@@ -287,5 +314,83 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
     );
   }
   
+  void _showConfirmationDialog(BuildContext context, double amount) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Confirmar Solicitud',
+            style: TBTypography.titleLarge,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '¿Estás seguro de que deseas solicitar este crédito?',
+                style: TBTypography.bodyMedium,
+              ),
+              const SizedBox(height: TBSpacing.md),
+              Container(
+                padding: const EdgeInsets.all(TBSpacing.sm),
+                decoration: BoxDecoration(
+                  color: TBColors.grey100,
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusSm),
+                ),
+                child: Column(
+                  children: [
+                    _buildDetailRow('Tipo:', widget.creditOption.title),
+                    const SizedBox(height: TBSpacing.xs),
+                    _buildDetailRow('Monto:', CurrencyFormatter.format(amount)),
+                    const SizedBox(height: TBSpacing.xs),
+                    _buildDetailRow('Plazo:', '$_selectedMonths meses'),
+                    const SizedBox(height: TBSpacing.xs),
+                    _buildDetailRow('Cuota mensual:', CurrencyFormatter.format(_monthlyPayment)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: TBSpacing.sm),
+              Text(
+                'Una vez enviada, la solicitud será revisada por nuestro equipo.',
+                style: TBTypography.bodySmall.copyWith(color: TBColors.grey600),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Cancelar',
+                style: TBTypography.labelMedium.copyWith(color: TBColors.grey600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                
+                // Enviar solicitud
+                context.read<CreditsBloc>().add(SubmitCreditApplication(
+                  creditType: widget.creditOption.title,
+                  amount: amount,
+                  termMonths: _selectedMonths,
+                  interestRate: widget.creditOption.interestRate,
+                  monthlyPayment: _monthlyPayment,
+                ));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TBColors.primary,
+                foregroundColor: TBColors.white,
+              ),
+              child: Text(
+                'Confirmar',
+                style: TBTypography.labelMedium.copyWith(color: TBColors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 }

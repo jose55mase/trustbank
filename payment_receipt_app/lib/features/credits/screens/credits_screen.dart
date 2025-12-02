@@ -5,8 +5,6 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../models/credit_option.dart';
 import 'credit_simulation_screen.dart';
 import 'my_credits_screen.dart';
-import '../../../services/api_service.dart';
-import '../../../design_system/components/molecules/tb_dialog.dart';
 
 class CreditsScreen extends StatelessWidget {
   const CreditsScreen({super.key});
