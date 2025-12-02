@@ -7,8 +7,7 @@ import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_input.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../models/credit_option.dart';
-import 'credit_status_screen.dart';
-import '../../notifications/bloc/notifications_bloc.dart';
+import 'credit_processing_screen.dart';
 import '../bloc/credits_bloc.dart';
 import '../bloc/credits_event.dart';
 import '../bloc/credits_state.dart';
@@ -221,43 +220,7 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
             const SizedBox(height: TBSpacing.xl),
             BlocProvider(
               create: (context) => CreditsBloc(),
-              child: BlocConsumer<CreditsBloc, CreditsState>(
-                listener: (context, state) {
-                  if (state is CreditApplicationSubmitted) {
-                    // Agregar notificación
-                    NotificationsBloc().add(AddCreditNotification(
-                      creditType: widget.creditOption.title,
-                      amount: CurrencyInputFormatter.getNumericValue(_amountController.text),
-                    ));
-                    
-                    // Mostrar mensaje de éxito
-                    TBDialogHelper.showSuccess(
-                      context,
-                      title: '¡Solicitud enviada!',
-                      message: 'Tu solicitud de crédito ha sido enviada al administrador para su revisión y aprobación.',
-                    );
-                    
-                    // Navegar a pantalla de estado
-                    Future.delayed(const Duration(seconds: 2), () {
-                      if (mounted && context.mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreditStatusScreen(
-                              application: state.application,
-                            ),
-                          ),
-                        );
-                      }
-                    });
-                  } else if (state is CreditsError) {
-                    TBDialogHelper.showError(
-                      context,
-                      title: 'Error en la solicitud',
-                      message: state.message.isEmpty ? 'No se pudo procesar tu solicitud. Inténtalo nuevamente.' : state.message,
-                    );
-                  }
-                },
+              child: BlocBuilder<CreditsBloc, CreditsState>(
                 builder: (context, state) {
                   return TBButton(
                     text: state is CreditsSubmitting ? 'Enviando solicitud...' : 'Solicitar crédito',
@@ -368,6 +331,17 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                
+                // Navegar inmediatamente a pantalla de procesamiento
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BlocProvider.value(
+                      value: context.read<CreditsBloc>(),
+                      child: const CreditProcessingScreen(),
+                    ),
+                  ),
+                );
                 
                 // Enviar solicitud
                 context.read<CreditsBloc>().add(SubmitCreditApplication(
