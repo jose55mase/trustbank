@@ -234,7 +234,7 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                     TBDialogHelper.showSuccess(
                       context,
                       title: '¡Solicitud enviada!',
-                      message: 'Tu solicitud de crédito ha sido enviada exitosamente. Te contactaremos pronto.',
+                      message: 'Tu solicitud de crédito ha sido enviada al administrador para su revisión y aprobación.',
                     );
                     
                     // Navegar a pantalla de estado
@@ -352,7 +352,7 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               ),
               const SizedBox(height: TBSpacing.sm),
               Text(
-                'Una vez enviada, la solicitud será revisada por nuestro equipo.',
+                'Una vez enviada, la solicitud será revisada y aprobada por un administrador.',
                 style: TBTypography.bodySmall.copyWith(color: TBColors.grey600),
               ),
             ],
