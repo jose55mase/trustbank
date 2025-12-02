@@ -336,9 +336,8 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BlocProvider.value(
-                      value: context.read<CreditsBloc>(),
-                      child: const CreditProcessingScreen(),
+                    builder: (context) => CreditProcessingScreen(
+                      creditsBloc: context.read<CreditsBloc>(),
                     ),
                   ),
                 );

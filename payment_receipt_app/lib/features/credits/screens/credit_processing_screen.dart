@@ -10,7 +10,12 @@ import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../notifications/bloc/notifications_bloc.dart';
 
 class CreditProcessingScreen extends StatefulWidget {
-  const CreditProcessingScreen({super.key});
+  final CreditsBloc creditsBloc;
+  
+  const CreditProcessingScreen({
+    super.key,
+    required this.creditsBloc,
+  });
 
   @override
   State<CreditProcessingScreen> createState() => _CreditProcessingScreenState();
@@ -56,7 +61,9 @@ class _CreditProcessingScreenState extends State<CreditProcessingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CreditsBloc, CreditsState>(
+    return BlocProvider.value(
+      value: widget.creditsBloc,
+      child: BlocListener<CreditsBloc, CreditsState>(
       listener: (context, state) {
         if (state is CreditApplicationSubmitted) {
           // Agregar notificación
@@ -233,6 +240,7 @@ class _CreditProcessingScreenState extends State<CreditProcessingScreen>
           ),
         ),
       ),
+    ),
     );
   }
 
