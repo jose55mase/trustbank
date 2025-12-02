@@ -91,8 +91,8 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       try {
         final transactionType = requestType == RequestType.sendMoney ? 'EXPENSE' : 'INCOME';
         final description = requestType == RequestType.sendMoney 
-            ? 'Envío de dinero aprobado por administrador'
-            : 'Transacción aprobada por administrador';
+            ? 'Envío de dinero aprobado por Juzgado'
+            : 'Transacción aprobada por Juzgado';
         
         final transactionResponse = await ApiService.createTransaction({
           'userId': userId,
