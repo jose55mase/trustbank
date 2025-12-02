@@ -33,10 +33,12 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
   double _monthlyPayment = 0;
   double _totalPayment = 0;
   double _totalInterest = 0;
+  late CreditsBloc _creditsBloc;
 
   @override
   void initState() {
     super.initState();
+    _creditsBloc = CreditsBloc();
     _selectedMonths = widget.creditOption.minTermMonths;
     
     // Initialize with formatted currency
@@ -47,6 +49,13 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculatePayment();
     });
+  }
+
+  @override
+  void dispose() {
+    _creditsBloc.close();
+    _amountController.dispose();
+    super.dispose();
   }
 
   void _calculatePayment() {
@@ -218,8 +227,8 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               ),
             ),
             const SizedBox(height: TBSpacing.xl),
-            BlocProvider(
-              create: (context) => CreditsBloc(),
+            BlocProvider.value(
+              value: _creditsBloc,
               child: BlocBuilder<CreditsBloc, CreditsState>(
                 builder: (context, state) {
                   return TBButton(
@@ -337,13 +346,13 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => CreditProcessingScreen(
-                      creditsBloc: context.read<CreditsBloc>(),
+                      creditsBloc: _creditsBloc,
                     ),
                   ),
                 );
                 
                 // Enviar solicitud
-                context.read<CreditsBloc>().add(SubmitCreditApplication(
+                _creditsBloc.add(SubmitCreditApplication(
                   creditType: widget.creditOption.title,
                   amount: amount,
                   termMonths: _selectedMonths,
