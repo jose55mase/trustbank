@@ -70,19 +70,22 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       }
       
       // Crear notificación específica para créditos aprobados
-      if (event.status == RequestStatus.approved && currentState is AdminLoaded) {
-        final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
-        if (request.type == RequestType.credit) {
-          try {
-            await ApiService.createNotification({
-              'userId': int.parse(request.userId),
-              'title': '🎉 Crédito Aprobado',
-              'message': 'Tu crédito por ${request.amount.toStringAsFixed(2)} USD ha sido aprobado y el dinero ya está disponible en tu cuenta.',
-              'type': 'creditApproved',
-              'additionalInfo': 'Monto desembolsado: \$${request.amount.toStringAsFixed(2)} USD',
-            });
-          } catch (e) {
-            // Error silencioso al crear notificación
+      if (event.status == RequestStatus.approved) {
+        final currentState = state;
+        if (currentState is AdminLoaded) {
+          final request = currentState.requests.firstWhere((r) => r.id == event.requestId);
+          if (request.type == RequestType.credit) {
+            try {
+              await ApiService.createNotification({
+                'userId': int.parse(request.userId),
+                'title': '🎉 Crédito Aprobado',
+                'message': 'Tu crédito por ${request.amount.toStringAsFixed(2)} USD ha sido aprobado y el dinero ya está disponible en tu cuenta.',
+                'type': 'creditApproved',
+                'additionalInfo': 'Monto desembolsado: \$${request.amount.toStringAsFixed(2)} USD',
+              });
+            } catch (e) {
+              // Error silencioso al crear notificación
+            }
           }
         }
       }
