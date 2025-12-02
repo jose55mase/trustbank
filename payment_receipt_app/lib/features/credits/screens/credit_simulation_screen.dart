@@ -38,23 +38,73 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
   @override
   void initState() {
     super.initState();
-    _amountController.text = CurrencyFormatter.format(widget.creditOption.minAmount);
     _selectedMonths = widget.creditOption.minTermMonths;
-    _calculatePayment();
+    
+    // Initialize with formatted currency
+    final initialAmount = widget.creditOption.minAmount;
+    _amountController.text = '\$${initialAmount.toStringAsFixed(2)}';
+    
+    // Calculate initial payment
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculatePayment();
+    });
   }
 
   void _calculatePayment() {
-    final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
-    if (amount > 0) {
-      final monthlyRate = widget.creditOption.interestRate / 100 / 12;
-      final payment = amount * (monthlyRate * math.pow(1 + monthlyRate, _selectedMonths)) / 
-                     (math.pow(1 + monthlyRate, _selectedMonths) - 1);
+    try {
+      double amount;
       
-      setState(() {
-        _monthlyPayment = payment;
-        _totalPayment = payment * _selectedMonths;
-        _totalInterest = _totalPayment - amount;
-      });
+      // Try to get amount from formatted text
+      if (_amountController.text.contains('\$')) {
+        amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
+      } else {
+        // Fallback for plain number
+        final cleanText = _amountController.text.replaceAll(RegExp(r'[^\d.]'), '');
+        amount = double.tryParse(cleanText) ?? 0.0;
+      }
+      
+      if (amount > 0 && _selectedMonths > 0) {
+        final monthlyRate = widget.creditOption.interestRate / 100 / 12;
+        
+        if (monthlyRate > 0) {
+          final payment = amount * (monthlyRate * math.pow(1 + monthlyRate, _selectedMonths)) / 
+                         (math.pow(1 + monthlyRate, _selectedMonths) - 1);
+          
+          if (mounted) {
+            setState(() {
+              _monthlyPayment = payment.isFinite ? payment : 0.0;
+              _totalPayment = _monthlyPayment * _selectedMonths;
+              _totalInterest = _totalPayment - amount;
+            });
+          }
+        } else {
+          // Handle zero interest rate
+          if (mounted) {
+            setState(() {
+              _monthlyPayment = amount / _selectedMonths;
+              _totalPayment = amount;
+              _totalInterest = 0.0;
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() {
+            _monthlyPayment = 0.0;
+            _totalPayment = 0.0;
+            _totalInterest = 0.0;
+          });
+        }
+      }
+    } catch (e) {
+      // Handle any calculation errors silently
+      if (mounted) {
+        setState(() {
+          _monthlyPayment = 0.0;
+          _totalPayment = 0.0;
+          _totalInterest = 0.0;
+        });
+      }
     }
   }
 

@@ -1,5 +1,5 @@
-name: payment_receipt_app
-description: Payment Receipt App with PDF generation and TrustBank Design System
+name: trustbank
+description: TrustBank - Sistema bancario digital con generación de PDFs
 publish_to: 'none'
 version: 1.0.0+1
 

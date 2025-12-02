@@ -189,36 +189,13 @@ class CreditsScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () async {
-                try {
-                  final response = await ApiService.simulateCredit({
-                    'creditType': option.title,
-                    'amount': option.minAmount,
-                    'termMonths': option.minTermMonths,
-                    'interestRate': option.interestRate,
-                  });
-                  
-                  if (response['status'] == 200) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CreditSimulationScreen(creditOption: option),
-                      ),
-                    );
-                  } else {
-                    TBDialogHelper.showError(
-                      context,
-                      title: 'Error en simulación',
-                      message: response['message'] ?? 'No se pudo simular el crédito',
-                    );
-                  }
-                } catch (e) {
-                  TBDialogHelper.showError(
-                    context,
-                    title: 'Error de conexión',
-                    message: e.toString().replaceAll('Exception: ', ''),
-                  );
-                }
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreditSimulationScreen(creditOption: option),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: TBColors.primary,
