@@ -176,10 +176,18 @@ class ApiService {
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      return json.decode(response.body);
+      final data = json.decode(response.body);
+      return {
+        'status': response.statusCode,
+        'data': data,
+        'message': 'Success'
+      };
     } else {
       final errorData = json.decode(response.body);
-      throw Exception(errorData['message'] ?? 'Server error: ${response.statusCode}');
+      return {
+        'status': response.statusCode,
+        'message': errorData['message'] ?? 'Server error: ${response.statusCode}'
+      };
     }
   }
 

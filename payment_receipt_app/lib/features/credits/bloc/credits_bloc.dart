@@ -129,30 +129,22 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
     try {
       final userId = await AuthService.getCurrentUserId() ?? 1;
       
-      // Crear detalles de la solicitud de crédito
-      // Crear detalles de la solicitud de crédito (no se usa directamente)
-      // final creditDetails = {
-      //   'creditType': event.creditType,
-      //   'amount': event.amount,
-      //   'termMonths': event.termMonths,
-      //   'interestRate': event.interestRate,
-      //   'monthlyPayment': event.monthlyPayment,
-      //   'applicationDate': DateTime.now().toIso8601String(),
-      // };
-      
-      // Enviar como AdminRequest
-      final response = await ApiService.createAdminRequest({
+      final requestData = {
         'requestType': 'CREDIT',
         'userId': userId,
         'amount': event.amount,
-        'details': 'Solicitud de ${event.creditType} por ${event.amount} USD a ${event.termMonths} meses. Cuota mensual: ${event.monthlyPayment} USD. Tasa: ${event.interestRate}%',
+        'details': 'Solicitud de ${event.creditType} por \$${event.amount} USD a ${event.termMonths} meses. Cuota mensual: \$${event.monthlyPayment.toStringAsFixed(2)} USD. Tasa: ${event.interestRate}%',
         'description': 'Solicitud de crédito ${event.creditType}',
-      });
+      };
+      
+      // Enviar como AdminRequest
+      final response = await ApiService.createAdminRequest(requestData);
       
       if (response['status'] == 201 || response['status'] == 200) {
         // Crear aplicación local basada en la respuesta del AdminRequest
-        final adminRequest = response['data'];
+        final adminRequest = response['data'] ?? {};
         final requestId = _safeParseInt(adminRequest['id'], DateTime.now().millisecondsSinceEpoch);
+        
         final application = CreditApplication(
           id: requestId,
           userId: userId,
@@ -161,23 +153,27 @@ class CreditsBloc extends Bloc<CreditsEvent, CreditsState> {
           termMonths: event.termMonths,
           interestRate: event.interestRate,
           monthlyPayment: event.monthlyPayment,
-          status: CreditStatus.pending, // Siempre inicia como pending
+          status: CreditStatus.pending,
           applicationDate: DateTime.now(),
         );
+        
         emit(CreditApplicationSubmitted(application: application));
       } else {
-        emit(CreditsError(message: response['message'] ?? 'Error al enviar solicitud'));
+        final errorMessage = response['message'] ?? 'Error al procesar la solicitud. Código: ${response['status']}';
+        emit(CreditsError(message: errorMessage));
       }
     } catch (e) {
       String errorMessage = e.toString().replaceAll('Exception: ', '');
       
       // Personalizar mensajes de error comunes
-      if (errorMessage.contains('conexión')) {
-        errorMessage = 'Error de conexión. Verifica tu internet.';
-      } else if (errorMessage.contains('timeout')) {
+      if (errorMessage.contains('Connection failed') || errorMessage.contains('SocketException')) {
+        errorMessage = 'Error de conexión. Verifica tu internet y el servidor.';
+      } else if (errorMessage.contains('timeout') || errorMessage.contains('TimeoutException')) {
         errorMessage = 'La solicitud tomó demasiado tiempo. Inténtalo nuevamente.';
-      } else if (errorMessage.contains('server')) {
-        errorMessage = 'Error del servidor. Inténtalo más tarde.';
+      } else if (errorMessage.contains('FormatException')) {
+        errorMessage = 'Error en el formato de datos. Inténtalo nuevamente.';
+      } else if (errorMessage.isEmpty) {
+        errorMessage = 'Error desconocido. Inténtalo nuevamente.';
       }
       
       emit(CreditsError(message: errorMessage));
