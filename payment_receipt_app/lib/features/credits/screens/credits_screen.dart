@@ -4,6 +4,7 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../models/credit_option.dart';
 import 'credit_simulation_screen.dart';
+import 'my_credits_screen.dart';
 import '../../../services/api_service.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 
@@ -51,6 +52,20 @@ class CreditsScreen extends StatelessWidget {
         title: Text('Créditos TrustBank', style: TBTypography.headlineMedium),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyCreditsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Mis solicitudes',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(TBSpacing.screenPadding),
@@ -84,9 +99,31 @@ class CreditsScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: TBSpacing.xl),
-            Text(
-              'Nuestros productos',
-              style: TBTypography.titleLarge,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Nuestros productos',
+                  style: TBTypography.titleLarge,
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyCreditsScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.history, size: 16),
+                  label: Text(
+                    'Mis solicitudes',
+                    style: TBTypography.labelMedium.copyWith(
+                      color: TBColors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: TBSpacing.md),
             ...creditOptions.map((option) => _buildCreditCard(context, option)),

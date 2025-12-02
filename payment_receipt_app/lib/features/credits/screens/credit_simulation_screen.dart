@@ -1,19 +1,20 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_input.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../models/credit_option.dart';
-import 'credit_validation_screen.dart';
+import 'credit_status_screen.dart';
 import '../../notifications/bloc/notifications_bloc.dart';
-import '../../../services/api_service.dart';
-import '../../../services/auth_service.dart';
+import '../bloc/credits_bloc.dart';
+import '../bloc/credits_event.dart';
+import '../bloc/credits_state.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../../utils/currency_formatter.dart';
 import '../../../utils/currency_input_formatter.dart';
-import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 
 class CreditSimulationScreen extends StatefulWidget {
   final CreditOption creditOption;
@@ -168,47 +169,51 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
               ),
             ),
             const SizedBox(height: TBSpacing.xl),
-            TBButton(
-              text: 'Solicitar crédito',
-              fullWidth: true,
-              onPressed: () async {
-                final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
-                
-                try {
-                  final response = await TBLoadingOverlay.showWithDelay(
-                    context,
-                    _processCreditApplication(amount),
-                    message: 'Procesando solicitud de crédito...',
-                    minDelayMs: 3000,
-                  );
-                  
-                  if (response['status'] == 201) {
+            BlocProvider(
+              create: (context) => CreditsBloc(),
+              child: BlocConsumer<CreditsBloc, CreditsState>(
+                listener: (context, state) {
+                  if (state is CreditApplicationSubmitted) {
                     NotificationsBloc().add(AddCreditNotification(
                       creditType: widget.creditOption.title,
-                      amount: amount,
+                      amount: CurrencyInputFormatter.getNumericValue(_amountController.text),
                     ));
                     
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CreditValidationScreen(
-                          creditType: widget.creditOption.title,
-                          amount: amount,
-                          months: _selectedMonths,
+                        builder: (context) => CreditStatusScreen(
+                          application: state.application,
                         ),
                       ),
                     );
-                  } else {
-                    throw Exception(response['message'] ?? 'Error al procesar solicitud');
+                  } else if (state is CreditsError) {
+                    TBDialogHelper.showError(
+                      context,
+                      title: 'Error en la solicitud',
+                      message: state.message,
+                    );
                   }
-                } catch (e) {
-                  TBDialogHelper.showError(
-                    context,
-                    title: 'Error en la solicitud',
-                    message: e.toString().replaceAll('Exception: ', ''),
+                },
+                builder: (context, state) {
+                  return TBButton(
+                    text: state is CreditsSubmitting ? 'Procesando...' : 'Solicitar crédito',
+                    fullWidth: true,
+                    isLoading: state is CreditsSubmitting,
+                    onPressed: state is CreditsSubmitting ? null : () {
+                      final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
+                      
+                      context.read<CreditsBloc>().add(SubmitCreditApplication(
+                        creditType: widget.creditOption.title,
+                        amount: amount,
+                        termMonths: _selectedMonths,
+                        interestRate: widget.creditOption.interestRate,
+                        monthlyPayment: _monthlyPayment,
+                      ));
+                    },
                   );
-                }
-              },
+                },
+              ),
             ),
           ],
         ),
@@ -232,15 +237,5 @@ class _CreditSimulationScreenState extends State<CreditSimulationScreen> {
     );
   }
   
-  Future<Map<String, dynamic>> _processCreditApplication(double amount) async {
-    final userId = await AuthService.getCurrentUserId() ?? 1;
-    return await ApiService.applyForCredit({
-      'userId': userId,
-      'creditType': widget.creditOption.title,
-      'amount': amount,
-      'termMonths': _selectedMonths,
-      'interestRate': widget.creditOption.interestRate,
-      'monthlyPayment': _monthlyPayment,
-    });
-  }
+
 }

@@ -79,7 +79,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
   
   Future<void> _updateUserBalance(int userId, double amount, RequestType requestType) async {
     try {
-      print('Starting balance update for user $userId with amount $amount');
+      // Starting balance update for user $userId with amount $amount
       
       // 1. Actualizar saldo en base de datos
       await _updateBackendBalance(userId, amount);
@@ -101,15 +101,15 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           'description': description,
           'date': DateTime.now().toIso8601String(),
         });
-        print('Transaction created: $transactionResponse');
+        // Transaction created successfully
       } catch (e) {
-        print('Error creating transaction: $e');
+        // Error creating transaction: silently continue
       }
       
-      print('Balance update process completed for user $userId');
+      // Balance update process completed
       
     } catch (e) {
-      print('Error updating balance: $e');
+      // Error updating balance: silently continue
     }
   }
   
@@ -143,12 +143,11 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           };
           
           await ApiService.updateUser(userEntity);
-          print('Backend balance updated to: $newBalance');
+          // Backend balance updated successfully
         }
       }
     } catch (e) {
-      print('Error updating backend balance: $e');
-      // Continuar con actualización local aunque falle el backend
+      // Error updating backend balance: continue with local update
     }
   }
   
@@ -167,7 +166,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
           userData['moneyclean'] = currentBalance + amount;
           
           await prefs.setString('user_data', json.encode(userData));
-          print('Local balance updated: ${userData['moneyclean']}');
+          // Local balance updated successfully
           
           // Notificar actualización de saldo globalmente
           BalanceService().updateBalance(userId, userData['moneyclean']);
@@ -177,7 +176,7 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
         }
       }
     } catch (e) {
-      print('Error updating local balance: $e');
+      // Error updating local balance: silently continue
     }
   }
   
@@ -211,10 +210,10 @@ class AdminBloc extends Bloc<AdminEvent, AdminState> {
       }
       
       await prefs.setString(transactionsKey, json.encode(transactions));
-      print('Local transaction added: +\$${amount.toStringAsFixed(2)}');
+      // Local transaction added successfully
       
     } catch (e) {
-      print('Error adding local transaction: $e');
+      // Error adding local transaction: silently continue
     }
   }
 

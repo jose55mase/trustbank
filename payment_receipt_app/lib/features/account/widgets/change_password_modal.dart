@@ -138,33 +138,41 @@ class _ChangePasswordModalState extends State<ChangePasswordModal> {
     try {
       final user = await AuthService.getCurrentUser();
       if (user == null) {
-        TBDialogHelper.showError(
-          context,
-          title: 'Error',
-          message: 'No se pudo obtener la información del usuario',
-        );
+        if (mounted) {
+          TBDialogHelper.showError(
+            context,
+            title: 'Error',
+            message: 'No se pudo obtener la información del usuario',
+          );
+        }
         return;
       }
 
-      await TBLoadingOverlay.showWithDelay(
-        context,
-        _performPasswordChange(user['email']),
-        message: 'Cambiando contraseña...',
-        minDelayMs: 1500,
-      );
+      if (mounted) {
+        await TBLoadingOverlay.showWithDelay(
+          context,
+          _performPasswordChange(user['email']),
+          message: 'Cambiando contraseña...',
+          minDelayMs: 1500,
+        );
+      }
 
-      Navigator.pop(context);
-      TBDialogHelper.showSuccess(
-        context,
-        title: '¡Contraseña actualizada!',
-        message: 'Tu contraseña ha sido cambiada exitosamente.',
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        TBDialogHelper.showSuccess(
+          context,
+          title: '¡Contraseña actualizada!',
+          message: 'Tu contraseña ha sido cambiada exitosamente.',
+        );
+      }
     } catch (e) {
-      TBDialogHelper.showError(
-        context,
-        title: 'Error al cambiar contraseña',
-        message: e.toString().replaceAll('Exception: ', ''),
-      );
+      if (mounted) {
+        TBDialogHelper.showError(
+          context,
+          title: 'Error al cambiar contraseña',
+          message: e.toString().replaceAll('Exception: ', ''),
+        );
+      }
     }
   }
 

@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           Text(
-            '${isIncome ? '+' : '-'}${amount}',
+            '${isIncome ? '+' : '-'}$amount',
             style: TBTypography.bodyMedium.copyWith(
               fontWeight: FontWeight.w600,
               color: isIncome ? TBColors.success : TBColors.error,

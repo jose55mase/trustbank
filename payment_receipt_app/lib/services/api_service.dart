@@ -350,6 +350,32 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getUserCreditApplications(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/credits/user/$userId/applications?sort=applicationDate,desc'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get credit applications');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getCreditApplicationStatus(int applicationId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/credits/application/$applicationId/status'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get application status');
+    }
+  }
+
   static Future<List<dynamic>> getUserCredits(int userId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/credits/user/$userId'),
