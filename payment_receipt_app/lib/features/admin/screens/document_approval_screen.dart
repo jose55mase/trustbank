@@ -74,7 +74,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : pendingUsers.isEmpty
-              ? const Center(
+              ?  Center(
                   child: Text(
                     'No hay documentos pendientes de aprobación',
                     style: TBTypography.bodyLarge,
@@ -129,7 +129,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Documentos pendientes:',
               style: TBTypography.titleSmall,
             ),
