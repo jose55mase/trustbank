@@ -1,59 +1,135 @@
-enum AccountStatus { pending, verified, rejected, suspended }
-enum DocumentType { id, proofOfAddress, incomeProof, bankStatement }
-enum DocumentStatus { pending, approved, rejected }
-
 class UserAccount {
-  final String userId;
-  final String userName;
-  final String email;
-  final AccountStatus status;
-  final List<UserDocument> documents;
-  final DateTime createdAt;
-  final DateTime? verifiedAt;
+  final int? id;
+  final String? username;
+  final String? email;
+  final String? firstName;
+  final String? lastName;
+  final String? phone;
+  final String? address;
+  final String? city;
+  final String? country;
+  final String? postal;
+  final String? aboutme;
+  final String? documentType;
+  final String? documentNumber;
+  final String? accountStatus;
+  final int? balance;
+  final bool? status;
+  final String? foto;
+  final String? documentFrom;
+  final String? documentBack;
+  final String? fotoStatus;
+  final String? documentFromStatus;
+  final String? documentBackStatus;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   UserAccount({
-    required this.userId,
-    required this.userName,
-    required this.email,
-    required this.status,
-    required this.documents,
-    required this.createdAt,
-    this.verifiedAt,
+    this.id,
+    this.username,
+    this.email,
+    this.firstName,
+    this.lastName,
+    this.phone,
+    this.address,
+    this.city,
+    this.country,
+    this.postal,
+    this.aboutme,
+    this.documentType,
+    this.documentNumber,
+    this.accountStatus,
+    this.balance,
+    this.status,
+    this.foto,
+    this.documentFrom,
+    this.documentBack,
+    this.fotoStatus,
+    this.documentFromStatus,
+    this.documentBackStatus,
+    this.createdAt,
+    this.updatedAt,
   });
 
-  UserAccount copyWith({
-    AccountStatus? status,
-    List<UserDocument>? documents,
-    DateTime? verifiedAt,
-  }) {
+  factory UserAccount.fromJson(Map<String, dynamic> json) {
     return UserAccount(
-      userId: userId,
-      userName: userName,
-      email: email,
-      status: status ?? this.status,
-      documents: documents ?? this.documents,
-      createdAt: createdAt,
-      verifiedAt: verifiedAt ?? this.verifiedAt,
+      id: json['id'],
+      username: json['username'],
+      email: json['email'],
+      firstName: json['fistName'], // Note: backend uses 'fistName'
+      lastName: json['lastName'],
+      phone: json['phone'],
+      address: json['address'],
+      city: json['city'],
+      country: json['country'],
+      postal: json['postal'],
+      aboutme: json['aboutme'],
+      documentType: json['documentType'],
+      documentNumber: json['documentNumber'],
+      accountStatus: json['accountStatus'],
+      balance: json['moneyclean'],
+      status: json['status'],
+      foto: json['foto'],
+      documentFrom: json['documentFrom'],
+      documentBack: json['documentBack'],
+      fotoStatus: json['fotoStatus'],
+      documentFromStatus: json['documentFromStatus'],
+      documentBackStatus: json['documentBackStatus'],
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
+      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'email': email,
+      'fistName': firstName,
+      'lastName': lastName,
+      'phone': phone,
+      'address': address,
+      'city': city,
+      'country': country,
+      'postal': postal,
+      'aboutme': aboutme,
+      'documentType': documentType,
+      'documentNumber': documentNumber,
+      'accountStatus': accountStatus,
+      'moneyclean': balance,
+      'status': status,
+      'foto': foto,
+      'documentFrom': documentFrom,
+      'documentBack': documentBack,
+      'fotoStatus': fotoStatus,
+      'documentFromStatus': documentFromStatus,
+      'documentBackStatus': documentBackStatus,
+      'createdAt': createdAt?.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+
+  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
+  
   String get statusLabel {
-    switch (status) {
-      case AccountStatus.pending:
-        return 'Pendiente verificación';
-      case AccountStatus.verified:
-        return 'Verificada';
-      case AccountStatus.rejected:
-        return 'Rechazada';
-      case AccountStatus.suspended:
+    switch (accountStatus?.toUpperCase()) {
+      case 'ACTIVE':
+        return 'Activa';
+      case 'SUSPENDED':
         return 'Suspendida';
+      case 'PENDING':
+        return 'Pendiente';
+      default:
+        return 'Desconocido';
     }
   }
 }
 
+enum DocumentStatus { pending, approved, rejected }
+
 class UserDocument {
   final String id;
-  final DocumentType type;
+  final String type;
   final String fileName;
   final String filePath;
   final DocumentStatus status;
@@ -71,36 +147,6 @@ class UserDocument {
     this.processedAt,
     this.adminNotes,
   });
-
-  UserDocument copyWith({
-    DocumentStatus? status,
-    DateTime? processedAt,
-    String? adminNotes,
-  }) {
-    return UserDocument(
-      id: id,
-      type: type,
-      fileName: fileName,
-      filePath: filePath,
-      status: status ?? this.status,
-      uploadedAt: uploadedAt,
-      processedAt: processedAt ?? this.processedAt,
-      adminNotes: adminNotes ?? this.adminNotes,
-    );
-  }
-
-  String get typeLabel {
-    switch (type) {
-      case DocumentType.id:
-        return 'Cédula/Pasaporte';
-      case DocumentType.proofOfAddress:
-        return 'Comprobante domicilio';
-      case DocumentType.incomeProof:
-        return 'Comprobante ingresos';
-      case DocumentType.bankStatement:
-        return 'Estado de cuenta';
-    }
-  }
 
   String get statusLabel {
     switch (status) {
