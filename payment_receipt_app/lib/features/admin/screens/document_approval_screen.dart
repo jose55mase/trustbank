@@ -22,19 +22,25 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
 
   Future<void> _loadPendingDocuments() async {
     try {
-      final response = await ApiService.get('/admin/documents/pending');
-      if (response['success']) {
-        setState(() {
-          pendingUsers = (response['data'] as List)
-              .cast<Map<String, dynamic>>();
-          isLoading = false;
-        });
-      }
+      final response = await ApiService.getAllUsers();
+      setState(() {
+        pendingUsers = (response as List)
+            .cast<Map<String, dynamic>>()
+            .where((user) => _hasDocumentsToReview(user))
+            .toList();
+        isLoading = false;
+      });
     } catch (e) {
       setState(() {
         isLoading = false;
       });
     }
+  }
+
+  bool _hasDocumentsToReview(Map<String, dynamic> user) {
+    return (user['foto'] != null && user['foto'].toString().isNotEmpty) ||
+           (user['documentFrom'] != null && user['documentFrom'].toString().isNotEmpty) ||
+           (user['documentBack'] != null && user['documentBack'].toString().isNotEmpty);
   }
 
   Future<void> _approveDocument(int userId, String documentType, String status) async {
@@ -129,15 +135,15 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Documentos pendientes:',
+              'Documentos del usuario:',
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            if (user['fotoStatus'] == 'PENDING')
+            if (user['foto'] != null && user['foto'].toString().isNotEmpty)
               _buildDocumentRow('Foto de perfil', 'foto', user),
-            if (user['documentFromStatus'] == 'PENDING')
+            if (user['documentFrom'] != null && user['documentFrom'].toString().isNotEmpty)
               _buildDocumentRow('Documento frontal', 'documentFrom', user),
-            if (user['documentBackStatus'] == 'PENDING')
+            if (user['documentBack'] != null && user['documentBack'].toString().isNotEmpty)
               _buildDocumentRow('Documento trasero', 'documentBack', user),
           ],
         ),
@@ -146,12 +152,38 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
   }
 
   Widget _buildDocumentRow(String title, String documentType, Map<String, dynamic> user) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+    final status = _getDocumentStatus(user, documentType);
+    final statusColor = _getStatusColor(status);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: statusColor.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8),
+        color: statusColor.withOpacity(0.1),
+      ),
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: TBTypography.bodyMedium),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _getStatusText(status),
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
           ),
           TextButton(
             onPressed: () => _showDocumentDialog(user, documentType, title),
@@ -179,6 +211,45 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
         ],
       ),
     );
+  }
+
+  String _getDocumentStatus(Map<String, dynamic> user, String documentType) {
+    switch (documentType) {
+      case 'foto':
+        return user['fotoStatus'] ?? 'PENDING';
+      case 'documentFrom':
+        return user['documentFromStatus'] ?? 'PENDING';
+      case 'documentBack':
+        return user['documentBackStatus'] ?? 'PENDING';
+      default:
+        return 'PENDING';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return Colors.green;
+      case 'REJECTED':
+        return Colors.red;
+      case 'PENDING':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return 'APROBADO ✓';
+      case 'REJECTED':
+        return 'RECHAZADO ✗';
+      case 'PENDING':
+        return 'PENDIENTE ⏳';
+      default:
+        return status;
+    }
   }
 
   void _showDocumentDialog(Map<String, dynamic> user, String documentType, String title) {
