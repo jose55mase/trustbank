@@ -46,7 +46,11 @@ public class UserConstructor {
                 nombreArchivo = uploadService.copiar(archivo);
             } catch (IOException e) {
                 response.put("mensaje", "Error al subir la imagen del cliente");
-                response.put("error", e.getMessage().concat(": ").concat(e.getCause().getMessage()));
+                String errorMessage = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    errorMessage = errorMessage.concat(": ").concat(e.getCause().getMessage());
+                }
+                response.put("error", errorMessage);
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             String nombreFotoAnterior = cliente.getFoto();
@@ -72,7 +76,11 @@ public class UserConstructor {
                 nombreArchivo = uploadService.copiar(archivo);
             } catch (IOException e) {
                 response.put("mensaje", "Error al subir la imagen del cliente");
-                response.put("error", e.getMessage().concat(": ").concat(e.getCause().getMessage()));
+                String errorMessage = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    errorMessage = errorMessage.concat(": ").concat(e.getCause().getMessage());
+                }
+                response.put("error", errorMessage);
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             String nombreFotoAnterior = cliente.getDocumentFrom();
@@ -95,7 +103,11 @@ public class UserConstructor {
                 nombreArchivo = uploadService.copiar(archivo);
             } catch (IOException e) {
                 response.put("mensaje", "Error al subir la imagen del cliente");
-                response.put("error", e.getMessage().concat(": ").concat(e.getCause().getMessage()));
+                String errorMessage = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+                if (e.getCause() != null && e.getCause().getMessage() != null) {
+                    errorMessage = errorMessage.concat(": ").concat(e.getCause().getMessage());
+                }
+                response.put("error", errorMessage);
                 return new ResponseEntity<Map<String, Object>>(response, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             String nombreFotoAnterior = cliente.getDocumentBack();

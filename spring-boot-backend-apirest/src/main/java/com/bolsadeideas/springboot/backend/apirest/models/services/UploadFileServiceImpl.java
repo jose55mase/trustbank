@@ -44,15 +44,43 @@ public class UploadFileServiceImpl implements IUploadFileService {
 
     @Override
     public String copiar(MultipartFile archivo) throws IOException {
-
-        String nombreArchivo = UUID.randomUUID().toString() + "_" +  archivo.getOriginalFilename().replace(" ", "");
-
-        Path rutaArchivo = getPath(nombreArchivo);
-        log.info(rutaArchivo.toString());
-
-        Files.copy(archivo.getInputStream(), rutaArchivo);
-
-        return nombreArchivo;
+        // Validar que el archivo no esté vacío
+        if (archivo.isEmpty()) {
+            throw new IOException("El archivo está vacío");
+        }
+        
+        // Validar el nombre del archivo
+        String originalFilename = archivo.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IOException("Nombre de archivo inválido");
+        }
+        
+        // Validar el tamaño del archivo (máximo 5MB)
+        if (archivo.getSize() > 5 * 1024 * 1024) {
+            throw new IOException("El archivo es muy grande. Máximo 5MB permitido");
+        }
+        
+        // Validar tipo de archivo
+        String contentType = archivo.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IOException("Solo se permiten archivos de imagen");
+        }
+        
+        try {
+            String nombreArchivo = UUID.randomUUID().toString() + "_" + originalFilename.replace(" ", "");
+            Path rutaArchivo = getPath(nombreArchivo);
+            
+            // Crear directorio si no existe
+            Files.createDirectories(rutaArchivo.getParent());
+            
+            log.info("Guardando archivo en: " + rutaArchivo.toString());
+            Files.copy(archivo.getInputStream(), rutaArchivo);
+            
+            return nombreArchivo;
+        } catch (IOException e) {
+            log.error("Error al copiar archivo: " + e.getMessage());
+            throw new IOException("Error al guardar el archivo: " + e.getMessage());
+        }
     }
 
     @Override
@@ -72,7 +100,17 @@ public class UploadFileServiceImpl implements IUploadFileService {
 
     @Override
     public Path getPath(String nombreFoto) {
-        return Paths.get(DIRECTORIO_UPLOAD).resolve(nombreFoto).toAbsolutePath();
+        Path uploadPath = Paths.get(DIRECTORIO_UPLOAD).toAbsolutePath();
+        try {
+            // Crear directorio si no existe
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+                log.info("Directorio de uploads creado: " + uploadPath.toString());
+            }
+        } catch (IOException e) {
+            log.error("Error al crear directorio de uploads: " + e.getMessage());
+        }
+        return uploadPath.resolve(nombreFoto);
     }
 
 }
