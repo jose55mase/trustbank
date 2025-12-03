@@ -3,8 +3,6 @@ import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
-import '../../account/models/account_model.dart';
-import '../../account/bloc/account_bloc.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 
 class DocumentManagementScreen extends StatefulWidget {
@@ -15,23 +13,23 @@ class DocumentManagementScreen extends StatefulWidget {
 }
 
 class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
-  final List<UserDocument> _pendingDocuments = [
-    UserDocument(
-      id: '2',
-      type: DocumentType.proofOfAddress,
-      fileName: 'recibo_luz.pdf',
-      filePath: '/documents/recibo_luz.pdf',
-      status: DocumentStatus.pending,
-      uploadedAt: DateTime.now().subtract(const Duration(hours: 5)),
-    ),
-    UserDocument(
-      id: '3',
-      type: DocumentType.incomeProof,
-      fileName: 'certificado_ingresos.pdf',
-      filePath: '/documents/certificado_ingresos.pdf',
-      status: DocumentStatus.pending,
-      uploadedAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
+  final List<Map<String, dynamic>> _pendingDocuments = [
+    {
+      'id': '2',
+      'type': 'proofOfAddress',
+      'fileName': 'recibo_luz.pdf',
+      'filePath': '/documents/recibo_luz.pdf',
+      'status': 'pending',
+      'uploadedAt': DateTime.now().subtract(const Duration(hours: 5)),
+    },
+    {
+      'id': '3',
+      'type': 'incomeProof',
+      'fileName': 'certificado_ingresos.pdf',
+      'filePath': '/documents/certificado_ingresos.pdf',
+      'status': 'pending',
+      'uploadedAt': DateTime.now().subtract(const Duration(hours: 2)),
+    },
   ];
 
   @override
@@ -58,7 +56,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     );
   }
 
-  Widget _buildDocumentCard(UserDocument document) {
+  Widget _buildDocumentCard(Map<String, dynamic> document) {
     return Container(
       margin: const EdgeInsets.only(bottom: TBSpacing.md),
       padding: const EdgeInsets.all(TBSpacing.md),
@@ -78,15 +76,15 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
         children: [
           Row(
             children: [
-              _buildDocumentIcon(document.type),
+              _buildDocumentIcon(document['type']),
               const SizedBox(width: TBSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(document.typeLabel, style: TBTypography.titleLarge),
-                    Text(document.fileName, style: TBTypography.bodyMedium.copyWith(color: TBColors.grey600)),
-                    Text('Subido: ${_formatDate(document.uploadedAt)}', style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
+                    Text(_getTypeLabel(document['type']), style: TBTypography.titleLarge),
+                    Text(document['fileName'], style: TBTypography.bodyMedium.copyWith(color: TBColors.grey600)),
+                    Text('Subido: ${_formatDate(document['uploadedAt'])}', style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
                   ],
                 ),
               ),
@@ -98,7 +96,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
               Expanded(
                 child: TBButton(
                   text: 'Aprobar',
-                  onPressed: () => _processDocument(document, DocumentStatus.approved),
+                  onPressed: () => _processDocument(document, 'approved'),
                 ),
               ),
               const SizedBox(width: TBSpacing.sm),
@@ -116,26 +114,30 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     );
   }
 
-  Widget _buildDocumentIcon(DocumentType type) {
+  Widget _buildDocumentIcon(String type) {
     IconData icon;
     Color color;
 
     switch (type) {
-      case DocumentType.id:
+      case 'id':
         icon = Icons.badge;
         color = TBColors.primary;
         break;
-      case DocumentType.proofOfAddress:
+      case 'proofOfAddress':
         icon = Icons.home;
         color = TBColors.secondary;
         break;
-      case DocumentType.incomeProof:
+      case 'incomeProof':
         icon = Icons.attach_money;
         color = Colors.orange;
         break;
-      case DocumentType.bankStatement:
+      case 'bankStatement':
         icon = Icons.account_balance;
         color = Colors.purple;
+        break;
+      default:
+        icon = Icons.description;
+        color = TBColors.primary;
         break;
     }
 
@@ -149,12 +151,11 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     );
   }
 
-  void _processDocument(UserDocument document, DocumentStatus status) {
-    AccountBloc.updateDocumentStatus(document.id, status, null);
+  void _processDocument(Map<String, dynamic> document, String status) {
     setState(() {
-      _pendingDocuments.removeWhere((d) => d.id == document.id);
+      _pendingDocuments.removeWhere((d) => d['id'] == document['id']);
     });
-    final isApproved = status == DocumentStatus.approved;
+    final isApproved = status == 'approved';
     TBDialogHelper.showSuccess(
       context,
       title: isApproved ? 'Documento aprobado' : 'Documento procesado',
@@ -164,7 +165,7 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
     );
   }
 
-  void _showRejectDialog(UserDocument document) {
+  void _showRejectDialog(Map<String, dynamic> document) {
     final notesController = TextEditingController();
     
     showDialog(
@@ -187,13 +188,8 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
           TBButton(
             text: 'Rechazar',
             onPressed: () {
-              AccountBloc.updateDocumentStatus(
-                document.id,
-                DocumentStatus.rejected,
-                notesController.text,
-              );
               setState(() {
-                _pendingDocuments.removeWhere((d) => d.id == document.id);
+                _pendingDocuments.removeWhere((d) => d['id'] == document['id']);
               });
               Navigator.pop(context);
               TBDialogHelper.showInfo(
@@ -210,5 +206,20 @@ class _DocumentManagementScreenState extends State<DocumentManagementScreen> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _getTypeLabel(String type) {
+    switch (type) {
+      case 'id':
+        return 'Cédula/Pasaporte';
+      case 'proofOfAddress':
+        return 'Comprobante domicilio';
+      case 'incomeProof':
+        return 'Comprobante ingresos';
+      case 'bankStatement':
+        return 'Estado de cuenta';
+      default:
+        return 'Documento';
+    }
   }
 }

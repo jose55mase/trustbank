@@ -4,7 +4,7 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../services/api_service.dart';
 
 class DocumentApprovalScreen extends StatefulWidget {
-  const DocumentApprovalScreen({Key? key}) : super(key: key);
+  const DocumentApprovalScreen({super.key});
 
   @override
   State<DocumentApprovalScreen> createState() => _DocumentApprovalScreenState();
@@ -74,10 +74,9 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : pendingUsers.isEmpty
-              ?  Center(
+              ? const Center(
                   child: Text(
                     'No hay documentos pendientes de aprobación',
-                    style: TBTypography.bodyLarge,
                   ),
                 )
               : ListView.builder(
@@ -129,9 +128,9 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Documentos pendientes:',
-              style: TBTypography.titleSmall,
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             if (user['fotoStatus'] == 'PENDING')
