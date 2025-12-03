@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
@@ -214,6 +215,23 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
         clientPhoto: _clientPhotoBytes,
       );
       
+      // Actualizar estados en el servidor
+      final user = await AuthService.getCurrentUser();
+      if (user != null) {
+        Map<String, String> statusUpdates = {};
+        if (_documentFrontBytes != null) statusUpdates['documentFromStatus'] = 'PENDING';
+        if (_documentBackBytes != null) statusUpdates['documentBackStatus'] = 'PENDING';
+        if (_clientPhotoBytes != null) statusUpdates['fotoStatus'] = 'PENDING';
+        
+        if (statusUpdates.isNotEmpty) {
+          try {
+            await _updateDocumentStatuses(user['id'], statusUpdates);
+          } catch (e) {
+            // Ignore status update errors
+          }
+        }
+      }
+      
       // Guardar imágenes localmente para vista previa
       if (_documentFrontBytes != null) {
         await ImageStorageService.saveDocumentFront(_documentFrontBytes!);
@@ -246,6 +264,25 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
           ),
         );
       }
+    }
+  }
+  
+  Future<void> _updateDocumentStatuses(int userId, Map<String, String> statusUpdates) async {
+    // Update user document statuses via API
+    final response = await http.put(
+      Uri.parse('http://localhost:8081/api/user/update'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: json.encode({
+        'id': userId,
+        ...statusUpdates,
+      }),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update document statuses');
     }
   }
 }

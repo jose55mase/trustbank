@@ -56,8 +56,7 @@ public class UserConstructor {
             String nombreFotoAnterior = cliente.getFoto();
             uploadService.eliminar(nombreFotoAnterior);
             cliente.setFoto(nombreArchivo);
-
-
+            cliente.setFotoStatus("PENDING");
 
             usuarioService.save(cliente);
             response.put("cliente", cliente);
@@ -86,6 +85,7 @@ public class UserConstructor {
             String nombreFotoAnterior = cliente.getDocumentFrom();
             uploadService.eliminar(nombreFotoAnterior);
             cliente.setDocumentFrom(nombreArchivo);
+            cliente.setDocumentFromStatus("PENDING");
             usuarioService.save(cliente);
             response.put("cliente", cliente);
             response.put("mensaje", "Has subido correctamente la imagen: " + nombreArchivo);
@@ -113,6 +113,7 @@ public class UserConstructor {
             String nombreFotoAnterior = cliente.getDocumentBack();
             uploadService.eliminar(nombreFotoAnterior);
             cliente.setDocumentBack(nombreArchivo);
+            cliente.setDocumentBackStatus("PENDING");
             usuarioService.save(cliente);
             response.put("cliente", cliente);
             response.put("mensaje", "Has subido correctamente la imagen: " + nombreArchivo);
