@@ -169,7 +169,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () => _approveDocument(user['id'], documentType, 'REJECTED');
+            onPressed: () => _approveDocument(user['id'], documentType, 'REJECTED'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
