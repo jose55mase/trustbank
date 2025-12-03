@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:http/http.dart' as http;
-
+import 'package:path_provider/path_provider.dart';
+import 'api_service.dart';
 
 class DocumentApiService {
-  static const String baseUrl = 'http://localhost:8080/api';
+  static const String baseUrl = 'https://guardianstrustbank.com:8081/api';
 
   static Future<Map<String, dynamic>> uploadUserDocuments({
     required int userId,
@@ -13,52 +15,56 @@ class DocumentApiService {
     Uint8List? clientPhoto,
   }) async {
     try {
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/documents/users/$userId/images'),
-      );
-
-      if (documentFront != null) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'documentFrom',
-            documentFront,
-            filename: 'document_front.jpg',
-          ),
-        );
-      }
-
-      if (documentBack != null) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'documentBack',
-            documentBack,
-            filename: 'document_back.jpg',
-          ),
-        );
-      }
-
+      Map<String, dynamic> results = {};
+      
+      // Subir foto de perfil si existe
       if (clientPhoto != null) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            'foto',
-            clientPhoto,
-            filename: 'client_photo.jpg',
-          ),
-        );
+        final photoFile = await _createTempFile(clientPhoto, 'client_photo.jpg');
+        try {
+          final result = await ApiService.uploadProfileImage(photoFile, userId);
+          results['clientPhoto'] = result;
+        } finally {
+          await photoFile.delete();
+        }
       }
-
-      final response = await request.send();
-      final responseData = await response.stream.bytesToString();
-
-      if (response.statusCode == 200) {
-        return json.decode(responseData);
-      } else {
-        throw Exception('Error al subir documentos: ${response.statusCode}');
+      
+      // Subir documento frontal si existe
+      if (documentFront != null) {
+        final frontFile = await _createTempFile(documentFront, 'document_front.jpg');
+        try {
+          final result = await ApiService.uploadDocumentFront(frontFile, userId);
+          results['documentFront'] = result;
+        } finally {
+          await frontFile.delete();
+        }
       }
+      
+      // Subir documento trasero si existe
+      if (documentBack != null) {
+        final backFile = await _createTempFile(documentBack, 'document_back.jpg');
+        try {
+          final result = await ApiService.uploadDocumentBack(backFile, userId);
+          results['documentBack'] = result;
+        } finally {
+          await backFile.delete();
+        }
+      }
+      
+      return {
+        'success': true,
+        'message': 'Documentos subidos exitosamente',
+        'results': results
+      };
     } catch (e) {
-      throw Exception('Error de conexión: $e');
+      throw Exception('Error al subir documentos: $e');
     }
+  }
+  
+  static Future<File> _createTempFile(Uint8List bytes, String filename) async {
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/$filename');
+    await file.writeAsBytes(bytes);
+    return file;
   }
 
   static Future<Map<String, dynamic>> updateDocumentStatus({
@@ -88,14 +94,20 @@ class DocumentApiService {
 
   static Future<Map<String, dynamic>> getUserDocuments(int userId) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/documents/users/$userId/images'),
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
+      final response = await ApiService.getUserById(userId);
+      
+      if (response['status'] == 200) {
+        final userData = response['data'];
+        return {
+          'documentFromStatus': userData['documentFromStatus'] ?? 'PENDING',
+          'documentBackStatus': userData['documentBackStatus'] ?? 'PENDING', 
+          'fotoStatus': userData['fotoStatus'] ?? 'PENDING',
+          'foto': userData['foto'],
+          'documentFrom': userData['documentFrom'],
+          'documentBack': userData['documentBack'],
+        };
       } else {
-        throw Exception('Error al obtener documentos: ${response.statusCode}');
+        throw Exception('Error al obtener documentos: ${response['status']}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');

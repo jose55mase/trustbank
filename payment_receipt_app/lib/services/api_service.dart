@@ -611,4 +611,87 @@ class ApiService {
       throw Exception('Error del servidor');
     }
   }
+
+  // User image upload endpoints
+  static Future<Map<String, dynamic>> uploadProfileImage(File file, int userId) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/user/upload'),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    request.fields['id'] = userId.toString();
+    request.files.add(await http.MultipartFile.fromPath('archivo', file.path));
+
+    var response = await request.send();
+    var responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 201) {
+      return json.decode(responseBody);
+    } else {
+      throw Exception('Failed to upload profile image');
+    }
+  }
+
+  static Future<Map<String, dynamic>> uploadDocumentFront(File file, int userId) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/user/upload/documentFrom'),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    request.fields['id'] = userId.toString();
+    request.files.add(await http.MultipartFile.fromPath('archivo', file.path));
+
+    var response = await request.send();
+    var responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 201) {
+      return json.decode(responseBody);
+    } else {
+      throw Exception('Failed to upload document front');
+    }
+  }
+
+  static Future<Map<String, dynamic>> uploadDocumentBack(File file, int userId) async {
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$baseUrl/user/upload/documentBack'),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    request.fields['id'] = userId.toString();
+    request.files.add(await http.MultipartFile.fromPath('archivo', file.path));
+
+    var response = await request.send();
+    var responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 201) {
+      return json.decode(responseBody);
+    } else {
+      throw Exception('Failed to upload document back');
+    }
+  }
+
+  static String getUserImageUrl(String? imageName) {
+    if (imageName == null || imageName.isEmpty) {
+      return '';
+    }
+    return '$baseUrl/user/uploads/img/$imageName';
+  }
 }
