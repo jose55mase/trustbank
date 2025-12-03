@@ -694,4 +694,77 @@ class ApiService {
     }
     return '$baseUrl/user/uploads/img/$imageName';
   }
+
+  // Document approval endpoints
+  static Future<Map<String, dynamic>> getPendingDocumentsForApproval() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/admin/documents/pending'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return {
+        'success': true,
+        'data': data is List ? data : data['data'] ?? []
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Failed to get pending documents'
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> approveDocument(int userId, String documentType, String status) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/admin/documents/approve/$userId'),
+      headers: await headers,
+      body: json.encode({
+        'documentType': documentType,
+        'status': status,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to approve document');
+    }
+  }
+
+  // Generic HTTP methods
+  static Future<Map<String, dynamic>> get(String endpoint) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return {
+        'success': true,
+        'data': data is List ? data : data['data'] ?? data
+      };
+    } else {
+      return {
+        'success': false,
+        'message': 'Request failed with status ${response.statusCode}'
+      };
+    }
+  }
+
+  static Future<Map<String, dynamic>> put(String endpoint, Map<String, dynamic> data) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl$endpoint'),
+      headers: await headers,
+      body: json.encode(data),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Request failed with status ${response.statusCode}');
+    }
+  }
 }

@@ -8,6 +8,7 @@ import '../widgets/profile_header.dart';
 import '../widgets/account_menu_section.dart';
 import '../widgets/security_section.dart';
 import '../widgets/support_section.dart';
+import '../widgets/document_status_card.dart';
 import '../../../services/auth_service.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -46,6 +47,15 @@ class AccountScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         ProfileHeader(user: user, account: state.account),
+                        const SizedBox(height: TBSpacing.md),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding),
+                          child: DocumentStatusCard(
+                            fotoStatus: state.account.fotoStatus,
+                            documentFromStatus: state.account.documentFromStatus,
+                            documentBackStatus: state.account.documentBackStatus,
+                          ),
+                        ),
                         const SizedBox(height: TBSpacing.md),
                         AccountMenuSection(account: state.account),
                         const SizedBox(height: TBSpacing.md),
