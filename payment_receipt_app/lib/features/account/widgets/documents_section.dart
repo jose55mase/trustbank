@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:typed_data';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
@@ -7,7 +9,6 @@ import '../../../services/auth_service.dart';
 import '../../../services/image_storage_service.dart';
 import '../../../services/document_api_service.dart';
 import 'upload_document_images_dialog.dart';
-import 'dart:typed_data';
 
 class DocumentsSection extends StatefulWidget {
   const DocumentsSection({super.key});
@@ -22,12 +23,79 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   Map<String, String> imageStatuses = {};
   Map<String, String> serverImageUrls = {};
   bool isLoadingDocs = true;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUserDocuments();
     _loadUserImages();
+    _startPeriodicRefresh();
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPeriodicRefresh() {
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (mounted) {
+        _checkForStatusUpdates();
+      }
+    });
+  }
+
+  Future<void> _checkForStatusUpdates() async {
+    final oldStatuses = Map<String, String>.from(imageStatuses);
+    await _loadUserImages();
+    
+    // Check for status changes and show notifications
+    for (final entry in imageStatuses.entries) {
+      final key = entry.key;
+      final newStatus = entry.value;
+      final oldStatus = oldStatuses[key];
+      
+      if (oldStatus != null && oldStatus != newStatus && mounted) {
+        final docName = _getDocumentName(key);
+        final statusText = _getStatusText(newStatus);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$docName: $statusText'),
+            backgroundColor: _getStatusColor(newStatus),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  String _getDocumentName(String key) {
+    switch (key) {
+      case 'documentFront':
+        return 'Documento frontal';
+      case 'documentBack':
+        return 'Documento trasero';
+      case 'clientPhoto':
+        return 'Foto de perfil';
+      default:
+        return 'Documento';
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toUpperCase()) {
+      case 'APPROVED':
+        return 'Aprobado ✅';
+      case 'REJECTED':
+        return 'Rechazado ❌';
+      case 'PENDING':
+        return 'Pendiente ⏳';
+      default:
+        return status;
+    }
   }
 
   Future<void> _loadUserDocuments() async {
@@ -144,13 +212,26 @@ class _DocumentsSectionState extends State<DocumentsSection> {
                       'Mis Documentos',
                       style: TBTypography.headlineSmall,
                     ),
-                    IconButton(
-                      onPressed: () => _showUploadDialog(context),
-                      icon: const Icon(Icons.add),
-                      style: IconButton.styleFrom(
-                        backgroundColor: TBColors.primary,
-                        foregroundColor: TBColors.white,
-                      ),
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => _checkForStatusUpdates(),
+                          icon: const Icon(Icons.refresh),
+                          style: IconButton.styleFrom(
+                            backgroundColor: TBColors.secondary,
+                            foregroundColor: TBColors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => _showUploadDialog(context),
+                          icon: const Icon(Icons.add),
+                          style: IconButton.styleFrom(
+                            backgroundColor: TBColors.primary,
+                            foregroundColor: TBColors.white,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -515,11 +596,13 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   }
 
   String _getStatusLabel(String status) {
-    switch (status) {
+    switch (status.toUpperCase()) {
       case 'APPROVED':
-        return 'OK';
+        return '✓';
       case 'REJECTED':
-        return 'X';
+        return '✗';
+      case 'PENDING':
+        return '⏳';
       default:
         return '?';
     }
