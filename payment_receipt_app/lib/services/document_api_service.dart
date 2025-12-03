@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DocumentApiService {
   static const String baseUrl = 'https://guardianstrustbank.com:8081/api';
@@ -16,37 +15,19 @@ class DocumentApiService {
     try {
       Map<String, dynamic> results = {};
       
-      // Subir foto de perfil si existe
       if (clientPhoto != null) {
-        final photoFile = await _createTempFile(clientPhoto, 'client_photo.jpg');
-        try {
-          final result = await ApiService.uploadProfileImage(photoFile, userId);
-          results['clientPhoto'] = result;
-        } finally {
-          await photoFile.delete();
-        }
+        final result = await _uploadBytes(clientPhoto, 'client_photo.jpg', '/user/upload', userId);
+        results['clientPhoto'] = result;
       }
       
-      // Subir documento frontal si existe
       if (documentFront != null) {
-        final frontFile = await _createTempFile(documentFront, 'document_front.jpg');
-        try {
-          final result = await ApiService.uploadDocumentFront(frontFile, userId);
-          results['documentFront'] = result;
-        } finally {
-          await frontFile.delete();
-        }
+        final result = await _uploadBytes(documentFront, 'document_front.jpg', '/user/upload/documentFrom', userId);
+        results['documentFront'] = result;
       }
       
-      // Subir documento trasero si existe
       if (documentBack != null) {
-        final backFile = await _createTempFile(documentBack, 'document_back.jpg');
-        try {
-          final result = await ApiService.uploadDocumentBack(backFile, userId);
-          results['documentBack'] = result;
-        } finally {
-          await backFile.delete();
-        }
+        final result = await _uploadBytes(documentBack, 'document_back.jpg', '/user/upload/documentBack', userId);
+        results['documentBack'] = result;
       }
       
       return {
@@ -59,13 +40,26 @@ class DocumentApiService {
     }
   }
   
-  static Future<File> _createTempFile(Uint8List bytes, String filename) async {
-    // Crear archivo temporal sin path_provider
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final tempFilename = 'temp_${timestamp}_$filename';
-    final file = File(tempFilename);
-    await file.writeAsBytes(bytes);
-    return file;
+  static Future<Map<String, dynamic>> _uploadBytes(Uint8List bytes, String filename, String endpoint, int userId) async {
+    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'));
+    
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('auth_token');
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+    
+    request.fields['id'] = userId.toString();
+    request.files.add(http.MultipartFile.fromBytes('archivo', bytes, filename: filename));
+    
+    var response = await request.send();
+    var responseBody = await response.stream.bytesToString();
+    
+    if (response.statusCode == 201) {
+      return json.decode(responseBody);
+    } else {
+      throw Exception('Failed to upload: ${response.statusCode}');
+    }
   }
 
   static Future<Map<String, dynamic>> updateDocumentStatus({
@@ -95,10 +89,19 @@ class DocumentApiService {
 
   static Future<Map<String, dynamic>> getUserDocuments(int userId) async {
     try {
-      final response = await ApiService.getUserById(userId);
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
       
-      if (response['status'] == 200) {
-        final userData = response['data'];
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/$userId'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null) 'Authorization': 'Bearer $token',
+        },
+      );
+      
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
         return {
           'documentFromStatus': userData['documentFromStatus'] ?? 'PENDING',
           'documentBackStatus': userData['documentBackStatus'] ?? 'PENDING', 
@@ -108,7 +111,7 @@ class DocumentApiService {
           'documentBack': userData['documentBack'],
         };
       } else {
-        throw Exception('Error al obtener documentos: ${response['status']}');
+        throw Exception('Error al obtener documentos: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Error de conexión: $e');
