@@ -84,10 +84,37 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                       width: 2,
                     ),
                   ),
-                  child: Icon(
-                    Icons.person,
-                    size: 40,
-                    color: TBColors.white.withOpacity(0.9),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(38),
+                    child: profile['foto'] != null && profile['foto'].toString().isNotEmpty
+                        ? Image.network(
+                            'http://localhost:8081/api/user/uploads/img/${profile['foto']}',
+                            width: 76,
+                            height: 76,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.person,
+                              size: 40,
+                              color: TBColors.white.withOpacity(0.9),
+                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: CircularProgressIndicator(
+                                  value: loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  valueColor: AlwaysStoppedAnimation<Color>(TBColors.white),
+                                ),
+                              );
+                            },
+                          )
+                        : Icon(
+                            Icons.person,
+                            size: 40,
+                            color: TBColors.white.withOpacity(0.9),
+                          ),
                   ),
                 ),
                 const SizedBox(width: TBSpacing.md),

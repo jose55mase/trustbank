@@ -20,6 +20,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   List<dynamic> userDocuments = [];
   Map<String, Uint8List?> localImages = {};
   Map<String, String> imageStatuses = {};
+  Map<String, String> serverImageUrls = {};
   bool isLoadingDocs = true;
 
   @override
@@ -57,8 +58,9 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       final clientPhoto = await ImageStorageService.getClientPhoto();
       
       Map<String, String> apiStatuses = {};
+      Map<String, String> serverImages = {};
       
-      // Intentar cargar estados desde la API
+      // Intentar cargar estados e imágenes desde la API
       if (user != null) {
         try {
           final userDocs = await DocumentApiService.getUserDocuments(user['id']);
@@ -66,6 +68,11 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             'documentFront': userDocs['documentFromStatus'] ?? 'PENDING',
             'documentBack': userDocs['documentBackStatus'] ?? 'PENDING',
             'clientPhoto': userDocs['fotoStatus'] ?? 'PENDING',
+          };
+          serverImages = {
+            'documentFront': userDocs['documentFrom'] ?? '',
+            'documentBack': userDocs['documentBack'] ?? '',
+            'clientPhoto': userDocs['foto'] ?? '',
           };
         } catch (e) {
           // Fallback a estados locales
@@ -92,6 +99,8 @@ class _DocumentsSectionState extends State<DocumentsSection> {
             'clientPhoto': clientPhoto,
           };
           imageStatuses = apiStatuses;
+          // Store server image URLs for later use
+          serverImageUrls = serverImages;
         });
       }
     } catch (e) {
@@ -364,11 +373,11 @@ class _DocumentsSectionState extends State<DocumentsSection> {
           const SizedBox(height: TBSpacing.sm),
           Row(
             children: [
-              Expanded(child: _buildImageCard('Frontal', localImages['documentFront'], imageStatuses['documentFront'], Icons.credit_card)),
+              Expanded(child: _buildImageCard('Frontal', localImages['documentFront'], imageStatuses['documentFront'], Icons.credit_card, 'documentFront')),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Reverso', localImages['documentBack'], imageStatuses['documentBack'], Icons.flip_to_back)),
+              Expanded(child: _buildImageCard('Reverso', localImages['documentBack'], imageStatuses['documentBack'], Icons.flip_to_back, 'documentBack')),
               const SizedBox(width: TBSpacing.sm),
-              Expanded(child: _buildImageCard('Foto', localImages['clientPhoto'], imageStatuses['clientPhoto'], Icons.person)),
+              Expanded(child: _buildImageCard('Foto', localImages['clientPhoto'], imageStatuses['clientPhoto'], Icons.person, 'clientPhoto')),
             ],
           ),
         ],
@@ -376,47 +385,76 @@ class _DocumentsSectionState extends State<DocumentsSection> {
     );
   }
 
-  Widget _buildImageCard(String title, Uint8List? imageBytes, String? status, IconData icon) {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: TBColors.grey100,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: _getStatusBorderColor(status)),
-      ),
-      child: Stack(
-        children: [
-          imageBytes != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.memory(
-                    imageBytes,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                  ),
-                )
-              : _buildPlaceholder(title, icon),
-          if (imageBytes != null && status != null)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(status),
-                  borderRadius: BorderRadius.circular(8),
+  Widget _buildImageCard(String title, Uint8List? imageBytes, String? status, IconData icon, String imageType) {
+    final serverImageUrl = serverImageUrls[imageType];
+    final hasLocalImage = imageBytes != null;
+    final hasServerImage = serverImageUrl != null && serverImageUrl.isNotEmpty;
+    
+    return GestureDetector(
+      onTap: (hasLocalImage || hasServerImage) ? () => _showImageDialog(title, imageBytes, serverImageUrl) : null,
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          color: TBColors.grey100,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: _getStatusBorderColor(status)),
+        ),
+        child: Stack(
+          children: [
+            if (hasLocalImage)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.memory(
+                  imageBytes!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
                 ),
-                child: Text(
-                  _getStatusLabel(status),
-                  style: TBTypography.labelSmall.copyWith(
-                    color: TBColors.white,
-                    fontSize: 10,
+              )
+            else if (hasServerImage)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  'http://localhost:8081/api/user/uploads/img/$serverImageUrl',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) => _buildPlaceholder(title, icon),
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    );
+                  },
+                ),
+              )
+            else
+              _buildPlaceholder(title, icon),
+            if ((hasLocalImage || hasServerImage) && status != null)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(status),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _getStatusLabel(status),
+                    style: TBTypography.labelSmall.copyWith(
+                      color: TBColors.white,
+                      fontSize: 10,
+                    ),
                   ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -437,16 +475,16 @@ class _DocumentsSectionState extends State<DocumentsSection> {
   }
 
   bool _hasNoImages() {
-    return localImages['documentFront'] == null && 
-           localImages['documentBack'] == null && 
-           localImages['clientPhoto'] == null;
+    return (localImages['documentFront'] == null && (serverImageUrls['documentFront']?.isEmpty ?? true)) && 
+           (localImages['documentBack'] == null && (serverImageUrls['documentBack']?.isEmpty ?? true)) && 
+           (localImages['clientPhoto'] == null && (serverImageUrls['clientPhoto']?.isEmpty ?? true));
   }
 
   int _getImageCount() {
     int count = 0;
-    if (localImages['documentFront'] != null) count++;
-    if (localImages['documentBack'] != null) count++;
-    if (localImages['clientPhoto'] != null) count++;
+    if (localImages['documentFront'] != null || (serverImageUrls['documentFront']?.isNotEmpty ?? false)) count++;
+    if (localImages['documentBack'] != null || (serverImageUrls['documentBack']?.isNotEmpty ?? false)) count++;
+    if (localImages['clientPhoto'] != null || (serverImageUrls['clientPhoto']?.isNotEmpty ?? false)) count++;
     return count;
   }
 
@@ -489,5 +527,78 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       context: context,
       builder: (context) => const UploadDocumentImagesDialog(),
     ).then((_) => _loadUserImages());
+  }
+  
+  void _showImageDialog(String title, Uint8List? localImage, String? serverImageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: TBTypography.titleLarge),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: InteractiveViewer(
+                  child: localImage != null
+                      ? Image.memory(
+                          localImage,
+                          fit: BoxFit.contain,
+                        )
+                      : serverImageUrl != null && serverImageUrl.isNotEmpty
+                          ? Image.network(
+                              'http://localhost:8081/api/user/uploads/img/$serverImageUrl',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) => const Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.error, size: 64, color: Colors.red),
+                                    SizedBox(height: 16),
+                                    Text('Error al cargar la imagen'),
+                                  ],
+                                ),
+                              ),
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                );
+                              },
+                            )
+                          : const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+                                  SizedBox(height: 16),
+                                  Text('No hay imagen disponible'),
+                                ],
+                              ),
+                            ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
