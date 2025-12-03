@@ -13,27 +13,50 @@ class DocumentApiService {
     Uint8List? clientPhoto,
   }) async {
     try {
+      // Validar que al menos un documento se proporcione
+      if (documentFront == null && documentBack == null && clientPhoto == null) {
+        throw Exception('Debe proporcionar al menos un documento');
+      }
+      
       Map<String, dynamic> results = {};
+      List<String> errors = [];
       
       if (clientPhoto != null) {
-        final result = await _uploadBytes(clientPhoto, 'client_photo.jpg', '/user/upload', userId);
-        results['clientPhoto'] = result;
+        try {
+          final result = await _uploadBytes(clientPhoto, 'client_photo.jpg', '/user/upload', userId);
+          results['clientPhoto'] = result;
+        } catch (e) {
+          errors.add('Foto del cliente: $e');
+        }
       }
       
       if (documentFront != null) {
-        final result = await _uploadBytes(documentFront, 'document_front.jpg', '/user/upload/documentFrom', userId);
-        results['documentFront'] = result;
+        try {
+          final result = await _uploadBytes(documentFront, 'document_front.jpg', '/user/upload/documentFrom', userId);
+          results['documentFront'] = result;
+        } catch (e) {
+          errors.add('Documento frontal: $e');
+        }
       }
       
       if (documentBack != null) {
-        final result = await _uploadBytes(documentBack, 'document_back.jpg', '/user/upload/documentBack', userId);
-        results['documentBack'] = result;
+        try {
+          final result = await _uploadBytes(documentBack, 'document_back.jpg', '/user/upload/documentBack', userId);
+          results['documentBack'] = result;
+        } catch (e) {
+          errors.add('Documento trasero: $e');
+        }
+      }
+      
+      if (errors.isNotEmpty && results.isEmpty) {
+        throw Exception('Todos los documentos fallaron: ${errors.join(', ')}');
       }
       
       return {
         'success': true,
-        'message': 'Documentos subidos exitosamente',
-        'results': results
+        'message': errors.isEmpty ? 'Documentos subidos exitosamente' : 'Algunos documentos subidos con errores',
+        'results': results,
+        'errors': errors
       };
     } catch (e) {
       throw Exception('Error al subir documentos: $e');
@@ -41,24 +64,34 @@ class DocumentApiService {
   }
   
   static Future<Map<String, dynamic>> _uploadBytes(Uint8List bytes, String filename, String endpoint, int userId) async {
-    var request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'));
-    
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    if (token != null) {
-      request.headers['Authorization'] = 'Bearer $token';
-    }
-    
-    request.fields['id'] = userId.toString();
-    request.files.add(http.MultipartFile.fromBytes('archivo', bytes, filename: filename));
-    
-    var response = await request.send();
-    var responseBody = await response.stream.bytesToString();
-    
-    if (response.statusCode == 201) {
-      return json.decode(responseBody);
-    } else {
-      throw Exception('Failed to upload: ${response.statusCode}');
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl$endpoint'));
+      
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+      
+      request.fields['id'] = userId.toString();
+      request.files.add(http.MultipartFile.fromBytes('archivo', bytes, filename: filename));
+      
+      var response = await request.send();
+      var responseBody = await response.stream.bytesToString();
+      
+      if (response.statusCode == 201) {
+        return json.decode(responseBody);
+      } else if (response.statusCode == 500) {
+        throw Exception('Error interno del servidor. Verifique el formato del archivo.');
+      } else {
+        final errorData = json.decode(responseBody);
+        throw Exception('Error ${response.statusCode}: ${errorData['message'] ?? 'Error desconocido'}');
+      }
+    } catch (e) {
+      if (e.toString().contains('FormatException')) {
+        throw Exception('Formato de archivo no válido');
+      }
+      throw Exception('Error de conexión: $e');
     }
   }
 
