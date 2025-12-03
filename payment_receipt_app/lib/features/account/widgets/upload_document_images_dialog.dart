@@ -270,7 +270,7 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
   Future<void> _updateDocumentStatuses(int userId, Map<String, String> statusUpdates) async {
     // Update user document statuses via API
     final response = await http.put(
-      Uri.parse('http://localhost:8081/api/user/update'),
+      Uri.parse('https://guardianstrustbank.com:8081/api/user/update'),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

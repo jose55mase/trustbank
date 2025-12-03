@@ -91,7 +91,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     borderRadius: BorderRadius.circular(38),
                     child: profile['foto'] != null && profile['foto'].toString().isNotEmpty
                         ? Image.network(
-                            'http://localhost:8081/api/user/uploads/img/${profile['foto']}?userId=${profile['id']}&t=${DateTime.now().millisecondsSinceEpoch}',
+                            'https://guardianstrustbank.com/:8081/api/user/uploads/img/${profile['foto']}?userId=${profile['id']}&t=${DateTime.now().millisecondsSinceEpoch}',
                             width: 76,
                             height: 76,
                             fit: BoxFit.cover,
