@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DocumentApiService {
-  static const String baseUrl = 'https://guardianstrustbank.com:8081/api';
+  static const String baseUrl = 'http://hocalhost:8081/api';
 
   static Future<Map<String, dynamic>> uploadUserDocuments({
     required int userId,
