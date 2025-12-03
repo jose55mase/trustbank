@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DocumentApiService {
@@ -74,7 +75,25 @@ class DocumentApiService {
       }
       
       request.fields['id'] = userId.toString();
-      request.files.add(http.MultipartFile.fromBytes('archivo', bytes, filename: filename));
+      
+      // Determinar el tipo MIME basado en la extensión del archivo
+      String contentType = 'image/jpeg'; // Por defecto
+      if (filename.toLowerCase().endsWith('.png')) {
+        contentType = 'image/png';
+      } else if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg')) {
+        contentType = 'image/jpeg';
+      } else if (filename.toLowerCase().endsWith('.gif')) {
+        contentType = 'image/gif';
+      } else if (filename.toLowerCase().endsWith('.webp')) {
+        contentType = 'image/webp';
+      }
+      
+      request.files.add(http.MultipartFile.fromBytes(
+        'archivo', 
+        bytes, 
+        filename: filename,
+        contentType: MediaType.parse(contentType),
+      ));
       
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
