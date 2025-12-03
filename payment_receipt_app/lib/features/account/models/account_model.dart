@@ -123,6 +123,40 @@ class UserAccount {
         return 'Desconocido';
     }
   }
+
+  UserAccount copyWith({
+    String? fotoStatus,
+    String? documentFromStatus,
+    String? documentBackStatus,
+    String? accountStatus,
+  }) {
+    return UserAccount(
+      id: id,
+      username: username,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      phone: phone,
+      address: address,
+      city: city,
+      country: country,
+      postal: postal,
+      aboutme: aboutme,
+      documentType: documentType,
+      documentNumber: documentNumber,
+      accountStatus: accountStatus ?? this.accountStatus,
+      balance: balance,
+      status: status,
+      foto: foto,
+      documentFrom: documentFrom,
+      documentBack: documentBack,
+      fotoStatus: fotoStatus ?? this.fotoStatus,
+      documentFromStatus: documentFromStatus ?? this.documentFromStatus,
+      documentBackStatus: documentBackStatus ?? this.documentBackStatus,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
+    );
+  }
 }
 
 enum DocumentStatus { pending, approved, rejected }

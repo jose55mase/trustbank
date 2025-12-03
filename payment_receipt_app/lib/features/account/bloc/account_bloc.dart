@@ -7,31 +7,19 @@ part 'account_state.dart';
 
 class AccountBloc extends Bloc<AccountEvent, AccountState> {
   static UserAccount _mockAccount = UserAccount(
-    userId: 'user1',
-    userName: 'Juan Pérez',
+    id: 1,
+    username: 'juan_perez',
     email: 'juan@email.com',
-    status: AccountStatus.pending,
-    documents: [
-      UserDocument(
-        id: '1',
-        type: DocumentType.id,
-        fileName: 'cedula.pdf',
-        filePath: '/documents/cedula.pdf',
-        status: DocumentStatus.approved,
-        uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
-        processedAt: DateTime.now().subtract(const Duration(days: 1)),
-        adminNotes: 'Documento válido',
-      ),
-      UserDocument(
-        id: '2',
-        type: DocumentType.proofOfAddress,
-        fileName: 'recibo_luz.pdf',
-        filePath: '/documents/recibo_luz.pdf',
-        status: DocumentStatus.pending,
-        uploadedAt: DateTime.now().subtract(const Duration(hours: 5)),
-      ),
-    ],
+    firstName: 'Juan',
+    lastName: 'Pérez',
+    accountStatus: 'ACTIVE',
+    fotoStatus: 'APPROVED',
+    documentFromStatus: 'PENDING',
+    documentBackStatus: 'PENDING',
+    balance: 150000,
+    status: true,
     createdAt: DateTime.now().subtract(const Duration(days: 30)),
+    updatedAt: DateTime.now(),
   );
 
   AccountBloc() : super(AccountInitial()) {
@@ -45,43 +33,31 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
 
   void _onUploadDocument(UploadDocument event, Emitter<AccountState> emit) async {
     try {
-      // Simular subida de archivo (en producción usar file_picker)
+      // Simular subida de archivo
       await ApiService.createAdminRequest({
         'requestType': 'DOCUMENT_UPLOAD',
-        'userId': 1, // ID del usuario actual
+        'userId': 1,
         'amount': 0.0,
-        'details': '${event.type.name}: ${event.fileName}',
+        'details': 'Documento subido: ${event.fileName}',
       });
-
-      final newDocument = UserDocument(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        type: event.type,
-        fileName: event.fileName,
-        filePath: '/documents/${event.fileName}',
-        status: DocumentStatus.pending,
-        uploadedAt: DateTime.now(),
-      );
-
-      final updatedDocuments = [..._mockAccount.documents, newDocument];
-      _mockAccount = _mockAccount.copyWith(documents: updatedDocuments);
       
       emit(AccountLoaded(account: _mockAccount));
     } catch (e) {
-      // Manejar error
       emit(AccountLoaded(account: _mockAccount));
     }
   }
 
-  static void updateDocumentStatus(String documentId, DocumentStatus status, String? notes) {
-    final docIndex = _mockAccount.documents.indexWhere((d) => d.id == documentId);
-    if (docIndex != -1) {
-      final updatedDocuments = [..._mockAccount.documents];
-      updatedDocuments[docIndex] = updatedDocuments[docIndex].copyWith(
-        status: status,
-        processedAt: DateTime.now(),
-        adminNotes: notes,
-      );
-      _mockAccount = _mockAccount.copyWith(documents: updatedDocuments);
+  static void updateDocumentStatus(String documentType, String status) {
+    switch (documentType) {
+      case 'foto':
+        _mockAccount = _mockAccount.copyWith(fotoStatus: status);
+        break;
+      case 'documentFrom':
+        _mockAccount = _mockAccount.copyWith(documentFromStatus: status);
+        break;
+      case 'documentBack':
+        _mockAccount = _mockAccount.copyWith(documentBackStatus: status);
+        break;
     }
   }
 }

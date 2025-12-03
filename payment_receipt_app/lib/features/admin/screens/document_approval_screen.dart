@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../services/api_service.dart';
-import '../models/user_model.dart';
 
 class DocumentApprovalScreen extends StatefulWidget {
   const DocumentApprovalScreen({Key? key}) : super(key: key);
@@ -13,7 +11,7 @@ class DocumentApprovalScreen extends StatefulWidget {
 }
 
 class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
-  List<UserModel> pendingUsers = [];
+  List<Map<String, dynamic>> pendingUsers = [];
   bool isLoading = true;
 
   @override
@@ -28,8 +26,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
       if (response['success']) {
         setState(() {
           pendingUsers = (response['data'] as List)
-              .map((user) => UserModel.fromJson(user))
-              .toList();
+              .cast<Map<String, dynamic>>();
           isLoading = false;
         });
       }
@@ -94,7 +91,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
     );
   }
 
-  Widget _buildUserCard(UserModel user) {
+  Widget _buildUserCard(Map<String, dynamic> user) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -107,7 +104,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                 CircleAvatar(
                   backgroundColor: TBColors.primary,
                   child: Text(
-                    user.firstName?.substring(0, 1).toUpperCase() ?? 'U',
+                    (user['fistName'] ?? 'U').toString().substring(0, 1).toUpperCase(),
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -117,11 +114,11 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${user.firstName ?? ''} ${user.lastName ?? ''}',
+                        '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
                         style: TBTypography.titleMedium,
                       ),
                       Text(
-                        user.email ?? '',
+                        user['email'] ?? '',
                         style: TBTypography.bodyMedium.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -137,11 +134,11 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
               style: TBTypography.titleSmall,
             ),
             const SizedBox(height: 8),
-            if (user.fotoStatus == 'PENDING')
+            if (user['fotoStatus'] == 'PENDING')
               _buildDocumentRow('Foto de perfil', 'foto', user),
-            if (user.documentFromStatus == 'PENDING')
+            if (user['documentFromStatus'] == 'PENDING')
               _buildDocumentRow('Documento frontal', 'documentFrom', user),
-            if (user.documentBackStatus == 'PENDING')
+            if (user['documentBackStatus'] == 'PENDING')
               _buildDocumentRow('Documento trasero', 'documentBack', user),
           ],
         ),
@@ -149,7 +146,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
     );
   }
 
-  Widget _buildDocumentRow(String title, String documentType, UserModel user) {
+  Widget _buildDocumentRow(String title, String documentType, Map<String, dynamic> user) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -162,7 +159,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
             child: const Text('Ver'),
           ),
           ElevatedButton(
-            onPressed: () => _approveDocument(user.id!, documentType, 'APPROVED'),
+            onPressed: () => _approveDocument(user['id'], documentType, 'APPROVED'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
@@ -172,7 +169,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
           ),
           const SizedBox(width: 8),
           ElevatedButton(
-            onPressed: () => _approveDocument(user.id!, documentType, 'REJECTED'),
+            onPressed: () => _approveDocument(user['id'], documentType, 'REJECTED');
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
@@ -185,17 +182,17 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
     );
   }
 
-  void _showDocumentDialog(UserModel user, String documentType, String title) {
+  void _showDocumentDialog(Map<String, dynamic> user, String documentType, String title) {
     String? imageUrl;
     switch (documentType) {
       case 'foto':
-        imageUrl = user.foto;
+        imageUrl = user['foto'];
         break;
       case 'documentFrom':
-        imageUrl = user.documentFrom;
+        imageUrl = user['documentFrom'];
         break;
       case 'documentBack':
-        imageUrl = user.documentBack;
+        imageUrl = user['documentBack'];
         break;
     }
 
@@ -218,7 +215,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _approveDocument(user.id!, documentType, 'APPROVED');
+              _approveDocument(user['id'], documentType, 'APPROVED');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: const Text('Aprobar'),
@@ -226,7 +223,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _approveDocument(user.id!, documentType, 'REJECTED');
+              _approveDocument(user['id'], documentType, 'REJECTED');
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Rechazar'),
