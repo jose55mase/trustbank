@@ -61,9 +61,10 @@ class _DocumentsSectionState extends State<DocumentsSection> {
       Map<String, String> serverImages = {};
       
       // Intentar cargar estados e imágenes desde la API
-      if (user != null) {
+      if (user != null && user['id'] != null) {
         try {
           final userDocs = await DocumentApiService.getUserDocuments(user['id']);
+          
           apiStatuses = {
             'documentFront': userDocs['documentFromStatus'] ?? 'PENDING',
             'documentBack': userDocs['documentBackStatus'] ?? 'PENDING',

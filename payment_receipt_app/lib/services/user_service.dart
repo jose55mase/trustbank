@@ -10,9 +10,14 @@ class UserService {
       }
 
       final userId = currentUser['id'];
-      final userProfile = await ApiService.getUserById(userId);
+      final response = await ApiService.getUserById(userId);
       
-      return userProfile;
+      // Extract the actual user data from the API response
+      if (response['status'] == 200 && response['data'] != null) {
+        return response['data'];
+      }
+      
+      return null;
     } catch (e) {
       print('Error getting user profile: $e');
       return null;

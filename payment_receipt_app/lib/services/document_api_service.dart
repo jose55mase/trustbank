@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class DocumentApiService {
-  static const String baseUrl = 'http://hocalhost:8081/api';
+  static const String baseUrl = 'http://localhost:8081/api';
 
   static Future<Map<String, dynamic>> uploadUserDocuments({
     required int userId,
