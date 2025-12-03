@@ -219,7 +219,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                 child: imageUrl != null
                     ? InteractiveViewer(
                         child: Image.network(
-                          'http://localhost:8081/api/user/uploads/img/$imageUrl',
+                          'http://localhost:8081/api/user/uploads/img/$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) => Column(
                             mainAxisAlignment: MainAxisAlignment.center,

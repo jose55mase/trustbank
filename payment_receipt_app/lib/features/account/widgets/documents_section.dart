@@ -50,6 +50,8 @@ class _DocumentsSectionState extends State<DocumentsSection> {
 
   Future<void> _loadUserImages() async {
     try {
+      // Refresh user data from server first
+      await AuthService.refreshCurrentUser();
       final user = await AuthService.getCurrentUser();
       
       // Cargar imágenes locales
@@ -416,7 +418,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'http://localhost:8081/api/user/uploads/img/$serverImageUrl',
+                  'http://localhost:8081/api/user/uploads/img/$serverImageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,
@@ -560,7 +562,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
                         )
                       : serverImageUrl != null && serverImageUrl.isNotEmpty
                           ? Image.network(
-                              'http://localhost:8081/api/user/uploads/img/$serverImageUrl',
+                              'http://localhost:8081/api/user/uploads/img/$serverImageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
                               fit: BoxFit.contain,
                               errorBuilder: (context, error, stackTrace) => const Center(
                                 child: Column(

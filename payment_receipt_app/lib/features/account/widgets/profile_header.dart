@@ -4,6 +4,7 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../models/account_model.dart';
 import '../../../services/user_service.dart';
+import '../../../services/auth_service.dart';
 
 class ProfileHeader extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -31,6 +32,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 
   Future<void> _loadUserProfile() async {
     try {
+      // Refresh user data from server first
+      await AuthService.refreshCurrentUser();
       final profile = await UserService.getUserProfile();
       if (mounted) {
         setState(() {
@@ -88,7 +91,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                     borderRadius: BorderRadius.circular(38),
                     child: profile['foto'] != null && profile['foto'].toString().isNotEmpty
                         ? Image.network(
-                            'http://localhost:8081/api/user/uploads/img/${profile['foto']}',
+                            'http://localhost:8081/api/user/uploads/img/${profile['foto']}?userId=${profile['id']}&t=${DateTime.now().millisecondsSinceEpoch}',
                             width: 76,
                             height: 76,
                             fit: BoxFit.cover,

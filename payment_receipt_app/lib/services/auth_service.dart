@@ -86,6 +86,19 @@ class AuthService {
     return user?['id'];
   }
 
+  static Future<void> refreshCurrentUser() async {
+    try {
+      final currentUser = await getCurrentUser();
+      if (currentUser != null && currentUser['email'] != null) {
+        final userData = await ApiService.getUserByEmail(currentUser['email']);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_userDataKey, json.encode(userData));
+      }
+    } catch (e) {
+      // Ignore refresh errors
+    }
+  }
+
   static Future<Map<String, dynamic>> login(String email, String password) async {
     try {
       // Usar ApiService para login real con backend
