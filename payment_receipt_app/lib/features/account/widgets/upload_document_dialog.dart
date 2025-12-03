@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
-import '../../../design_system/components/molecules/tb_dialog.dart';
-import '../bloc/account_bloc.dart';
-import '../models/account_model.dart';
+
+
+
 import 'upload_document_images_dialog.dart';
 
 class UploadDocumentDialog extends StatefulWidget {
@@ -17,14 +17,14 @@ class UploadDocumentDialog extends StatefulWidget {
 }
 
 class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
-  DocumentType? _selectedType;
+  String? _selectedType;
   String _fileName = '';
 
-  final List<DocumentType> _documentTypes = [
-    DocumentType.id,
-    DocumentType.proofOfAddress,
-    DocumentType.incomeProof,
-    DocumentType.bankStatement,
+  final List<String> _documentTypes = [
+    'id',
+    'proofOfAddress',
+    'incomeProof',
+    'bankStatement',
   ];
 
   @override
@@ -54,7 +54,7 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
           const SizedBox(height: TBSpacing.md),
           const Divider(),
           const SizedBox(height: TBSpacing.md),
-          DropdownButtonFormField<DocumentType>(
+          DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               labelText: 'Tipo de documento',
               border: OutlineInputBorder(),
@@ -109,16 +109,18 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
     );
   }
 
-  String _getTypeLabel(DocumentType type) {
+  String _getTypeLabel(String type) {
     switch (type) {
-      case DocumentType.id:
+      case 'id':
         return 'Cédula/Pasaporte';
-      case DocumentType.proofOfAddress:
+      case 'proofOfAddress':
         return 'Comprobante domicilio';
-      case DocumentType.incomeProof:
+      case 'incomeProof':
         return 'Comprobante ingresos';
-      case DocumentType.bankStatement:
+      case 'bankStatement':
         return 'Estado de cuenta';
+      default:
+        return 'Documento';
     }
   }
 
@@ -135,17 +137,16 @@ class _UploadDocumentDialogState extends State<UploadDocumentDialog> {
 
   void _uploadDocument() {
     if (_canUpload()) {
-      context.read<AccountBloc>().add(
-        UploadDocument(
-          type: _selectedType!,
-          fileName: _fileName,
-        ),
+      // Simulate document upload
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Documento $_fileName subido exitosamente')),
       );
       Navigator.pop(context);
-      TBDialogHelper.showSuccess(
-        context,
-        title: '¡Documento subido!',
-        message: 'Tu documento ha sido subido exitosamente y está siendo revisado por nuestro equipo.',
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Documento subido exitosamente!'),
+          backgroundColor: Colors.green,
+        ),
       );
     }
   }

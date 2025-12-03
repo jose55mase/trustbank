@@ -123,6 +123,8 @@ class UserAccount {
         return 'Desconocido';
     }
   }
+  
+  String get statusValue => accountStatus ?? 'pending';
 
   UserAccount copyWith({
     String? fotoStatus,
@@ -159,14 +161,12 @@ class UserAccount {
   }
 }
 
-enum DocumentStatus { pending, approved, rejected }
-
 class UserDocument {
   final String id;
   final String type;
   final String fileName;
   final String filePath;
-  final DocumentStatus status;
+  final String status;
   final DateTime uploadedAt;
   final DateTime? processedAt;
   final String? adminNotes;
@@ -183,13 +183,15 @@ class UserDocument {
   });
 
   String get statusLabel {
-    switch (status) {
-      case DocumentStatus.pending:
+    switch (status.toLowerCase()) {
+      case 'pending':
         return 'Pendiente';
-      case DocumentStatus.approved:
+      case 'approved':
         return 'Aprobado';
-      case DocumentStatus.rejected:
+      case 'rejected':
         return 'Rechazado';
+      default:
+        return 'Desconocido';
     }
   }
 }

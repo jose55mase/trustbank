@@ -46,11 +46,11 @@ class AccountStatusCard extends StatelessWidget {
           Text(
             userData != null 
                 ? '${userData!['fistName'] ?? userData!['firstName'] ?? ''} ${userData!['lastName'] ?? ''}'
-                : account.userName,
+                : account.email ?? 'Usuario',
             style: TBTypography.headlineMedium.copyWith(color: TBColors.white),
           ),
           Text(
-            userData?['email'] ?? account.email,
+            userData?['email'] ?? account.email ?? 'Sin email',
             style: TBTypography.bodyMedium.copyWith(
               color: TBColors.white.withOpacity(0.9),
             ),
@@ -78,20 +78,20 @@ class AccountStatusCard extends StatelessWidget {
   }
 
   LinearGradient _getStatusGradient() {
-    switch (account.status) {
-      case AccountStatus.verified:
+    switch (account.statusValue) {
+      case 'verified':
         return const LinearGradient(
           colors: [TBColors.success, Color(0xFF66BB6A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
-      case AccountStatus.rejected:
+      case 'rejected':
         return const LinearGradient(
           colors: [TBColors.error, Color(0xFFEF5350)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         );
-      case AccountStatus.suspended:
+      case 'suspended':
         return const LinearGradient(
           colors: [TBColors.grey600, TBColors.grey500],
           begin: Alignment.topLeft,
@@ -103,12 +103,12 @@ class AccountStatusCard extends StatelessWidget {
   }
 
   IconData _getStatusIcon() {
-    switch (account.status) {
-      case AccountStatus.verified:
+    switch (account.statusValue) {
+      case 'verified':
         return Icons.verified_user;
-      case AccountStatus.rejected:
+      case 'rejected':
         return Icons.cancel;
-      case AccountStatus.suspended:
+      case 'suspended':
         return Icons.block;
       default:
         return Icons.pending;
@@ -116,12 +116,12 @@ class AccountStatusCard extends StatelessWidget {
   }
 
   String _getStatusMessage() {
-    switch (account.status) {
-      case AccountStatus.verified:
+    switch (account.statusValue) {
+      case 'verified':
         return 'Tu cuenta está completamente verificada. Puedes usar todos los servicios.';
-      case AccountStatus.rejected:
+      case 'rejected':
         return 'Tu cuenta fue rechazada. Revisa los documentos y vuelve a intentar.';
-      case AccountStatus.suspended:
+      case 'suspended':
         return 'Tu cuenta está suspendida. Contacta soporte para más información.';
       default:
         return 'Sube todos los documentos requeridos para verificar tu cuenta.';

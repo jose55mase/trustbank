@@ -223,15 +223,18 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
   }
 
   Widget _getVerificationIcon() {
-    switch (widget.account.status) {
-      case AccountStatus.verified:
+    final status = widget.account.accountStatus?.toUpperCase();
+    switch (status) {
+      case 'ACTIVE':
         return const Icon(Icons.verified, color: TBColors.success, size: 20);
-      case AccountStatus.pending:
+      case 'PENDING':
         return const Icon(Icons.pending, color: Colors.orange, size: 20);
-      case AccountStatus.rejected:
+      case 'REJECTED':
         return const Icon(Icons.cancel, color: TBColors.error, size: 20);
-      case AccountStatus.suspended:
+      case 'SUSPENDED':
         return Icon(Icons.block, color: Colors.red.shade700, size: 20);
+      default:
+        return const Icon(Icons.help_outline, color: Colors.grey, size: 20);
     }
   }
 
@@ -243,8 +246,6 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
       builder: (context) => const DocumentsSection(),
     ).then((_) => _loadImageCount());
   }
-
-
 
   void _showLimits(BuildContext context) {
     showModalBottomSheet(
@@ -323,34 +324,10 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
             topRight: Radius.circular(24),
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(TBSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: TBColors.grey300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: TBSpacing.lg),
-              Text(
-                'Historial de Cuenta',
-                style: TBTypography.headlineSmall,
-              ),
-              const SizedBox(height: TBSpacing.md),
-              Text(
-                'Aquí podrás ver todos los cambios y actualizaciones realizadas en tu cuenta.',
-                style: TBTypography.bodyMedium.copyWith(
-                  color: TBColors.grey600,
-                ),
-              ),
-            ],
+        child: const Padding(
+          padding: EdgeInsets.all(TBSpacing.lg),
+          child: Center(
+            child: Text('Historial de cuenta - Próximamente'),
           ),
         ),
       ),
@@ -362,7 +339,7 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: 400,
+        height: 300,
         decoration: const BoxDecoration(
           color: TBColors.white,
           borderRadius: BorderRadius.only(
@@ -391,87 +368,14 @@ class _AccountMenuSectionState extends State<AccountMenuSection> {
                 style: TBTypography.headlineSmall,
               ),
               const SizedBox(height: TBSpacing.md),
-              Container(
-                padding: const EdgeInsets.all(TBSpacing.md),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(widget.account.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _getStatusColor(widget.account.status).withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _getStatusIcon(widget.account.status),
-                      color: _getStatusColor(widget.account.status),
-                    ),
-                    const SizedBox(width: TBSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.account.statusLabel,
-                            style: TBTypography.bodyMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            _getStatusDescription(widget.account.status),
-                            style: TBTypography.bodySmall.copyWith(
-                              color: TBColors.grey600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              Text(
+                'Estado actual: ${widget.account.statusLabel}',
+                style: TBTypography.bodyMedium,
               ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(AccountStatus status) {
-    switch (status) {
-      case AccountStatus.verified:
-        return TBColors.success;
-      case AccountStatus.pending:
-        return Colors.orange;
-      case AccountStatus.rejected:
-        return TBColors.error;
-      case AccountStatus.suspended:
-        return Colors.red.shade700;
-    }
-  }
-
-  IconData _getStatusIcon(AccountStatus status) {
-    switch (status) {
-      case AccountStatus.verified:
-        return Icons.verified;
-      case AccountStatus.pending:
-        return Icons.pending;
-      case AccountStatus.rejected:
-        return Icons.cancel;
-      case AccountStatus.suspended:
-        return Icons.block;
-    }
-  }
-
-  String _getStatusDescription(AccountStatus status) {
-    switch (status) {
-      case AccountStatus.verified:
-        return 'Tu cuenta está completamente verificada';
-      case AccountStatus.pending:
-        return 'Tu cuenta está en proceso de verificación';
-      case AccountStatus.rejected:
-        return 'Tu cuenta ha sido rechazada. Contacta soporte';
-      case AccountStatus.suspended:
-        return 'Tu cuenta está suspendida temporalmente';
-    }
   }
 }

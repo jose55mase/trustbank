@@ -60,7 +60,7 @@ class DocumentList extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(document.typeLabel, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                Text(_getTypeLabel(document.type), style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
                 Text(document.fileName, style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
                 if (document.adminNotes != null)
                   Text(document.adminNotes!, style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
@@ -73,26 +73,30 @@ class DocumentList extends StatelessWidget {
     );
   }
 
-  Widget _buildDocumentIcon(DocumentType type) {
+  Widget _buildDocumentIcon(String type) {
     IconData icon;
     Color color;
 
     switch (type) {
-      case DocumentType.id:
+      case 'id':
         icon = Icons.badge;
         color = TBColors.primary;
         break;
-      case DocumentType.proofOfAddress:
+      case 'proofOfAddress':
         icon = Icons.home;
         color = TBColors.secondary;
         break;
-      case DocumentType.incomeProof:
+      case 'incomeProof':
         icon = Icons.attach_money;
         color = Colors.orange;
         break;
-      case DocumentType.bankStatement:
+      case 'bankStatement':
         icon = Icons.account_balance;
         color = Colors.purple;
+        break;
+      default:
+        icon = Icons.description;
+        color = TBColors.grey500;
         break;
     }
 
@@ -106,18 +110,21 @@ class DocumentList extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusChip(DocumentStatus status) {
+  Widget _buildStatusChip(String status) {
     Color color;
     
-    switch (status) {
-      case DocumentStatus.pending:
+    switch (status.toLowerCase()) {
+      case 'pending':
         color = TBColors.primary;
         break;
-      case DocumentStatus.approved:
+      case 'approved':
         color = TBColors.success;
         break;
-      case DocumentStatus.rejected:
+      case 'rejected':
         color = TBColors.error;
+        break;
+      default:
+        color = TBColors.grey500;
         break;
     }
 
@@ -128,9 +135,24 @@ class DocumentList extends StatelessWidget {
         borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
       ),
       child: Text(
-        status.name.toUpperCase(),
+        status.toUpperCase(),
         style: TBTypography.labelMedium.copyWith(color: color, fontSize: 10),
       ),
     );
+  }
+  
+  String _getTypeLabel(String type) {
+    switch (type) {
+      case 'id':
+        return 'Cédula/Pasaporte';
+      case 'proofOfAddress':
+        return 'Comprobante domicilio';
+      case 'incomeProof':
+        return 'Comprobante ingresos';
+      case 'bankStatement':
+        return 'Estado de cuenta';
+      default:
+        return 'Documento';
+    }
   }
 }
