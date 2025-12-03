@@ -489,7 +489,7 @@ class _DocumentsSectionState extends State<DocumentsSection> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.memory(
-                  imageBytes!,
+                  imageBytes,
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: double.infinity,

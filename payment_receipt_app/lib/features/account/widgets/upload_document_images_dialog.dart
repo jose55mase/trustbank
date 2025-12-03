@@ -216,8 +216,8 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
       );
       
       // Actualizar estados en el servidor
-      final user = await AuthService.getCurrentUser();
-      if (user != null) {
+      final currentUser = await AuthService.getCurrentUser();
+      if (currentUser != null) {
         Map<String, String> statusUpdates = {};
         if (_documentFrontBytes != null) statusUpdates['documentFromStatus'] = 'PENDING';
         if (_documentBackBytes != null) statusUpdates['documentBackStatus'] = 'PENDING';
@@ -225,7 +225,7 @@ class _UploadDocumentImagesDialogState extends State<UploadDocumentImagesDialog>
         
         if (statusUpdates.isNotEmpty) {
           try {
-            await _updateDocumentStatuses(user['id'], statusUpdates);
+            await _updateDocumentStatuses(currentUser['id'], statusUpdates);
           } catch (e) {
             // Ignore status update errors
           }

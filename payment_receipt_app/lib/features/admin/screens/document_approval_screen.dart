@@ -24,7 +24,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
     try {
       final response = await ApiService.getAllUsers();
       setState(() {
-        pendingUsers = (response as List)
+        pendingUsers = response
             .cast<Map<String, dynamic>>()
             .where((user) => _hasDocumentsToReview(user))
             .toList();
