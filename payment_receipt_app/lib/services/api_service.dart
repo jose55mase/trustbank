@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://hocalhost:8081/api';
+  static const String baseUrl = 'http://localhost:8081/api';
   static String credentials = base64Encode(utf8.encode('angularapp:12345'));
   
   static Future<Map<String, String>> get headers async {
@@ -25,7 +25,7 @@ class ApiService {
       final body = 'grant_type=password&username=${Uri.encodeComponent(email)}&password=${Uri.encodeComponent(password)}';
 
       final response = await http.post(
-        Uri.parse('http://hocalhost:8081/oauth/token'),
+        Uri.parse('http://localhost:8081/oauth/token'),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': 'Basic $credentials',

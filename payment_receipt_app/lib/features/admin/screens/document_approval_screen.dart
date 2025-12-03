@@ -197,37 +197,90 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: imageUrl != null
-            ? Image.network(
-                'https://guardianstrustbank.com:8081/api/user/uploads/img/$imageUrl',
-                errorBuilder: (context, error, stackTrace) =>
-                    const Text('Error al cargar la imagen'),
-              )
-            : const Text('No hay imagen disponible'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
+      builder: (context) => Dialog(
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.8,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(title, style: TBTypography.titleLarge),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: imageUrl != null
+                    ? InteractiveViewer(
+                        child: Image.network(
+                          'http://localhost:8081/api/user/uploads/img/$imageUrl',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.error, size: 64, color: Colors.red),
+                              const SizedBox(height: 16),
+                              Text('Error al cargar la imagen: $imageUrl'),
+                              const SizedBox(height: 8),
+                              Text('URL: http://localhost:8081/api/user/uploads/img/$imageUrl',
+                                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                            ],
+                          ),
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                value: loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text('No hay imagen disponible'),
+                          ],
+                        ),
+                      ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _approveDocument(user['id'], documentType, 'APPROVED');
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    child: const Text('Aprobar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _approveDocument(user['id'], documentType, 'REJECTED');
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                    child: const Text('Rechazar'),
+                  ),
+                ],
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _approveDocument(user['id'], documentType, 'APPROVED');
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-            child: const Text('Aprobar'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _approveDocument(user['id'], documentType, 'REJECTED');
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Rechazar'),
-          ),
-        ],
+        ),
       ),
     );
   }
