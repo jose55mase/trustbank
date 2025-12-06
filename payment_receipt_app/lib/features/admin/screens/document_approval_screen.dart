@@ -290,7 +290,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                 child: imageUrl != null
                     ? InteractiveViewer(
                         child: Image.network(
-                          'http://localhost:8081/api/user/uploads/img/$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
+                          'https://guardianstrustbank.com:8081/api/user/uploads/img/$imageUrl?t=${DateTime.now().millisecondsSinceEpoch}',
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) => Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -299,7 +299,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                               const SizedBox(height: 16),
                               Text('Error al cargar la imagen: $imageUrl'),
                               const SizedBox(height: 8),
-                              Text('URL: http://localhost:8081/api/user/uploads/img/$imageUrl',
+                              Text('URL: https://guardianstrustbank.com:8081/api/user/uploads/img/$imageUrl',
                                 style: const TextStyle(fontSize: 12, color: Colors.grey)),
                             ],
                           ),
