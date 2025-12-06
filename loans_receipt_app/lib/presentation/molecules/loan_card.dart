@@ -1,0 +1,109 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_styles.dart';
+import '../../domain/models/loan.dart';
+import '../../domain/models/user.dart';
+import '../atoms/status_badge.dart';
+
+class LoanCard extends StatelessWidget {
+  final Loan loan;
+  final User user;
+  final VoidCallback onTap;
+
+  const LoanCard({
+    super.key,
+    required this.loan,
+    required this.user,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO');
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      user.name,
+                      style: AppTextStyles.h3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  StatusBadge(status: loan.status),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _InfoColumn(
+                    label: 'Monto',
+                    value: currencyFormat.format(loan.amount),
+                  ),
+                  _InfoColumn(
+                    label: 'Ganancia',
+                    value: currencyFormat.format(loan.profit),
+                    valueColor: AppColors.secondary,
+                  ),
+                  _InfoColumn(
+                    label: 'Cuotas',
+                    value: '${loan.paidInstallments}/${loan.installments}',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                value: loan.paidInstallments / loan.installments,
+                backgroundColor: AppColors.border,
+                valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoColumn extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _InfoColumn({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyles.caption),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: AppTextStyles.body.copyWith(
+            fontWeight: FontWeight.w600,
+            color: valueColor,
+          ),
+        ),
+      ],
+    );
+  }
+}
