@@ -21,6 +21,13 @@ class HomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gestión de Préstamos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            onPressed: () {},
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       drawer: const AppDrawer(),
       body: ListView(
@@ -59,9 +66,11 @@ class HomeScreen extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (_) => const NewLoanScreen()),
         ),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuevo Préstamo'),
-        backgroundColor: AppColors.primary,
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Nuevo Préstamo', style: TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: AppColors.secondary,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 4,
       ),
     );
   }

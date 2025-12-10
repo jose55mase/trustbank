@@ -21,10 +21,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Análisis de Ganancias'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       drawer: const AppDrawer(),
       body: ListView(
@@ -71,64 +67,40 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Widget _buildChart() {
     final data = _getChartData();
+    final colors = [
+      AppColors.primary,
+      AppColors.secondary,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.pink,
+      Colors.indigo,
+      Colors.amber,
+      Colors.cyan,
+      Colors.lime,
+      Colors.deepOrange,
+    ];
     
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        maxY: data.map((e) => e.value).reduce((a, b) => a > b ? a : b) * 1.2,
-        barTouchData: BarTouchData(enabled: true),
-        titlesData: FlTitlesData(
-          show: true,
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, meta) {
-                if (value.toInt() >= 0 && value.toInt() < data.length) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      data[value.toInt()].label,
-                      style: AppTextStyles.caption,
-                    ),
-                  );
-                }
-                return const Text('');
-              },
+    return PieChart(
+      PieChartData(
+        sections: data.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return PieChartSectionData(
+            value: item.value,
+            title: '${item.label}\n\$${(item.value / 1000000).toStringAsFixed(1)}M',
+            color: colors[index % colors.length],
+            radius: 100,
+            titleStyle: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 60,
-              getTitlesWidget: (value, meta) {
-                return Text(
-                  '\$${(value / 1000000).toStringAsFixed(0)}M',
-                  style: AppTextStyles.caption,
-                );
-              },
-            ),
-          ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        gridData: const FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: 1000000,
-        ),
-        borderData: FlBorderData(show: false),
-        barGroups: data.asMap().entries.map((entry) {
-          return BarChartGroupData(
-            x: entry.key,
-            barRods: [
-              BarChartRodData(
-                toY: entry.value.value,
-                color: AppColors.secondary,
-                width: 20,
-              ),
-            ],
           );
         }).toList(),
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
       ),
     );
   }

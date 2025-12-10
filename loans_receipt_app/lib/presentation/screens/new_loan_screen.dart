@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/dummy_data.dart';
 import '../atoms/app_button.dart';
@@ -13,9 +15,43 @@ class NewLoanScreen extends StatefulWidget {
 
 class _NewLoanScreenState extends State<NewLoanScreen> {
   String? selectedUserId;
+  String? paymentFrequency;
+  String? loanType;
   final amountController = TextEditingController();
   final interestController = TextEditingController();
   final installmentsController = TextEditingController();
+  final phoneController = TextEditingController();
+  final numberFormat = NumberFormat('#,###', 'es_CO');
+
+  @override
+  void initState() {
+    super.initState();
+    amountController.addListener(_formatAmount);
+  }
+
+  void _formatAmount() {
+    String text = amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (text.isEmpty) return;
+    
+    final value = int.parse(text);
+    final formatted = numberFormat.format(value);
+    
+    final cursorPosition = formatted.length;
+    amountController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: cursorPosition),
+    );
+  }
+
+  @override
+  void dispose() {
+    amountController.removeListener(_formatAmount);
+    amountController.dispose();
+    interestController.dispose();
+    installmentsController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,18 +85,31 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: phoneController,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            decoration: const InputDecoration(
+              labelText: 'Número de Teléfono',
+              prefixIcon: Icon(Icons.phone),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
             controller: amountController,
             keyboardType: TextInputType.number,
             decoration: const InputDecoration(
               labelText: 'Monto del Préstamo',
               prefixText: '\$ ',
               border: OutlineInputBorder(),
+              hintText: '0',
             ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: interestController,
             keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
             decoration: const InputDecoration(
               labelText: 'Tasa de Interés',
               suffixText: '%',
@@ -71,10 +120,37 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
           TextField(
             controller: installmentsController,
             keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: const InputDecoration(
               labelText: 'Número de Cuotas',
               border: OutlineInputBorder(),
             ),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: paymentFrequency,
+            decoration: const InputDecoration(
+              labelText: 'Forma de Pago',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'Mensual', child: Text('Mensual')),
+              DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal')),
+            ],
+            onChanged: (value) => setState(() => paymentFrequency = value),
+          ),
+          const SizedBox(height: 16),
+          DropdownButtonFormField<String>(
+            value: loanType,
+            decoration: const InputDecoration(
+              labelText: 'Tipo de Préstamo',
+              border: OutlineInputBorder(),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'Fijo', child: Text('Fijo')),
+              DropdownMenuItem(value: 'Rotativo', child: Text('Rotativo')),
+            ],
+            onChanged: (value) => setState(() => loanType = value),
           ),
           const SizedBox(height: 32),
           AppButton(

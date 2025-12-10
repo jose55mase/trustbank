@@ -26,9 +26,9 @@ class LoanCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,11 +64,15 @@ class LoanCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              LinearProgressIndicator(
-                value: loan.paidInstallments / loan.installments,
-                backgroundColor: AppColors.border,
-                valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+              const SizedBox(height: 16),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: loan.paidInstallments / loan.installments,
+                  backgroundColor: AppColors.border.withOpacity(0.3),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
+                  minHeight: 8,
+                ),
               ),
             ],
           ),
