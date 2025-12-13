@@ -25,7 +25,7 @@ class AppTheme {
         iconTheme: IconThemeData(color: AppColors.primary, size: 24),
         titleTextStyle: TextStyle(
           color: AppColors.textPrimary,
-          fontSize: 20,
+          fontSize: 18,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.2,
         ),
@@ -52,7 +52,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontSize: 16,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
@@ -90,11 +90,11 @@ class AppTheme {
         ),
         labelStyle: const TextStyle(
           color: AppColors.textSecondary,
-          fontSize: 16,
+          fontSize: 14,
         ),
         hintStyle: const TextStyle(
           color: AppColors.textHint,
-          fontSize: 16,
+          fontSize: 14,
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

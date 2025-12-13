@@ -1,5 +1,6 @@
 import '../domain/models/user.dart';
 import '../domain/models/loan.dart';
+import '../domain/models/loan_status.dart';
 import '../domain/models/expense.dart';
 
 class DummyData {
@@ -7,6 +8,7 @@ class DummyData {
     User(
       id: '1',
       name: 'Juan Pérez',
+      userCode: 'USR0001',
       phone: '+1234567890',
       email: 'juan.perez@email.com',
       registrationDate: DateTime(2024, 1, 15),
@@ -14,6 +16,7 @@ class DummyData {
     User(
       id: '2',
       name: 'María García',
+      userCode: 'USR0002',
       phone: '+1234567891',
       email: 'maria.garcia@email.com',
       registrationDate: DateTime(2024, 2, 10),
@@ -21,6 +24,7 @@ class DummyData {
     User(
       id: '3',
       name: 'Carlos Rodríguez',
+      userCode: 'USR0003',
       phone: '+1234567892',
       email: 'carlos.rodriguez@email.com',
       registrationDate: DateTime(2024, 3, 5),
@@ -28,6 +32,7 @@ class DummyData {
     User(
       id: '4',
       name: 'Ana Martínez',
+      userCode: 'USR0004',
       phone: '+1234567893',
       email: 'ana.martinez@email.com',
       registrationDate: DateTime(2024, 1, 20),
@@ -35,6 +40,7 @@ class DummyData {
     User(
       id: '5',
       name: 'Luis Fernández',
+      userCode: 'USR0005',
       phone: '+1234567894',
       email: 'luis.fernandez@email.com',
       registrationDate: DateTime(2024, 2, 28),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../atoms/app_button.dart';
 import '../widgets/app_drawer.dart';
+import '../../data/services/api_service.dart';
 
 class NewUserScreen extends StatefulWidget {
   const NewUserScreen({super.key});
@@ -12,8 +13,54 @@ class NewUserScreen extends StatefulWidget {
 
 class _NewUserScreenState extends State<NewUserScreen> {
   final nameController = TextEditingController();
+  final userCodeController = TextEditingController();
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> _registerUser() async {
+    if (nameController.text.trim().isEmpty ||
+        userCodeController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty ||
+        emailController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await ApiService.createUser(
+        name: nameController.text.trim(),
+        userCode: userCodeController.text.trim(),
+        phone: phoneController.text.trim(),
+        email: emailController.text.trim(),
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuario registrado exitosamente')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +88,16 @@ class _NewUserScreenState extends State<NewUserScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: userCodeController,
+            decoration: const InputDecoration(
+              labelText: 'Código de Usuario (ej: USR0001)',
+              prefixIcon: Icon(Icons.tag),
+              border: OutlineInputBorder(),
+              hintText: 'USR0001',
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
@@ -61,13 +118,8 @@ class _NewUserScreenState extends State<NewUserScreen> {
           ),
           const SizedBox(height: 32),
           AppButton(
-            text: 'Registrar Usuario',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Usuario registrado exitosamente')),
-              );
-              Navigator.pop(context);
-            },
+            text: isLoading ? 'Registrando...' : 'Registrar Usuario',
+            onPressed: isLoading ? null : _registerUser,
           ),
         ],
       ),

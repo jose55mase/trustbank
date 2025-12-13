@@ -3,9 +3,10 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/loan.dart';
+import '../../domain/models/loan_status.dart';
 import '../../domain/models/user.dart';
-import '../../domain/models/transaction.dart';
-import '../../data/services/transaction_service.dart';
+
+import '../../data/services/api_service.dart';
 import '../atoms/status_badge.dart';
 import '../atoms/info_row.dart';
 import '../widgets/app_drawer.dart';
@@ -86,8 +87,17 @@ class LoanDetailScreen extends StatelessWidget {
                     valueColor: AppColors.warning,
                   ),
                   const Divider(height: 24),
-                  const InfoRow(label: 'Estado Pago Anterior', value: 'Pagado', valueColor: AppColors.success),
-                  const InfoRow(label: 'Estado Pago Actual', value: 'Pendiente', valueColor: AppColors.warning),
+                  InfoRow(
+                    label: 'Estado Pago Anterior',
+                    value: loan.pagoAnterior ? 'Pagado' : 'No Pagado',
+                    valueColor: loan.pagoAnterior ? AppColors.success : AppColors.error,
+                  ),
+                  InfoRow(
+                    label: 'Estado Pago Actual',
+                    value: loan.pagoActual ? 'Pagado' : 'Pendiente',
+                    valueColor: loan.pagoActual ? AppColors.success : AppColors.warning,
+                  ),
+
                   const Divider(height: 24),
                   InfoRow(label: 'Fecha de Inicio', value: DateFormat('dd/MM/yyyy').format(loan.startDate)),
                   const SizedBox(height: 16),
@@ -249,76 +259,129 @@ class LoanDetailScreen extends StatelessWidget {
     );
   }
 
-  void _processPayment(BuildContext context, Loan loan, double amount, String paymentMethod, String notes, NumberFormat currencyFormat) {
-    final interestPortion = (amount * loan.interestRate / 100).clamp(0.0, amount);
-    final principalPortion = amount - interestPortion;
-    
-    // Crear la transacción real
-    PaymentMethod method;
-    switch (paymentMethod) {
-      case 'Transferencia':
-        method = PaymentMethod.transfer;
-        break;
-      case 'Cheque':
-        method = PaymentMethod.check;
-        break;
-      default:
-        method = PaymentMethod.cash;
+  void _updatePaymentStatus(BuildContext context, String loanId, bool? pagoAnterior, bool? pagoActual) async {
+    try {
+      await ApiService.updatePaymentStatus(
+        loanId: loanId,
+        pagoAnterior: pagoAnterior,
+        pagoActual: pagoActual,
+      );
+      
+      // Obtener los datos actualizados del préstamo
+      final updatedLoan = await ApiService.getLoanByIdAsModel(loanId);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Estado de pago actualizado correctamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      // Recargar la pantalla con los datos actualizados
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoanDetailScreen(loan: updatedLoan, user: user),
+        ),
+      ).then((_) => Navigator.pop(context, true));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar estado: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
-    
-    final transaction = TransactionService.createPayment(
-      loanId: loan.id,
-      userId: user.id,
-      amount: amount,
-      paymentMethod: method,
-      notes: notes.isNotEmpty ? notes : 'Pago cuota #${loan.paidInstallments + 1}',
-    );
-    
-    // Actualizar la transacción con los montos de interés y capital
-    final updatedTransaction = Transaction(
-      id: transaction.id,
-      type: transaction.type,
-      userId: transaction.userId,
-      loanId: transaction.loanId,
-      amount: transaction.amount,
-      date: transaction.date,
-      paymentMethod: transaction.paymentMethod,
-      notes: transaction.notes,
-      interestAmount: interestPortion,
-      principalAmount: principalPortion,
-    );
-    
-    // Reemplazar en la lista (simulación de actualización)
-    final transactions = TransactionService.getAllTransactions();
-    final index = transactions.indexWhere((t) => t.id == transaction.id);
-    if (index != -1) {
-      transactions[index] = updatedTransaction;
-    }
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Pago Registrado'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('ID Transacción: ${transaction.id}'),
-            const SizedBox(height: 8),
-            Text('Monto total: ${currencyFormat.format(amount)}'),
-            Text('Capital: ${currencyFormat.format(principalPortion)}'),
-            Text('Interés: ${currencyFormat.format(interestPortion)}'),
-            Text('Método: $paymentMethod'),
-            if (notes.isNotEmpty) Text('Notas: $notes'),
+  }
+
+  void _processPayment(BuildContext context, Loan loan, double amount, String paymentMethod, String notes, NumberFormat currencyFormat) async {
+    try {
+      final interestPortion = (amount * loan.interestRate / 100).clamp(0.0, amount);
+      final principalPortion = amount - interestPortion;
+      
+      // Crear la transacción en el backend
+      final transaction = await ApiService.createTransaction(
+        loanId: loan.id,
+        amount: amount,
+        paymentMethod: paymentMethod,
+        notes: notes.isNotEmpty ? notes : 'Pago cuota #${loan.paidInstallments + 1}',
+        interestAmount: interestPortion,
+        principalAmount: principalPortion,
+      );
+      
+      // Actualizar las cuotas pagadas del préstamo
+      await ApiService.updateLoanInstallments(
+        loanId: loan.id,
+        paidInstallments: loan.paidInstallments + 1,
+      );
+      
+      // Actualizar estado de pago automáticamente
+      await ApiService.updatePaymentStatus(
+        loanId: loan.id,
+        pagoAnterior: true,
+        pagoActual: true,
+      );
+      
+      // Mostrar confirmación
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Pago Registrado'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('ID Transacción: ${transaction['id']}'),
+              const SizedBox(height: 8),
+              Text('Monto total: ${currencyFormat.format(amount)}'),
+              Text('Capital: ${currencyFormat.format(principalPortion)}'),
+              Text('Interés: ${currencyFormat.format(interestPortion)}'),
+              Text('Método: $paymentMethod'),
+              if (notes.isNotEmpty) Text('Notas: $notes'),
+              const SizedBox(height: 8),
+              const Text('Préstamo y estados actualizados correctamente', 
+                style: TextStyle(color: AppColors.success, fontSize: 12)),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // Recargar la pantalla con datos actualizados
+                _reloadLoanData(context);
+              },
+              child: const Text('Aceptar'),
+            ),
           ],
         ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Aceptar'),
-          ),
-        ],
-      ),
-    );
+      );
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al procesar pago: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+  
+  void _reloadLoanData(BuildContext context) async {
+    try {
+      final updatedLoan = await ApiService.getLoanByIdAsModel(loan.id);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => LoanDetailScreen(loan: updatedLoan, user: user),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al recargar datos: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

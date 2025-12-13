@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../data/dummy_data.dart';
+import '../../data/services/api_service.dart';
+import '../../domain/models/user.dart';
 import '../atoms/app_button.dart';
 import '../widgets/app_drawer.dart';
 
@@ -22,11 +23,34 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   final installmentsController = TextEditingController();
   final phoneController = TextEditingController();
   final numberFormat = NumberFormat('#,###', 'es_CO');
+  List<User> users = [];
+  bool isLoading = true;
+  bool isCreating = false;
 
   @override
   void initState() {
     super.initState();
     amountController.addListener(_formatAmount);
+    _loadUsers();
+  }
+  
+  Future<void> _loadUsers() async {
+    try {
+      final fetchedUsers = await ApiService.getUsers();
+      setState(() {
+        users = fetchedUsers;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar usuarios: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void _formatAmount() {
@@ -41,6 +65,61 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       text: formatted,
       selection: TextSelection.collapsed(offset: cursorPosition),
     );
+  }
+  
+  Future<void> _createLoan() async {
+    if (isLoading || users.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Esperando a cargar usuarios...')),
+      );
+      return;
+    }
+    
+    if (selectedUserId == null || 
+        amountController.text.isEmpty || 
+        interestController.text.isEmpty || 
+        installmentsController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor completa todos los campos')),
+      );
+      return;
+    }
+    
+    setState(() {
+      isCreating = true;
+    });
+    
+    try {
+      final amount = double.parse(amountController.text.replaceAll(RegExp(r'[^0-9]'), ''));
+      final interestRate = double.parse(interestController.text);
+      final installments = int.parse(installmentsController.text);
+      
+      await ApiService.createLoan(
+        userId: selectedUserId!,
+        amount: amount,
+        interestRate: interestRate,
+        installments: installments,
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Préstamo creado exitosamente')),
+        );
+        Navigator.pop(context, true); // Retornar true para indicar éxito
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al crear préstamo: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isCreating = false;
+        });
+      }
+    }
   }
 
   @override
@@ -75,14 +154,19 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
               labelText: 'Seleccionar Usuario',
               border: OutlineInputBorder(),
             ),
-            items: DummyData.users.map((user) {
+            items: isLoading ? [] : users.map((user) {
               return DropdownMenuItem(
                 value: user.id,
-                child: Text(user.name),
+                child: Text('${user.userCode} - ${user.name}'),
               );
             }).toList(),
-            onChanged: (value) => setState(() => selectedUserId = value),
+            onChanged: isLoading ? null : (value) => setState(() => selectedUserId = value),
           ),
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(child: CircularProgressIndicator()),
+            ),
           const SizedBox(height: 16),
           TextField(
             controller: phoneController,
@@ -154,13 +238,8 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
           ),
           const SizedBox(height: 32),
           AppButton(
-            text: 'Crear Préstamo',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Préstamo creado exitosamente')),
-              );
-              Navigator.pop(context);
-            },
+            text: isCreating ? 'Creando...' : 'Crear Préstamo',
+            onPressed: isCreating ? null : _createLoan,
           ),
         ],
       ),

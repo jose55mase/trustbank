@@ -9,6 +9,7 @@ class UserCard extends StatelessWidget {
   final int activeLoans;
   final double totalLent;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const UserCard({
     super.key,
@@ -16,6 +17,7 @@ class UserCard extends StatelessWidget {
     required this.activeLoans,
     required this.totalLent,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -46,7 +48,7 @@ class UserCard extends StatelessWidget {
                   children: [
                     Text(user.name, style: AppTextStyles.h3),
                     const SizedBox(height: 4),
-                    Text(user.phone, style: AppTextStyles.caption),
+                    Text('${user.userCode} • ${user.phone}', style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -67,6 +69,37 @@ class UserCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: AppColors.error),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Eliminar Usuario'),
+                        content: Text('¿Estás seguro de eliminar a ${user.name}?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              onDelete!();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                            ),
+                            child: const Text('Eliminar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ]
             ],
           ),
         ),

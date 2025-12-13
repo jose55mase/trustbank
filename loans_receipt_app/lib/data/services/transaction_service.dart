@@ -59,6 +59,12 @@ class TransactionService {
     return transaction;
   }
 
+  static double getTotalPayments() {
+    return _transactions
+        .where((t) => t.type == TransactionType.payment)
+        .fold(0.0, (sum, transaction) => sum + transaction.amount);
+  }
+
   static Map<String, double> calculateAccountingSummary(List<Transaction> transactions) {
     double totalLoans = 0;
     double totalPayments = 0;

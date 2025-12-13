@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
-import '../../domain/models/loan.dart';
+import '../../domain/models/loan_status.dart';
 
 class StatusBadge extends StatelessWidget {
   final LoanStatus status;

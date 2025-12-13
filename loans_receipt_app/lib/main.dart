@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
       title: 'Gestión de Préstamos',
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }
