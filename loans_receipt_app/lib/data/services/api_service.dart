@@ -4,6 +4,7 @@ import '../../domain/models/user.dart';
 import '../../domain/models/loan.dart';
 import '../../domain/models/expense_category.dart';
 import '../../domain/models/expense_model.dart';
+import '../../services/auth_service.dart';
 
 class ApiService {
   static const String baseUrl = 'http://localhost:8082/api';
@@ -27,7 +28,11 @@ class ApiService {
     
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      return data['success'] ?? false;
+      if (data['success'] == true) {
+        await AuthService.saveUser(data['user']);
+        return true;
+      }
+      return false;
     } else {
       throw Exception('Credenciales inválidas');
     }
@@ -37,7 +42,7 @@ class ApiService {
     required String name,
     required String userCode,
     required String phone,
-    required String email,
+    required String direccion,
   }) async {
     final url = Uri.parse('$baseUrl/users');
     
@@ -50,40 +55,26 @@ class ApiService {
         'name': name,
         'userCode': userCode,
         'phone': phone,
-        'email': email,
+        'direccion': direccion,
       }),
     );
     
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body);
-      return User(
-        id: data['id'].toString(),
-        name: data['name'],
-        userCode: data['userCode'] ?? '',
-        phone: data['phone'],
-        email: data['email'],
-        registrationDate: DateTime.parse(data['registrationDate'] ?? DateTime.now().toIso8601String()),
-      );
+      return User.fromJson(data);
     } else {
       throw Exception('Error al crear usuario: ${response.statusCode}');
     }
   }
   
   static Future<List<User>> getUsers() async {
-    final url = Uri.parse('$baseUrl/users');
+    final url = Uri.parse('$baseUrl/users?sort=id,asc');
     
     final response = await http.get(url);
     
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((json) => User(
-        id: json['id'].toString(),
-        name: json['name'],
-        userCode: json['userCode'] ?? '',
-        phone: json['phone'],
-        email: json['email'],
-        registrationDate: DateTime.parse(json['registrationDate'] ?? DateTime.now().toIso8601String()),
-      )).toList();
+      return data.map((json) => User.fromJson(json)).toList();
     } else {
       throw Exception('Error al obtener usuarios: ${response.statusCode}');
     }
@@ -116,6 +107,8 @@ class ApiService {
     required double amount,
     required double interestRate,
     required int installments,
+    String? loanType,
+    String? paymentFrequency,
   }) async {
     final url = Uri.parse('$baseUrl/loans');
     
@@ -129,6 +122,8 @@ class ApiService {
         'amount': amount,
         'interestRate': interestRate,
         'installments': installments,
+        'loanType': loanType,
+        'paymentFrequency': paymentFrequency,
       }),
     );
     
@@ -216,9 +211,10 @@ class ApiService {
     String? notes,
     double? interestAmount,
     double? principalAmount,
+    String? loanType,
+    String? paymentFrequency,
   }) async {
     final url = Uri.parse('$baseUrl/transactions');
-    
     final response = await http.post(
       url,
       headers: {
@@ -234,6 +230,8 @@ class ApiService {
         'notes': notes ?? '',
         'interestAmount': interestAmount,
         'principalAmount': principalAmount,
+        'loanType': loanType,
+        'paymentFrequency': paymentFrequency,
       }),
     );
     
@@ -248,23 +246,16 @@ class ApiService {
     required String loanId,
     required int paidInstallments,
   }) async {
-    final url = Uri.parse('$baseUrl/loans/$loanId');
-    
-    final currentLoan = await getLoanById(loanId);
-    currentLoan['paidInstallments'] = paidInstallments;
-    
-    final response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(currentLoan),
+    final uri = Uri.parse('$baseUrl/loans/$loanId/installments').replace(
+      queryParameters: {'paidInstallments': paidInstallments.toString()}
     );
+    
+    final response = await http.put(uri);
     
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Error al actualizar préstamo: ${response.statusCode}');
+      throw Exception('Error al actualizar cuotas pagadas: ${response.statusCode}');
     }
   }
   
@@ -318,6 +309,8 @@ class ApiService {
         return 'CASH';
       case 'transferencia':
         return 'TRANSFER';
+      case 'mixto':
+        return 'MIXED';
       case 'cheque':
         return 'CHECK';
       default:
@@ -430,12 +423,7 @@ class ApiService {
     
     final uri = Uri.parse('$baseUrl/expenses/by-date-range').replace(queryParameters: queryParams);
     
-    print('Calling expenses API: $uri');
-    
     final response = await http.get(uri);
-    
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
     
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
@@ -452,6 +440,293 @@ class ApiService {
     
     if (response.statusCode != 200) {
       throw Exception('Error al eliminar gasto: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> updateLoan({
+    required String loanId,
+    required double interestRate,
+    required int installments,
+    required String loanType,
+    required String paymentFrequency,
+  }) async {
+    final url = Uri.parse('$baseUrl/loans/$loanId');
+    
+    final currentLoan = await getLoanById(loanId);
+    currentLoan['interestRate'] = interestRate;
+    currentLoan['installments'] = installments;
+    currentLoan['loanType'] = loanType;
+    currentLoan['paymentFrequency'] = paymentFrequency;
+    
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(currentLoan),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al actualizar préstamo: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateLoanStatus({
+    required String loanId,
+    required String status,
+  }) async {
+    final url = Uri.parse('$baseUrl/loans/$loanId');
+    
+    final currentLoan = await getLoanById(loanId);
+    currentLoan['status'] = status.toUpperCase();
+    
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(currentLoan),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al actualizar estado del préstamo: ${response.statusCode}');
+    }
+  }
+  
+  static Future<List<Loan>> getOverdueLoans() async {
+    final url = Uri.parse('$baseUrl/loans/overdue');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Loan.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al obtener préstamos vencidos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<int> getOverdueLoansCount() async {
+    final url = Uri.parse('$baseUrl/loans/overdue/count');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return int.parse(response.body);
+    } else {
+      throw Exception('Error al contar préstamos vencidos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> checkOverdueLoans() async {
+    final url = Uri.parse('$baseUrl/loans/check-overdue');
+    
+    final response = await http.post(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al verificar préstamos vencidos: ${response.statusCode}');
+    }
+  }
+  
+  // Métodos para pagos
+  static Future<List<dynamic>> getAllPayments() async {
+    final url = Uri.parse('$baseUrl/payments');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener pagos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> createPayment({
+    required String userId,
+    required double amount,
+    required String paymentMethod,
+    String? description,
+    required double debtPayment,
+    required double interestPayment,
+    bool salida = false,
+  }) async {
+    final url = Uri.parse('$baseUrl/payments');
+    
+    final requestBody = {
+      'user': {'id': int.parse(userId)},
+      'amount': amount,
+      'paymentMethod': paymentMethod,
+      'description': description,
+      'debtPayment': debtPayment,
+      'interestPayment': interestPayment,
+      'salida': salida,
+    };
+    
+    print('Enviando al backend: ${jsonEncode(requestBody)}');
+    
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestBody),
+    );
+    
+    print('Respuesta del backend: ${response.statusCode} - ${response.body}');
+    
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al crear pago: ${response.statusCode} - ${response.body}');
+    }
+  }
+  
+  static Future<List<dynamic>> getPaymentsByUserId(String userId) async {
+    final url = Uri.parse('$baseUrl/payments/user/$userId');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener pagos del usuario: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> markPaymentAsRegistered(String paymentId) async {
+    final url = Uri.parse('$baseUrl/payments/$paymentId');
+    
+    // Primero obtener el pago actual
+    final getResponse = await http.get(url);
+    if (getResponse.statusCode != 200) {
+      throw Exception('Pago no encontrado: ${getResponse.statusCode}');
+    }
+    
+    final paymentData = jsonDecode(getResponse.body);
+    paymentData['registered'] = true;
+    
+    // Actualizar el pago
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(paymentData),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al marcar pago como registrado: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> updateTransactionField({
+    required String transactionId,
+    String? field,
+    dynamic value,
+  }) async {
+    final url = Uri.parse('$baseUrl/transactions/$transactionId');
+    
+    // Primero obtener la transacción actual
+    final getResponse = await http.get(url);
+    if (getResponse.statusCode != 200) {
+      throw Exception('Transacción no encontrada: ${getResponse.statusCode}');
+    }
+    
+    final transactionData = jsonDecode(getResponse.body);
+    
+    // Actualizar solo el campo especificado
+    if (field != null && value != null) {
+      transactionData[field] = value;
+      if (field == 'principalAmount') {
+        transactionData['amount'] = value; // Sincronizar amount con principalAmount
+      }
+    }
+    
+    // Actualizar la transacción
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(transactionData),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al actualizar campo: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateTransaction({
+    required String transactionId,
+    required double principalAmount,
+    required double interestAmount,
+    required String paymentMethod,
+    required String notes,
+  }) async {
+    final url = Uri.parse('$baseUrl/transactions/$transactionId');
+    
+    // Primero obtener la transacción actual
+    final getResponse = await http.get(url);
+    if (getResponse.statusCode != 200) {
+      throw Exception('Transacción no encontrada: ${getResponse.statusCode}');
+    }
+    
+    final transactionData = jsonDecode(getResponse.body);
+    transactionData['principalAmount'] = principalAmount;
+    transactionData['interestAmount'] = interestAmount;
+    transactionData['amount'] = principalAmount; // Monto total = solo capital
+    transactionData['paymentMethod'] = paymentMethod;
+    transactionData['notes'] = notes;
+    
+    // Actualizar la transacción
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(transactionData),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al actualizar transacción: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateTransactionBreakdown({
+    required String transactionId,
+    required double principalAmount,
+    required double interestAmount,
+  }) async {
+    final url = Uri.parse('$baseUrl/transactions/$transactionId');
+    
+    // Primero obtener la transacción actual
+    final getResponse = await http.get(url);
+    if (getResponse.statusCode != 200) {
+      throw Exception('Transacción no encontrada: ${getResponse.statusCode}');
+    }
+    
+    final transactionData = jsonDecode(getResponse.body);
+    transactionData['principalAmount'] = principalAmount;
+    transactionData['interestAmount'] = interestAmount;
+    transactionData['amount'] = principalAmount; // Monto total = solo capital
+    
+    // Actualizar la transacción
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(transactionData),
+    );
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al actualizar desglose: ${response.statusCode}');
     }
   }
 }

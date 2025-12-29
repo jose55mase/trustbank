@@ -21,7 +21,7 @@ public class TransactionService {
     private LoanRepository loanRepository;
     
     public List<Transaction> findAll() {
-        return transactionRepository.findAll();
+        return transactionRepository.findAllOrderByDateDesc();
     }
     
     public Optional<Transaction> findById(Long id) {
@@ -29,7 +29,7 @@ public class TransactionService {
     }
     
     public List<Transaction> findByLoanId(Long loanId) {
-        return transactionRepository.findByLoanId(loanId);
+        return transactionRepository.findByLoanIdOrderByDateDesc(loanId);
     }
     
     public Transaction save(Transaction transaction) {
@@ -46,10 +46,18 @@ public class TransactionService {
     
     public Transaction saveWithLoan(Transaction transaction) {
         // Asegurar que el préstamo existe y está correctamente asociado
+        
         if (transaction.getLoan() != null && transaction.getLoan().getId() != null) {
             Optional<Loan> loan = loanRepository.findById(transaction.getLoan().getId());
             if (loan.isPresent()) {
                 transaction.setLoan(loan.get());
+                
+                // Si no se especifica principalAmount, usar el monto completo del pago
+                // ya que los intereses se registran por separado en interestAmount
+                if (transaction.getPrincipalAmount() == null) {
+                    transaction.setPrincipalAmount(transaction.getAmount());
+                }
+                
                 return transactionRepository.save(transaction);
             } else {
                 throw new RuntimeException("Préstamo no encontrado con ID: " + transaction.getLoan().getId());
@@ -62,6 +70,6 @@ public class TransactionService {
     public List<Transaction> findByDateRange(LocalDate startDate, LocalDate endDate) {
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
-        return transactionRepository.findByDateBetween(startDateTime, endDateTime);
+        return transactionRepository.findByDateBetweenOrderByDateDesc(startDateTime, endDateTime);
     }
 }

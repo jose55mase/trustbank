@@ -38,7 +38,7 @@ class StatusBadge extends StatelessWidget {
       case LoanStatus.active:
         return _StatusConfig('Activo', AppColors.success);
       case LoanStatus.completed:
-        return _StatusConfig('Completado', AppColors.info);
+        return _StatusConfig('Completado', AppColors.primary);
       case LoanStatus.overdue:
         return _StatusConfig('Vencido', AppColors.error);
     }

@@ -11,15 +11,28 @@ import '../atoms/status_badge.dart';
 import '../atoms/info_row.dart';
 import '../widgets/app_drawer.dart';
 
-class LoanDetailScreen extends StatelessWidget {
+class LoanDetailScreen extends StatefulWidget {
   final Loan loan;
   final User user;
 
   const LoanDetailScreen({super.key, required this.loan, required this.user});
 
   @override
+  State<LoanDetailScreen> createState() => _LoanDetailScreenState();
+}
+
+class _LoanDetailScreenState extends State<LoanDetailScreen> {
+  late Loan currentLoan;
+
+  @override
+  void initState() {
+    super.initState();
+    currentLoan = widget.loan;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO');
+    final currencyFormat = NumberFormat('\$ #,###', 'es_CO');
 
     return Scaffold(
       appBar: AppBar(
@@ -28,6 +41,13 @@ class LoanDetailScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () => _showEditDialog(context),
+            tooltip: 'Editar Préstamo',
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: ListView(
@@ -42,12 +62,12 @@ class LoanDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(user.name, style: AppTextStyles.h2),
-                      StatusBadge(status: loan.status),
+                      Text(widget.user.name, style: AppTextStyles.h2),
+                      StatusBadge(status: currentLoan.status),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text('ID: ${loan.id}', style: AppTextStyles.caption),
+                  Text('ID: ${currentLoan.id}', style: AppTextStyles.caption),
                 ],
               ),
             ),
@@ -61,57 +81,72 @@ class LoanDetailScreen extends StatelessWidget {
                 children: [
                   const Text('Información del Préstamo', style: AppTextStyles.h3),
                   const SizedBox(height: 16),
-                  InfoRow(label: 'Monto Prestado', value: currencyFormat.format(loan.amount)),
-                  InfoRow(label: 'Tasa de Interés', value: '${loan.interestRate}%'),
+                  InfoRow(label: 'Monto Prestado', value: currencyFormat.format(currentLoan.amount)),
+                  InfoRow(label: 'Tasa de Interés', value: '${currentLoan.interestRate}%'),
                   InfoRow(
                     label: 'Ganancia',
-                    value: currencyFormat.format(loan.profit),
+                    value: currencyFormat.format(currentLoan.profit),
                     valueColor: AppColors.secondary,
                   ),
                   InfoRow(
                     label: 'Total a Pagar',
-                    value: currencyFormat.format(loan.totalAmount),
+                    value: currencyFormat.format(currentLoan.totalAmount),
                     valueColor: AppColors.primary,
                   ),
                   const Divider(height: 24),
-                  const InfoRow(label: 'Forma de Pago', value: 'Mensual'),
-                  const InfoRow(label: 'Tipo de Préstamo', value: 'Fijo'),
+                  InfoRow(label: 'Forma de Pago', value: currentLoan.paymentFrequency ?? 'No especificado'),
+                  InfoRow(label: 'Tipo de Préstamo', value: currentLoan.loanType ?? 'No especificado'),
                   const Divider(height: 24),
-                  InfoRow(label: 'Cuotas Totales', value: '${loan.installments}'),
-                  InfoRow(label: 'Cuotas Pagadas', value: '${loan.paidInstallments}'),
-                  InfoRow(label: 'Cuotas Pendientes', value: '${loan.installments - loan.paidInstallments}'),
-                  InfoRow(label: 'Valor por Cuota', value: currencyFormat.format(loan.installmentAmount)),
+                  InfoRow(label: 'Cuotas Totales', value: '${currentLoan.installments}'),
+                  InfoRow(label: 'Cuotas Pagadas', value: '${currentLoan.paidInstallments}'),
+                  InfoRow(label: 'Cuotas Pendientes', value: '${currentLoan.installments - currentLoan.paidInstallments}'),
+                  InfoRow(label: 'Valor por Cuota', value: currencyFormat.format(currentLoan.installmentAmount)),
                   InfoRow(
                     label: 'Monto Restante',
-                    value: currencyFormat.format(loan.remainingAmount),
+                    value: currencyFormat.format(currentLoan.remainingAmount),
                     valueColor: AppColors.warning,
                   ),
+                  if (currentLoan.loanType == 'Rotativo') ...[
+                    const Divider(height: 24),
+                    const Text('Información Rotativo', style: AppTextStyles.h3),
+                    const SizedBox(height: 8),
+                    InfoRow(
+                      label: 'Interés sobre Restante',
+                      value: currencyFormat.format(currentLoan.nextInstallmentInterest),
+                      valueColor: AppColors.secondary,
+                    ),
+                    InfoRow(
+                      label: 'Base de Cálculo',
+                      value: 'Monto restante: ${currencyFormat.format(currentLoan.remainingAmount)}',
+                      valueColor: AppColors.primary,
+                    ),
+                  ],
                   const Divider(height: 24),
                   InfoRow(
                     label: 'Estado Pago Anterior',
-                    value: loan.pagoAnterior ? 'Pagado' : 'No Pagado',
-                    valueColor: loan.pagoAnterior ? AppColors.success : AppColors.error,
+                    value: currentLoan.pagoAnterior ? 'Pagado' : 'No Pagado',
+                    valueColor: currentLoan.pagoAnterior ? AppColors.success : AppColors.error,
                   ),
                   InfoRow(
                     label: 'Estado Pago Actual',
-                    value: loan.pagoActual ? 'Pagado' : 'Pendiente',
-                    valueColor: loan.pagoActual ? AppColors.success : AppColors.warning,
+                    value: currentLoan.pagoActual ? 'Pagado' : 'Pendiente',
+                    valueColor: currentLoan.pagoActual ? AppColors.success : AppColors.warning,
                   ),
 
                   const Divider(height: 24),
-                  InfoRow(label: 'Fecha de Inicio', value: DateFormat('dd/MM/yyyy').format(loan.startDate)),
+                  InfoRow(label: 'Fecha de Inicio', value: DateFormat('dd/MM/yyyy').format(currentLoan.startDate)),
                   const SizedBox(height: 16),
                   const Text('Progreso', style: AppTextStyles.caption),
                   const SizedBox(height: 8),
                   LinearProgressIndicator(
-                    value: loan.paidInstallments / loan.installments,
+                    value: currentLoan.paidInstallments / currentLoan.installments,
                     backgroundColor: AppColors.border,
                     valueColor: const AlwaysStoppedAnimation(AppColors.secondary),
                     minHeight: 8,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${((loan.paidInstallments / loan.installments) * 100).toStringAsFixed(1)}% completado',
+                    '${((currentLoan.paidInstallments / currentLoan.installments) * 100).toStringAsFixed(1)}% completado',
                     style: AppTextStyles.caption,
                   ),
                 ],
@@ -120,19 +155,40 @@ class LoanDetailScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: loan.status == LoanStatus.active
+      bottomNavigationBar: (currentLoan.status == LoanStatus.active || currentLoan.status == LoanStatus.overdue)
           ? SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _showPaymentDialog(context, loan, currencyFormat);
-                  },
-                  icon: const Icon(Icons.payment),
-                  label: const Text('Registrar Pago'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          _showPaymentDialog(context, currentLoan, currencyFormat);
+                        },
+                        icon: const Icon(Icons.payment),
+                        label: const Text('Registrar Pago'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          _showCompletePaymentDialog(context, currentLoan);
+                        },
+                        icon: const Icon(Icons.check_circle),
+                        label: const Text('Pago Completado'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             )
@@ -143,6 +199,16 @@ class LoanDetailScreen extends StatelessWidget {
   void _showPaymentDialog(BuildContext context, Loan loan, NumberFormat currencyFormat) {
     final paymentController = TextEditingController(
       text: loan.installmentAmount.toStringAsFixed(0),
+    );
+    // Calcular el interés según el tipo de préstamo
+    final defaultInterest = loan.loanType == 'Fijo' 
+        ? (loan.amount * loan.interestRate / 100)  // Para fijos: monto * tasa
+        : loan.loanType == 'Rotativo'
+            ? (loan.remainingAmount * loan.interestRate / 100)  // Para rotativos: monto restante * tasa
+            : (loan.installmentAmount * loan.interestRate / 100);  // Para otros: cuota * tasa
+    
+    final interestController = TextEditingController(
+      text: NumberFormat('#,###', 'es_CO').format(defaultInterest),
     );
     final notesController = TextEditingController();
     bool useCustomAmount = false;
@@ -159,6 +225,8 @@ class LoanDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Cuota #${loan.paidInstallments + 1}', style: AppTextStyles.caption),
+                const SizedBox(height: 8),
+                Text('Tipo: ${loan.loanType ?? "Fijo"}', style: AppTextStyles.caption),
                 const SizedBox(height: 16),
                 const Text('Valor de la cuota:'),
                 const SizedBox(height: 8),
@@ -185,6 +253,16 @@ class LoanDetailScreen extends StatelessWidget {
                   TextField(
                     controller: paymentController,
                     keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                      if (text.isNotEmpty) {
+                        final formatted = NumberFormat('#,###', 'es_CO').format(int.parse(text));
+                        paymentController.value = TextEditingValue(
+                          text: formatted,
+                          selection: TextSelection.collapsed(offset: formatted.length),
+                        );
+                      }
+                    },
                     decoration: InputDecoration(
                       labelText: 'Monto a pagar',
                       prefixText: '\$ ',
@@ -194,6 +272,27 @@ class LoanDetailScreen extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
+                TextField(
+                  controller: interestController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final formatted = NumberFormat('#,###', 'es_CO').format(int.parse(text));
+                      interestController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Ganancia/Interés',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(),
+                    helperText: 'Ganancia que obtienes por este pago',
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text('Método de pago:'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
@@ -201,7 +300,10 @@ class LoanDetailScreen extends StatelessWidget {
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                   ),
-                  items: ['Efectivo', 'Transferencia', 'Cheque']
+                  items: [
+                    'Efectivo',
+                    'Transferencia',
+                    'Mixto']
                       .map((method) => DropdownMenuItem(
                             value: method,
                             child: Text(method),
@@ -232,24 +334,100 @@ class LoanDetailScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
-                final amount = double.tryParse(paymentController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                // Si el checkbox está marcado, usar el valor del input; si no, usar el valor de la cuota
+                final amount = useCustomAmount 
+                    ? (double.tryParse(paymentController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
+                    : loan.installmentAmount;
+                final interestAmount = double.tryParse(interestController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
                 
-                if (amount <= 0) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('El monto debe ser mayor a 0')),
+                if (amount < 0) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Error de Validación'),
+                      content: const Text('El monto no puede ser negativo'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
                   );
                   return;
                 }
                 
-                if (amount > loan.remainingAmount) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('El monto no puede exceder el saldo pendiente')),
+                // Validación para última cuota: debe pagar el total restante SIEMPRE
+                final cuotasPendientes = loan.installments - loan.paidInstallments;
+                if (cuotasPendientes == 1 && amount != loan.remainingAmount) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Última Cuota'),
+                      content: Text('Esta es la última cuota. Debe pagar el total restante: ${currencyFormat.format(loan.remainingAmount)}\n\nO puede ampliar la cantidad de cuotas del préstamo.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+                
+                // Validación para préstamos fijos: debe pagar el monto completo de la cuota (solo si no es monto personalizado)
+                if (loan.loanType == 'Fijo' && cuotasPendientes > 1 && amount > 0 && amount != loan.installmentAmount && !useCustomAmount) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Préstamo Fijo'),
+                      content: Text('Para préstamos fijos debe pagar el monto completo de la cuota: ${currencyFormat.format(loan.installmentAmount)}'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
+                  );
+                  return;
+                }
+                
+                if (amount > 0 && amount > loan.remainingAmount) {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Monto Excesivo'),
+                      content: const Text('El monto no puede exceder el saldo pendiente'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
                   );
                   return;
                 }
                 
                 Navigator.pop(context);
-                _processPayment(context, loan, amount, selectedPaymentMethod, notesController.text, currencyFormat);
+                // Mapear el método de pago al valor del enum del backend
+                String backendPaymentMethod;
+                switch (selectedPaymentMethod) {
+                  case 'Efectivo':
+                    backendPaymentMethod = 'CASH';
+                    break;
+                  case 'Transferencia':
+                    backendPaymentMethod = 'TRANSFER';
+                    break;
+                  case 'Mixto':
+                    backendPaymentMethod = 'MIXED';
+                    break;
+                  default:
+                    backendPaymentMethod = 'CASH';
+                }
+                _processPaymentWithCustomInterest(context, loan, amount, interestAmount, backendPaymentMethod, notesController.text, currencyFormat);
               },
               child: const Text('Confirmar Pago'),
             ),
@@ -277,13 +455,15 @@ class LoanDetailScreen extends StatelessWidget {
         ),
       );
       
-      // Recargar la pantalla con los datos actualizados
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoanDetailScreen(loan: updatedLoan, user: user),
+      // Actualizar los datos en la pantalla actual
+      await _refreshLoanData();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Estado de pago actualizado correctamente'),
+          backgroundColor: AppColors.success,
         ),
-      ).then((_) => Navigator.pop(context, true));
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -294,10 +474,98 @@ class LoanDetailScreen extends StatelessWidget {
     }
   }
 
+  void _processPaymentWithCustomInterest(BuildContext context, Loan loan, double amount, double interestAmount, String paymentMethod, String notes, NumberFormat currencyFormat) async {
+    try {
+      // El principalAmount debe ser el monto completo del pago
+      // Los intereses se registran por separado y no se restan del capital
+      final principalPortion = amount;
+      // Crear la transacción en el backend
+      final transaction = await ApiService.createTransaction(
+        loanId: loan.id,
+        amount: amount,
+        paymentMethod: paymentMethod,
+        notes: notes.isNotEmpty ? notes : (amount == 0 ? 'Pago de ganancia/interés solamente' : 'Pago cuota #${loan.paidInstallments + 1}'),
+        interestAmount: interestAmount,
+        principalAmount: principalPortion.toDouble(),
+        loanType: loan.loanType,
+        paymentFrequency: loan.paymentFrequency,
+      );
+      
+      // Actualizar cuotas pagadas siempre al hacer un pago
+      await ApiService.updateLoanInstallments(
+        loanId: loan.id,
+        paidInstallments: loan.paidInstallments + 1,
+      );
+      
+      // Actualizar estado de pago automáticamente
+      await ApiService.updatePaymentStatus(
+        loanId: loan.id,
+        pagoAnterior: true,
+        pagoActual: false,
+      );
+      
+      // Si el préstamo estaba vencido, cambiarlo a activo al realizar un pago
+      if (loan.status == LoanStatus.overdue) {
+        await ApiService.updateLoanStatus(
+          loanId: loan.id,
+          status: 'ACTIVE',
+        );
+      }
+      
+      // Mostrar confirmación
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Pago Registrado'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('ID Transacción: ${transaction['id']}'),
+              const SizedBox(height: 8),
+              Text('Monto total: ${currencyFormat.format(amount)}'),
+              Text('Capital: ${currencyFormat.format(principalPortion)}'),
+              Text('Ganancia: ${currencyFormat.format(interestAmount)}'),
+              Text('Método: $paymentMethod'),
+              if (notes.isNotEmpty) Text('Notas: $notes'),
+              const SizedBox(height: 8),
+              const Text('Préstamo y estados actualizados correctamente', 
+                style: TextStyle(color: AppColors.success, fontSize: 12)),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                // Actualizar la pantalla con datos actualizados
+                await _refreshLoanData();
+              },
+              child: const Text('Aceptar'),
+            ),
+          ],
+        ),
+      );
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al procesar pago: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
   void _processPayment(BuildContext context, Loan loan, double amount, String paymentMethod, String notes, NumberFormat currencyFormat) async {
     try {
-      final interestPortion = (amount * loan.interestRate / 100).clamp(0.0, amount);
-      final principalPortion = amount - interestPortion;
+      // Calcular interés según el tipo de préstamo
+      final interestPortion = loan.loanType == 'Fijo'
+          ? (loan.amount * loan.interestRate / 100).clamp(0.0, amount)  // Para fijos: monto * tasa
+          : (amount * loan.interestRate / 100).clamp(0.0, amount);      // Para otros: pago * tasa
+      
+      // El principalAmount debe ser el monto completo del pago
+      // Los intereses se registran por separado y no se restan del capital
+      final principalPortion = amount;
       
       // Crear la transacción en el backend
       final transaction = await ApiService.createTransaction(
@@ -307,6 +575,8 @@ class LoanDetailScreen extends StatelessWidget {
         notes: notes.isNotEmpty ? notes : 'Pago cuota #${loan.paidInstallments + 1}',
         interestAmount: interestPortion,
         principalAmount: principalPortion,
+        loanType: loan.loanType,
+        paymentFrequency: loan.paymentFrequency,
       );
       
       // Actualizar las cuotas pagadas del préstamo
@@ -345,10 +615,10 @@ class LoanDetailScreen extends StatelessWidget {
           ),
           actions: [
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                // Recargar la pantalla con datos actualizados
-                _reloadLoanData(context);
+                // Actualizar la pantalla con datos actualizados
+                await _refreshLoanData();
               },
               child: const Text('Aceptar'),
             ),
@@ -366,19 +636,250 @@ class LoanDetailScreen extends StatelessWidget {
     }
   }
   
-  void _reloadLoanData(BuildContext context) async {
+  void _showCompletePaymentDialog(BuildContext context, Loan loan) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle_outline, color: AppColors.primary, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Marcar como Completado',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          '¿Estás seguro de que deseas marcar este préstamo como completamente pagado?\n\nEsta acción actualizará el estado del préstamo.',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _markLoanAsCompleted(context, loan);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _markLoanAsCompleted(BuildContext context, Loan loan) async {
     try {
-      final updatedLoan = await ApiService.getLoanByIdAsModel(loan.id);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => LoanDetailScreen(loan: updatedLoan, user: user),
+      // 1. Actualizar las cuotas pagadas al total de cuotas
+      await ApiService.updateLoanInstallments(
+        loanId: loan.id,
+        paidInstallments: loan.installments,
+      );
+      
+      // 2. Actualizar el estado de pago a completado
+      await ApiService.updatePaymentStatus(
+        loanId: loan.id,
+        pagoAnterior: true,
+        pagoActual: true,
+      );
+      
+      // 3. Cambiar el estado del préstamo a COMPLETED
+      await ApiService.updateLoanStatus(
+        loanId: loan.id,
+        status: 'COMPLETED',
+      );
+      
+      // 4. Crear una transacción de completado si hay saldo pendiente
+      if (loan.remainingAmount > 0) {
+        // Calcular interés según el tipo de préstamo
+        final interestPortion = loan.loanType == 'Fijo'
+            ? (loan.amount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount)  // Para fijos: monto * tasa
+            : (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount);  // Para otros: saldo * tasa
+        
+        // El principalAmount debe ser el monto completo del pago
+        final principalPortion = loan.remainingAmount;
+        
+        await ApiService.createTransaction(
+          loanId: loan.id,
+          amount: loan.remainingAmount,
+          paymentMethod: 'Efectivo',
+          notes: 'Pago completado - Saldo restante liquidado',
+          interestAmount: interestPortion,
+          principalAmount: principalPortion,
+          loanType: loan.loanType,
+          paymentFrequency: loan.paymentFrequency,
+        );
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Préstamo finalizado exitosamente'),
+          backgroundColor: AppColors.success,
         ),
       );
+      
+      await _refreshLoanData();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al recargar datos: $e'),
+          content: Text('Error al finalizar préstamo: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _refreshLoanData() async {
+    try {
+      final updatedLoan = await ApiService.getLoanByIdAsModel(currentLoan.id);
+      setState(() {
+        currentLoan = updatedLoan;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar datos: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _reloadLoanData(BuildContext context) async {
+    await _refreshLoanData();
+  }
+
+  void _showEditDialog(BuildContext context) {
+    final interestController = TextEditingController(text: currentLoan.interestRate.toString());
+    final installmentsController = TextEditingController(text: currentLoan.installments.toString());
+    String selectedLoanType = currentLoan.loanType ?? 'Fijo';
+    String selectedPaymentFrequency = currentLoan.paymentFrequency ?? 'Mensual 30';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Editar Préstamo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: interestController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Tasa de Interés (%)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: installmentsController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Número de Cuotas',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedLoanType,
+                  decoration: const InputDecoration(
+                    labelText: 'Tipo de Préstamo',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Fijo', child: Text('Fijo')),
+                    DropdownMenuItem(value: 'Rotativo', child: Text('Rotativo')),
+                    DropdownMenuItem(value: 'Ahorro', child: Text('Ahorro')),
+                  ],
+                  onChanged: (value) => setState(() => selectedLoanType = value!),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedPaymentFrequency,
+                  decoration: const InputDecoration(
+                    labelText: 'Forma de Pago',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
+                    DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
+                    DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal')),
+                    DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
+                    DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
+                    DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
+                  ],
+                  onChanged: (value) => setState(() => selectedPaymentFrequency = value!),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final interestRate = double.tryParse(interestController.text);
+                final installments = int.tryParse(installmentsController.text);
+                
+                if (interestRate == null || installments == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor ingresa valores válidos'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                
+                Navigator.pop(context);
+                await _updateLoan(interestRate, installments, selectedLoanType, selectedPaymentFrequency);
+              },
+              child: const Text('Guardar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateLoan(double interestRate, int installments, String loanType, String paymentFrequency) async {
+    try {
+      await ApiService.updateLoan(
+        loanId: currentLoan.id,
+        interestRate: interestRate,
+        installments: installments,
+        loanType: loanType,
+        paymentFrequency: paymentFrequency,
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Préstamo actualizado correctamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      await _refreshLoanData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar préstamo: $e'),
           backgroundColor: AppColors.error,
         ),
       );

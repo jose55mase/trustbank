@@ -18,7 +18,7 @@ class TransactionService {
     required double amount,
     required PaymentMethod paymentMethod,
     String? notes,
-    LoanType? loanType,
+    String? loanType,
   }) {
     final transaction = Transaction(
       id: 'T${DateTime.now().millisecondsSinceEpoch}',
@@ -41,7 +41,7 @@ class TransactionService {
     required String userId,
     required double amount,
     String? notes,
-    LoanType? loanType,
+    String? loanType,
   }) {
     final transaction = Transaction(
       id: 'T${DateTime.now().millisecondsSinceEpoch}',

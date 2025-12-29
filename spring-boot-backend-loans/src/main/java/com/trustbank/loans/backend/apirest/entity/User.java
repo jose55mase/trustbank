@@ -22,8 +22,8 @@ public class User {
     @Column(nullable = false, length = 20)
     private String phone;
     
-    @Column(nullable = false, length = 100)
-    private String email;
+    @Column(nullable = false, length = 200)
+    private String direccion;
     
     @Column(name = "registration_date", nullable = false)
     private LocalDateTime registrationDate;
@@ -49,8 +49,8 @@ public class User {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
     
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getDireccion() { return direccion; }
+    public void setDireccion(String direccion) { this.direccion = direccion; }
     
     public LocalDateTime getRegistrationDate() { return registrationDate; }
     public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }

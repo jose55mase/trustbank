@@ -37,7 +37,7 @@ class UserCard extends StatelessWidget {
                 radius: 28,
                 backgroundColor: AppColors.primary.withOpacity(0.1),
                 child: Text(
-                  user.name[0].toUpperCase(),
+                  user.userCode.isNotEmpty ? user.userCode[0].toUpperCase() : user.name[0].toUpperCase(),
                   style: AppTextStyles.h3.copyWith(color: AppColors.primary),
                 ),
               ),
@@ -46,9 +46,9 @@ class UserCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user.name, style: AppTextStyles.h3),
+                    Text(user.userCode, style: AppTextStyles.h3),
                     const SizedBox(height: 4),
-                    Text('${user.userCode} • ${user.phone}', style: AppTextStyles.caption),
+                    Text('${user.name} • ${user.phone}', style: AppTextStyles.caption),
                   ],
                 ),
               ),

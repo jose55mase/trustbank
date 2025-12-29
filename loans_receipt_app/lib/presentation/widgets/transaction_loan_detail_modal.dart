@@ -42,7 +42,7 @@ class TransactionLoanDetailModal extends StatelessWidget {
         name: transaction.userId,
         userCode: 'TEMP',
         phone: 'N/A',
-        email: 'N/A',
+        direccion: 'N/A',
         registrationDate: DateTime.now(),
       ),
     );
@@ -167,7 +167,7 @@ class TransactionLoanDetailModal extends StatelessWidget {
                       [
                         _InfoRow('Nombre', user.name),
                         _InfoRow('Teléfono', user.phone),
-                        _InfoRow('Email', user.email),
+                        _InfoRow('Dirección', user.direccion),
                       ],
                     ),
                     
@@ -367,6 +367,7 @@ class TransactionLoanDetailModal extends StatelessWidget {
       paidInstallments: transaction.type == TransactionType.payment ? 1 : 0,
       startDate: transaction.date,
       status: LoanStatus.active,
+      remainingAmount: transaction.amount, // Monto restante por defecto
     );
   }
 

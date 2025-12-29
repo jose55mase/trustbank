@@ -299,8 +299,8 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                     child: Column(
                       children: [
                         Container(
-                          width: 60,
-                          height: 60,
+                          width: 50,
+                          height: 50,
                           decoration: BoxDecoration(
                             color: Color(int.parse('ff${category.colorValue}', radix: 16)).withOpacity(0.1),
                             shape: BoxShape.circle,
@@ -312,16 +312,18 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
                           child: Icon(
                             _getIconFromName(category.iconName),
                             color: Color(int.parse('ff${category.colorValue}', radix: 16)),
-                            size: 24,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          category.name,
-                          style: AppTextStyles.caption,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        const SizedBox(height: 6),
+                        Expanded(
+                          child: Text(
+                            category.name,
+                            style: AppTextStyles.caption.copyWith(fontSize: 10),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Colores principales - Paleta elegante azul oscuro y dorado
-  static const primary = Color(0xFF1A237E); // Azul índigo profundo
+  static const  primary = Color(0xFF1A237E); // Azul índigo profundo
   static const primaryLight = Color(0xFF534BAE);
   static const primaryDark = Color(0xFF000051);
   

@@ -20,7 +20,7 @@ public class LoanService {
     private UserRepository userRepository;
     
     public List<Loan> findAll() {
-        return loanRepository.findAll();
+        return loanRepository.findAllByOrderByIdDesc();
     }
     
     public Optional<Loan> findById(Long id) {
@@ -73,5 +73,24 @@ public class LoanService {
         } else {
             throw new RuntimeException("Préstamo no encontrado con ID: " + id);
         }
+    }
+    
+    public Loan updatePaidInstallments(Long id, Integer paidInstallments) {
+        Optional<Loan> loanOpt = loanRepository.findById(id);
+        if (loanOpt.isPresent()) {
+            Loan loan = loanOpt.get();
+            loan.setPaidInstallments(paidInstallments);
+            return loanRepository.save(loan);
+        } else {
+            throw new RuntimeException("Préstamo no encontrado con ID: " + id);
+        }
+    }
+    
+    public List<Loan> findOverdueLoans() {
+        return loanRepository.findByStatus(LoanStatus.OVERDUE);
+    }
+    
+    public Long countOverdueLoans() {
+        return loanRepository.countByStatus(LoanStatus.OVERDUE);
     }
 }

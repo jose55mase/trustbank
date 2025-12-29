@@ -10,7 +10,7 @@ class DummyData {
       name: 'Juan Pérez',
       userCode: 'USR0001',
       phone: '+1234567890',
-      email: 'juan.perez@email.com',
+      direccion: 'Calle 123 #45-67, Bogotá',
       registrationDate: DateTime(2024, 1, 15),
     ),
     User(
@@ -18,7 +18,7 @@ class DummyData {
       name: 'María García',
       userCode: 'USR0002',
       phone: '+1234567891',
-      email: 'maria.garcia@email.com',
+      direccion: 'Carrera 15 #28-90, Medellín',
       registrationDate: DateTime(2024, 2, 10),
     ),
     User(
@@ -26,7 +26,7 @@ class DummyData {
       name: 'Carlos Rodríguez',
       userCode: 'USR0003',
       phone: '+1234567892',
-      email: 'carlos.rodriguez@email.com',
+      direccion: 'Avenida 68 #12-34, Cali',
       registrationDate: DateTime(2024, 3, 5),
     ),
     User(
@@ -34,7 +34,7 @@ class DummyData {
       name: 'Ana Martínez',
       userCode: 'USR0004',
       phone: '+1234567893',
-      email: 'ana.martinez@email.com',
+      direccion: 'Calle 85 #19-45, Barranquilla',
       registrationDate: DateTime(2024, 1, 20),
     ),
     User(
@@ -42,7 +42,7 @@ class DummyData {
       name: 'Luis Fernández',
       userCode: 'USR0005',
       phone: '+1234567894',
-      email: 'luis.fernandez@email.com',
+      direccion: 'Carrera 7 #32-18, Bucaramanga',
       registrationDate: DateTime(2024, 2, 28),
     ),
   ];
@@ -57,6 +57,7 @@ class DummyData {
       paidInstallments: 5,
       startDate: DateTime(2024, 2, 1),
       status: LoanStatus.active,
+      remainingAmount: 3375000,
     ),
     Loan(
       id: 'L002',
@@ -67,6 +68,7 @@ class DummyData {
       paidInstallments: 10,
       startDate: DateTime(2024, 1, 15),
       status: LoanStatus.active,
+      remainingAmount: 6533333,
     ),
     Loan(
       id: 'L003',
@@ -77,6 +79,7 @@ class DummyData {
       paidInstallments: 6,
       startDate: DateTime(2023, 12, 1),
       status: LoanStatus.completed,
+      remainingAmount: 0,
     ),
     Loan(
       id: 'L004',
@@ -87,6 +90,7 @@ class DummyData {
       paidInstallments: 8,
       startDate: DateTime(2024, 3, 1),
       status: LoanStatus.active,
+      remainingAmount: 4750000,
     ),
     Loan(
       id: 'L005',
@@ -97,6 +101,7 @@ class DummyData {
       paidInstallments: 12,
       startDate: DateTime(2024, 1, 1),
       status: LoanStatus.active,
+      remainingAmount: 11000000,
     ),
     Loan(
       id: 'L006',
@@ -107,6 +112,7 @@ class DummyData {
       paidInstallments: 2,
       startDate: DateTime(2024, 4, 1),
       status: LoanStatus.active,
+      remainingAmount: 1200000,
     ),
   ];
 

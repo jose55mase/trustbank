@@ -18,7 +18,7 @@ class LoanDetailModal extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (context) => LoanDetailModal(loan: loan, user: user),
+      builder: (dialogContext) => LoanDetailModal(loan: loan, user: user),
     );
   }
 
@@ -94,7 +94,7 @@ class LoanDetailModal extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close, color: Colors.white, size: 24),
                   ),
                 ],
@@ -154,7 +154,7 @@ class LoanDetailModal extends StatelessWidget {
                         _InfoRow('Nombre', user.name),
                         _InfoRow('Código', user.userCode),
                         _InfoRow('Teléfono', user.phone),
-                        _InfoRow('Email', user.email),
+                        _InfoRow('Dirección', user.direccion),
                       ],
                     ),
                     
@@ -167,6 +167,8 @@ class LoanDetailModal extends StatelessWidget {
                       [
                         _InfoRow('Monto Original', currencyFormat.format(amount)),
                         _InfoRow('Tasa de Interés', '${interestRate.toStringAsFixed(1)}%'),
+                        _InfoRow('Tipo de Préstamo', loan['loanType'] ?? 'N/A'),
+                        _InfoRow('Forma de Pago', loan['paymentFrequency'] ?? 'N/A'),
                         _InfoRow('Interés Total', currencyFormat.format(totalAmount - amount)),
                         _InfoRow('Monto Restante', currencyFormat.format(remainingAmount)),
                       ],
@@ -183,7 +185,7 @@ class LoanDetailModal extends StatelessWidget {
                         _InfoRow('Cuotas Pagadas', '$paidInstallments'),
                         _InfoRow('Cuotas Pendientes', '${installments - paidInstallments}'),
                         _InfoRow('Valor por Cuota', currencyFormat.format(installmentAmount)),
-                        _InfoRow('Fecha de Inicio', DateFormat('dd/MM/yyyy').format(DateTime.parse(loan['startDate']))),
+                        _InfoRow('Fecha de Inicio', loan['startDate'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(loan['startDate'])) : 'N/A'),
                       ],
                     ),
                     
@@ -237,7 +239,7 @@ class LoanDetailModal extends StatelessWidget {
                           const SizedBox(height: 12),
                           _InfoRow('Estado Anterior', _getStatusText(loan['previousStatus'])),
                           if (loan['statusChangeDate'] != null)
-                            _InfoRow('Cambio de Estado', DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(loan['statusChangeDate']))),
+                            _InfoRow('Cambio de Estado', DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(loan['statusChangeDate']!))),
                         ],
                       ],
                     ),
@@ -260,7 +262,7 @@ class LoanDetailModal extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => Navigator.pop(context),
                     child: const Text('Cerrar'),
                   ),
                 ],

@@ -34,7 +34,8 @@ public class AuthController {
             response.put("user", Map.of(
                 "id", user.getId(),
                 "username", user.getUsername(),
-                "email", user.getEmail()
+                "email", user.getEmail(),
+                "role", user.getRole()
             ));
             return ResponseEntity.ok(response);
         }
@@ -50,6 +51,7 @@ public class AuthController {
         String username = userData.get("username");
         String password = userData.get("password");
         String email = userData.get("email");
+        String role = userData.getOrDefault("role", "USER");
         
         if (authUserRepository.existsByUsername(username)) {
             Map<String, Object> response = new HashMap<>();
@@ -62,6 +64,7 @@ public class AuthController {
         newUser.setUsername(username);
         newUser.setPassword(passwordEncoder.encode(password));
         newUser.setEmail(email);
+        newUser.setRole(role);
         
         authUserRepository.save(newUser);
         

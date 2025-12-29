@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -82,10 +83,24 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   const SizedBox(height: 16),
                   _buildInfoRow('Código', widget.user.userCode),
                   _buildInfoRow('Teléfono', widget.user.phone),
-                  _buildInfoRow('Email', widget.user.email),
+                  _buildInfoRow('Dirección', widget.user.direccion),
                   _buildInfoRow('Registro', DateFormat('dd/MM/yyyy').format(widget.user.registrationDate)),
                   _buildInfoRow('Total Prestado', NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(totalLent)),
                   _buildInfoRow('Ganancia Total', NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(totalProfit)),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showPaymentModal(context),
+                      icon: const Icon(Icons.payment),
+                      label: const Text('Registrar Pago'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -210,6 +225,157 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           Text(label, style: AppTextStyles.bodySecondary),
           Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
         ],
+      ),
+    );
+  }
+
+  void _showPaymentModal(BuildContext context) {
+    final amountController = TextEditingController();
+    final descriptionController = TextEditingController();
+    String selectedPaymentMethod = 'Efectivo';
+    bool pagoALaDeuda = false;
+    bool pagoIntereses = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Registrar Pago'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      if (newValue.text.isEmpty) return newValue;
+                      final number = double.tryParse(newValue.text) ?? 0;
+                      final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
+                      return TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Monto Total',
+                    prefixText: '\$ ',
+                    hintText: '1,000,000',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: selectedPaymentMethod,
+                  decoration: const InputDecoration(
+                    labelText: 'Método de Pago',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ['Efectivo', 'Transferencia', 'Mixto']
+                      .map((method) => DropdownMenuItem(
+                            value: method,
+                            child: Text(method),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedPaymentMethod = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción (opcional)',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Pago a la Deuda'),
+                  subtitle: const Text('Marcar si este pago se aplica al capital'),
+                  value: pagoALaDeuda,
+                  onChanged: (value) {
+                    setState(() {
+                      pagoALaDeuda = value ?? false;
+                    });
+                  },
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Pago de Intereses'),
+                  subtitle: const Text('Marcar si este pago incluye intereses/ganancia'),
+                  value: pagoIntereses,
+                  onChanged: (value) {
+                    setState(() {
+                      pagoIntereses = value ?? false;
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final cleanAmount = amountController.text.replaceAll(',', '').replaceAll('.', '');
+                print('Texto limpio: "$cleanAmount"');
+                final amount = double.tryParse(cleanAmount) ?? 0;
+                print('Monto parseado: $amount');
+                
+                if (amount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor ingresa un monto válido'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+                
+                try {
+                  print('Enviando pago: amount=$amount, debtPayment=${pagoALaDeuda ? amount : 0}, interestPayment=${pagoIntereses ? amount : 0}');
+                  
+                  await ApiService.createPayment(
+                    userId: widget.user.id,
+                    amount: amount,
+                    paymentMethod: selectedPaymentMethod,
+                    description: descriptionController.text.isEmpty ? null : descriptionController.text,
+                    debtPayment: pagoALaDeuda ? amount : 0,
+                    interestPayment: pagoIntereses ? amount : 0,
+                  );
+                  
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Pago registrado exitosamente'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } catch (e) {
+                  print('Error al crear pago: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al registrar pago: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Registrar'),
+            ),
+          ],
+        ),
       ),
     );
   }

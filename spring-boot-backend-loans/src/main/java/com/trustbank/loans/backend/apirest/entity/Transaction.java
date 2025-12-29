@@ -40,6 +40,12 @@ public class Transaction {
     @Column(name = "principal_amount", precision = 15, scale = 2)
     private BigDecimal principalAmount;
     
+    @Column(name = "loan_type", length = 50)
+    private String loanType;
+    
+    @Column(name = "payment_frequency", length = 50)
+    private String paymentFrequency;
+    
     public Transaction() {
         this.date = LocalDateTime.now();
     }
@@ -71,6 +77,12 @@ public class Transaction {
     
     public BigDecimal getPrincipalAmount() { return principalAmount; }
     public void setPrincipalAmount(BigDecimal principalAmount) { this.principalAmount = principalAmount; }
+    
+    public String getLoanType() { return loanType; }
+    public void setLoanType(String loanType) { this.loanType = loanType; }
+    
+    public String getPaymentFrequency() { return paymentFrequency; }
+    public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
     
     @Override
     public String toString() {

@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:excel/excel.dart' as excel;
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/transaction.dart';
 import '../../data/services/api_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/loan_id_row.dart';
+
+// Import condicional para web
+import 'dart:html' as html show Blob, Url, document, AnchorElement;
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -17,16 +23,33 @@ class TransactionsScreen extends StatefulWidget {
 class _TransactionsScreenState extends State<TransactionsScreen> {
   String selectedFilter = 'Todas';
   String? loanTypeFilter;
+  String? paymentFrequencyFilter;
   DateTime? selectedDate;
   DateTimeRange? selectedDateRange;
   Transaction? selectedTransaction;
   List<dynamic> _transactions = [];
   List<dynamic> _loans = [];
   bool _isLoading = true;
+  
+  // Variables temporales para filtros (antes de aplicar)
+  String _tempSelectedFilter = 'Todas';
+  String? _tempLoanTypeFilter;
+  String? _tempPaymentFrequencyFilter;
+  DateTime? _tempSelectedDate;
+  DateTimeRange? _tempSelectedDateRange;
 
   @override
   void initState() {
     super.initState();
+    // Configurar filtro inicial para el día actual
+    final today = DateTime.now();
+    selectedDate = DateTime(today.year, today.month, today.day);
+    _tempSelectedDate = selectedDate;
+    
+    _tempSelectedFilter = selectedFilter;
+    _tempLoanTypeFilter = loanTypeFilter;
+    _tempPaymentFrequencyFilter = paymentFrequencyFilter;
+    _tempSelectedDateRange = selectedDateRange;
     _loadTransactions();
   }
 
@@ -34,6 +57,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     setState(() => _isLoading = true);
     try {
       List<dynamic> transactions;
+      List<dynamic> loans;
+      
+      // Aplicar filtros al backend
       if (selectedDateRange != null) {
         transactions = await ApiService.getTransactionsByDateRange(
           startDate: selectedDateRange!.start,
@@ -43,8 +69,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         transactions = await ApiService.getAllTransactions();
       }
       
-      // Cargar préstamos también
-      final loans = await ApiService.getAllLoans();
+      loans = await ApiService.getAllLoans();
       
       setState(() {
         _transactions = transactions;
@@ -62,155 +87,461 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   List<dynamic> get filteredTransactions {
+    var filtered = <dynamic>[];
+    
     if (selectedFilter == 'Préstamo') {
-      return _loans; // Mostrar préstamos del API
+      filtered = List.from(_loans);
+    } else {
+      filtered = List.from(_transactions);
+      
+      if (selectedFilter == 'Pago') {
+        filtered = filtered.where((t) => t['type'] == 'PAYMENT').toList();
+      }
     }
     
-    var filtered = _transactions;
-    
-    // Filtrar por tipo de transacción
-    if (selectedFilter == 'Pago') {
-      filtered = filtered.where((t) => t['type'] == 'PAYMENT').toList();
-    }
-    
-    // Filtrar por tipo de préstamo si está seleccionado
     if (loanTypeFilter != null) {
-      filtered = filtered.where((t) {
-        final loan = t['loan'];
-        if (loan == null) return false;
-        final loanType = loan['loanType']?.toString();
-        return (loanTypeFilter == 'Fijo' && loanType == 'FIXED') ||
-               (loanTypeFilter == 'Rotativo' && loanType == 'REVOLVING');
+      if (selectedFilter == 'Préstamo') {
+        filtered = filtered.where((loan) {
+          final loanType = loan['loanType']?.toString();
+          return (loanTypeFilter == 'Fijo' && (loanType == 'FIXED' || loanType == 'Fijo')) ||
+                 (loanTypeFilter == 'Rotativo' && (loanType == 'REVOLVING' || loanType == 'Rotativo')) ||
+                 (loanTypeFilter == 'Ahorro' && (loanType == 'SAVINGS' || loanType == 'Ahorro'));
+        }).toList();
+      } else {
+        filtered = filtered.where((t) {
+          final loan = t['loan'];
+          if (loan == null) return false;
+          final loanType = loan['loanType']?.toString();
+          return (loanTypeFilter == 'Fijo' && (loanType == 'FIXED' || loanType == 'Fijo')) ||
+                 (loanTypeFilter == 'Rotativo' && (loanType == 'REVOLVING' || loanType == 'Rotativo')) ||
+                 (loanTypeFilter == 'Ahorro' && (loanType == 'SAVINGS' || loanType == 'Ahorro'));
+        }).toList();
+      }
+    }
+    
+    if (paymentFrequencyFilter != null) {
+      if (selectedFilter == 'Préstamo') {
+        filtered = filtered.where((loan) {
+          final frequency = loan['paymentFrequency']?.toString();
+          return frequency == paymentFrequencyFilter;
+        }).toList();
+      } else {
+        filtered = filtered.where((t) {
+          final loan = t['loan'];
+          if (loan == null) return false;
+          final frequency = loan['paymentFrequency']?.toString();
+          return frequency == paymentFrequencyFilter;
+        }).toList();
+      }
+    }
+    
+    if (selectedDate != null) {
+      filtered = filtered.where((item) {
+        try {
+          final dateField = selectedFilter == 'Préstamo' ? 'startDate' : 'date';
+          if (item[dateField] == null) return false;
+          final itemDate = DateTime.parse(item[dateField]);
+          return itemDate.year == selectedDate!.year &&
+                 itemDate.month == selectedDate!.month &&
+                 itemDate.day == selectedDate!.day;
+        } catch (e) {
+          return false;
+        }
+      }).toList();
+    }
+    
+    if (selectedDateRange != null) {
+      filtered = filtered.where((item) {
+        try {
+          final dateField = selectedFilter == 'Préstamo' ? 'startDate' : 'date';
+          if (item[dateField] == null) return false;
+          final itemDate = DateTime.parse(item[dateField]);
+          return itemDate.isAfter(selectedDateRange!.start.subtract(const Duration(days: 1))) &&
+                 itemDate.isBefore(selectedDateRange!.end.add(const Duration(days: 1)));
+        } catch (e) {
+          return false;
+        }
       }).toList();
     }
     
     return filtered;
   }
   
-  Future<void> _selectDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-      initialDateRange: selectedDateRange,
-    );
-    if (picked != null) {
-      setState(() {
-        selectedDateRange = picked;
-      });
-      _loadTransactions();
-    }
-  }
-  
-  void _clearDateFilter() {
+  void _applyFilters() {
     setState(() {
-      selectedDate = null;
-      selectedDateRange = null;
+      selectedFilter = _tempSelectedFilter;
+      loanTypeFilter = _tempLoanTypeFilter;
+      paymentFrequencyFilter = _tempPaymentFrequencyFilter;
+      selectedDate = _tempSelectedDate;
+      selectedDateRange = _tempSelectedDateRange;
     });
     _loadTransactions();
+    Navigator.pop(context);
   }
   
-  Widget _buildFilters(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
+  void _clearFilters() {
+    setState(() {
+      _tempSelectedFilter = 'Todas';
+      _tempLoanTypeFilter = null;
+      _tempPaymentFrequencyFilter = null;
+      _tempSelectedDate = null;
+      _tempSelectedDateRange = null;
+    });
+  }
+  
+  Widget _buildFilterDrawer() {
+    return Drawer(
       child: Column(
         children: [
-          Row(
-            children: [
-              const Icon(Icons.filter_list, color: AppColors.primary),
-              const SizedBox(width: 8),
-              const Text('Filtros:'),
-              const Spacer(),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  final picked = await showDatePicker(
-                    context: context,
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime.now().add(const Duration(days: 365)),
-                  );
-                  if (picked != null) {
-                    setState(() {
-                      selectedDate = picked;
-                      selectedDateRange = null;
-                    });
-                    _loadTransactions();
-                  }
-                },
-                icon: const Icon(Icons.calendar_today),
-                label: Text(selectedDate != null 
-                    ? DateFormat('dd/MM/yyyy').format(selectedDate!) 
-                    : 'Fecha'),
-              ),
-              const SizedBox(width: 8),
-              OutlinedButton.icon(
-                onPressed: _selectDateRange,
-                icon: const Icon(Icons.date_range),
-                label: Text(
-                  selectedDateRange != null
-                      ? '${DateFormat('dd/MM').format(selectedDateRange!.start)}-${DateFormat('dd/MM').format(selectedDateRange!.end)}'
-                      : 'Rango',
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (selectedDate != null || selectedDateRange != null)
-                IconButton(
-                  onPressed: _clearDateFilter,
-                  icon: const Icon(Icons.clear),
-                  tooltip: 'Limpiar filtro de fecha',
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          SegmentedButton<String>(
-            segments: const [
-              ButtonSegment(value: 'Todas', label: Text('Todas')),
-              ButtonSegment(value: 'Préstamo', label: Text('Préstamos')),
-              ButtonSegment(value: 'Pago', label: Text('Pagos')),
-            ],
-            selected: {selectedFilter},
-            onSelectionChanged: (Set<String> newSelection) {
-              setState(() {
-                selectedFilter = newSelection.first;
-                if (selectedFilter == 'Préstamo') {
-                  loanTypeFilter = null;
-                }
-              });
-            },
-          ),
-          if (selectedFilter == 'Todas' || selectedFilter == 'Pago') ...[
-            const SizedBox(height: 12),
-            Row(
+          const DrawerHeader(
+            decoration: BoxDecoration(color: AppColors.primary),
+            child: Row(
               children: [
-                const Text('Tipo de préstamo: '),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: SegmentedButton<String?>(
-                    segments: const [
-                      ButtonSegment(value: null, label: Text('Todos')),
-                      ButtonSegment(value: 'Fijo', label: Text('Fijo')),
-                      ButtonSegment(value: 'Rotativo', label: Text('Rotativo')),
-                    ],
-                    selected: {loanTypeFilter},
-                    onSelectionChanged: (Set<String?> newSelection) {
+                Icon(Icons.filter_list, color: Colors.white, size: 28),
+                SizedBox(width: 12),
+                Text('Filtros', style: TextStyle(color: Colors.white, fontSize: 20)),
+              ],
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Tipo de datos:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  RadioListTile<String>(
+                    title: const Text('Todas'),
+                    value: 'Todas',
+                    groupValue: _tempSelectedFilter,
+                    onChanged: (value) {
                       setState(() {
-                        loanTypeFilter = newSelection.first;
+                        _tempSelectedFilter = value!;
+                        if (_tempSelectedFilter == 'Préstamo') {
+                          _tempLoanTypeFilter = null;
+                        }
                       });
                     },
                   ),
-                ),
-              ],
+                  RadioListTile<String>(
+                    title: const Text('Préstamos'),
+                    value: 'Préstamo',
+                    groupValue: _tempSelectedFilter,
+                    onChanged: (value) {
+                      setState(() {
+                        _tempSelectedFilter = value!;
+                        if (_tempSelectedFilter == 'Préstamo') {
+                          _tempLoanTypeFilter = null;
+                        }
+                      });
+                    },
+                  ),
+                  RadioListTile<String>(
+                    title: const Text('Pagos'),
+                    value: 'Pago',
+                    groupValue: _tempSelectedFilter,
+                    onChanged: (value) {
+                      setState(() {
+                        _tempSelectedFilter = value!;
+                      });
+                    },
+                  ),
+                  if (_tempSelectedFilter == 'Todas' || _tempSelectedFilter == 'Pago') ...[
+                    const SizedBox(height: 16),
+                    const Text('Tipo de préstamo:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    DropdownButtonFormField<String?>(
+                      value: _tempLoanTypeFilter,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: null, child: Text('Todos')),
+                        DropdownMenuItem(value: 'Fijo', child: Text('Fijo')),
+                        DropdownMenuItem(value: 'Rotativo', child: Text('Rotativo')),
+                        DropdownMenuItem(value: 'Ahorro', child: Text('Ahorro')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _tempLoanTypeFilter = value;
+                        });
+                      },
+                    ),
+                  ],
+                  if (_tempSelectedFilter == 'Todas' || _tempSelectedFilter == 'Pago' || _tempSelectedFilter == 'Préstamo') ...[
+                    const SizedBox(height: 16),
+                    const Text('Forma de pago:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    DropdownButtonFormField<String?>(
+                      value: _tempPaymentFrequencyFilter,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: null, child: Text('Todas')),
+                        DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
+                        DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
+                        DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal')),
+                        DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
+                        DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
+                        DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _tempPaymentFrequencyFilter = value;
+                        });
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  const Text('Filtros de fecha:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: _tempSelectedDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now().add(const Duration(days: 365)),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _tempSelectedDate = picked;
+                                _tempSelectedDateRange = null;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.calendar_today),
+                          label: Text(_tempSelectedDate != null
+                              ? DateFormat('dd/MM/yyyy').format(_tempSelectedDate!)
+                              : 'Fecha'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final picked = await showDateRangePicker(
+                              context: context,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                              initialDateRange: _tempSelectedDateRange,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _tempSelectedDateRange = picked;
+                                _tempSelectedDate = null;
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.date_range),
+                          label: Text(
+                            _tempSelectedDateRange != null
+                                ? '${DateFormat('dd/MM').format(_tempSelectedDateRange!.start)}-${DateFormat('dd/MM').format(_tempSelectedDateRange!.end)}'
+                                : 'Rango',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (_tempSelectedDate != null || _tempSelectedDateRange != null)
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _tempSelectedDate = null;
+                          _tempSelectedDateRange = null;
+                        });
+                      },
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Limpiar fechas'),
+                    ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _applyFilters,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: const Text('Aplicar Filtros'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: _clearFilters,
+                      child: const Text('Limpiar Filtros'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ],
       ),
     );
   }
   
-  void _exportTransactions(List<dynamic> transactions) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Función de exportación pendiente')),
-    );
+  Future<void> _exportTransactions(List<dynamic> transactions) async {
+    try {
+      final excelFile = excel.Excel.createExcel();
+      final sheet = excelFile['Transacciones'];
+      
+      // Encabezados principales
+      final headers1 = [
+        'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
+        'FORMA', 'ID', 'CLIENTE', 'TELEFONO', 'CUOTAS', 
+        'CUOTAS', 'CUOTAS', 'CAPITAL', 'INTERES', 'NOTAS'
+      ];
+      
+      // Encabezados secundarios
+      final headers2 = [
+        '', '', '', '', 'DE PAGO', 'PRESTAMO', 
+        'DE PAGO', 'PRESTAMO', '', '', 'TOTALES', 
+        'PAGADAS', 'RESTANTES', '', '', ''
+      ];
+      
+      // Ajustar altura de las filas de encabezados
+      sheet.setRowHeight(0, 25);
+      sheet.setRowHeight(1, 25);
+      
+      // Agregar primera fila de encabezados
+      for (int i = 0; i < headers1.length; i++) {
+        final cell = sheet.cell(excel.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0));
+        cell.value = excel.TextCellValue(headers1[i]);
+        cell.cellStyle = excel.CellStyle(
+          bold: true,
+          fontSize: 12,
+          fontColorHex: excel.ExcelColor.white,
+          backgroundColorHex: excel.ExcelColor.blue,
+          horizontalAlign: excel.HorizontalAlign.Center,
+          verticalAlign: excel.VerticalAlign.Center,
+        );
+      }
+      
+      // Agregar segunda fila de encabezados
+      for (int i = 0; i < headers2.length; i++) {
+        final cell = sheet.cell(excel.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 1));
+        cell.value = excel.TextCellValue(headers2[i]);
+        cell.cellStyle = excel.CellStyle(
+          bold: true,
+          fontSize: 12,
+          fontColorHex: excel.ExcelColor.white,
+          backgroundColorHex: excel.ExcelColor.blue,
+          horizontalAlign: excel.HorizontalAlign.Center,
+          verticalAlign: excel.VerticalAlign.Center,
+        );
+      }
+      
+      // Ajustar ancho de columnas
+      for (int i = 0; i < headers1.length; i++) {
+        sheet.setColumnWidth(i, 20);
+      }
+      
+      // Agregar datos
+      for (int rowIndex = 0; rowIndex < transactions.length; rowIndex++) {
+        final item = transactions[rowIndex];
+        final isLoan = selectedFilter == 'Préstamo';
+        final isPayment = !isLoan && item['type'] == 'PAYMENT';
+        
+        final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO');
+        
+        final row = [
+          item['id']?.toString() ?? '',
+          isLoan ? 'Prestamo' : (isPayment ? 'Pago' : 'Transaccion'),
+          isLoan 
+            ? (item['startDate'] != null ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['startDate'])) : '')
+            : (item['date'] != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(item['date'])) : ''),
+          currencyFormat.format(item['amount'] ?? 0),
+          isLoan ? '' : _getPaymentMethodText(item['paymentMethod']?.toString() ?? ''),
+          isLoan 
+            ? (item['loanType']?.toString() ?? '')
+            : (item['loan']?['loanType']?.toString() ?? ''),
+          isLoan 
+            ? (item['paymentFrequency']?.toString() ?? '')
+            : (item['loan']?['paymentFrequency']?.toString() ?? ''),
+          isLoan ? item['id']?.toString() ?? '' : (item['loan']?['id']?.toString() ?? ''),
+          isLoan 
+            ? (item['user']?['name']?.toString() ?? '')
+            : (item['loan']?['user']?['name']?.toString() ?? ''),
+          isLoan 
+            ? (item['user']?['phone']?.toString() ?? '')
+            : (item['loan']?['user']?['phone']?.toString() ?? ''),
+          isLoan 
+            ? (item['installments']?.toString() ?? '')
+            : (item['loan']?['installments']?.toString() ?? ''),
+          isLoan 
+            ? (item['paidInstallments']?.toString() ?? '')
+            : (item['loan']?['paidInstallments']?.toString() ?? ''),
+          isLoan 
+            ? ((item['installments'] ?? 0) - (item['paidInstallments'] ?? 0)).toString()
+            : ((item['loan']?['installments'] ?? 0) - (item['loan']?['paidInstallments'] ?? 0)).toString(),
+          isPayment ? currencyFormat.format(item['principalAmount'] ?? 0) : '',
+          isPayment ? currencyFormat.format(item['interestAmount'] ?? 0) : '',
+          item['notes']?.toString() ?? ''
+        ];
+        
+        for (int colIndex = 0; colIndex < row.length; colIndex++) {
+          final cell = sheet.cell(excel.CellIndex.indexByColumnRow(columnIndex: colIndex, rowIndex: rowIndex + 2));
+          cell.value = excel.TextCellValue(row[colIndex]);
+          cell.cellStyle = excel.CellStyle(
+            fontSize: 12,
+            horizontalAlign: excel.HorizontalAlign.Center,
+            verticalAlign: excel.VerticalAlign.Center,
+          );
+        }
+      }
+      
+      // Generar archivo
+      final bytes = excelFile.encode();
+      if (bytes != null) {
+        final now = DateTime.now();
+        final fileName = 'transacciones_${DateFormat('yyyyMMdd_HHmmss').format(now)}.xlsx';
+        
+        if (kIsWeb) {
+          // Para web: descargar directamente
+          final blob = html.Blob([bytes], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.document.createElement('a') as html.AnchorElement
+            ..href = url
+            ..style.display = 'none'
+            ..download = fileName;
+          html.document.body?.children.add(anchor);
+          anchor.click();
+          html.document.body?.children.remove(anchor);
+          html.Url.revokeObjectUrl(url);
+        } else {
+          // Para móvil: usar share
+          await Share.shareXFiles(
+            [XFile.fromData(
+              Uint8List.fromList(bytes), 
+              name: fileName,
+              mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )],
+            text: 'Exportacion de transacciones',
+          );
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(kIsWeb ? 'Excel descargado exitosamente' : 'Excel compartido exitosamente')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al exportar: $e')),
+        );
+      }
+    }
   }
 
   double get totalPayments {
@@ -244,6 +575,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         return 'Transferencia';
       case 'CHECK':
         return 'Cheque';
+      case 'MIXED':
+        return 'Mixto';
       default:
         return method;
     }
@@ -532,6 +865,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           ],
                           if (transaction['loan'] != null) ...[
                             _DetailRow('Monto Préstamo', currencyFormat.format(transaction['loan']['amount'] ?? 0)),
+                            _DetailRow('Tipo de Préstamo', transaction['loan']['loanType'] ?? 'N/A'),
+                            _DetailRow('Forma de Pago', transaction['loan']['paymentFrequency'] ?? 'N/A'),
                             _DetailRow('Tasa Interés', '${transaction['loan']['interestRate'] ?? 0}%'),
                             _DetailRow('Cuotas Totales', '${transaction['loan']['installments'] ?? 0}'),
                             _DetailRow('Cuotas Pagadas', '${transaction['loan']['paidInstallments'] ?? 0}'),
@@ -546,6 +881,25 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         _DetailSection(
                           title: 'Desglose del Pago',
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Desglose del Pago',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: () => _showEditPaymentBreakdown(context, transaction, currencyFormat),
+                                  icon: const Icon(Icons.edit, size: 20),
+                                  tooltip: 'Editar desglose',
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
                             if (transaction['principalAmount'] != null)
                               _DetailRow('Capital', currencyFormat.format(transaction['principalAmount'])),
                             if (transaction['interestAmount'] != null)
@@ -636,6 +990,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         title: const Text('Transacciones'),
         actions: [
+          Builder(
+            builder: (context) => IconButton(
+              icon: const Icon(Icons.filter_list),
+              onPressed: () {
+                Scaffold.of(context).openEndDrawer();
+              },
+              tooltip: 'Filtros',
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadTransactions,
@@ -643,9 +1006,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ],
       ),
       drawer: const AppDrawer(),
+      endDrawer: _buildFilterDrawer(),
       body: Column(
         children: [
-          _buildFilters(context),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
@@ -662,7 +1025,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       ),
                   ],
                 ),
-
               ],
             ),
           ),
@@ -692,88 +1054,121 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           final isLoan = selectedFilter == 'Préstamo';
                           final isPayment = !isLoan && item['type'] == 'PAYMENT';
                           
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: InkWell(
-                              onTap: () => isLoan ? _showLoanDetail(item['id'].toString()) : _showTransactionDetail(item),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: (isLoan ? AppColors.warning : (isPayment ? AppColors.success : AppColors.primary)).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        isLoan ? Icons.account_balance_wallet : (isPayment ? Icons.arrow_downward : Icons.arrow_upward),
-                                        color: isLoan ? AppColors.warning : (isPayment ? AppColors.success : AppColors.primary),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            isLoan 
-                                                ? 'Cliente: ${item['user']?['name'] ?? 'N/A'}'
-                                                : 'Préstamo ID: ${item['loan']?['id'] ?? 'N/A'}',
-                                            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            isLoan 
-                                                ? 'Préstamo • ${item['id']}'
-                                                : '${isPayment ? 'Pago' : 'Transacción'} • ${item['id']}',
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            isLoan 
-                                                ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['startDate']))
-                                                : DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(item['date'])),
-                                            style: AppTextStyles.caption,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
+                          return Stack(
+                            children: [
+                              Card(
+                                margin: const EdgeInsets.only(bottom: 12, top: 8),
+                                child: InkWell(
+                                  onTap: () => isLoan ? _showLoanDetail(item['id'].toString()) : _showTransactionDetail(item),
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
                                       children: [
-                                        Text(
-                                          currencyFormat.format(item['amount'] ?? 0),
-                                          style: AppTextStyles.body.copyWith(
-                                            fontWeight: FontWeight.w700,
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: (isLoan ? AppColors.warning : (isPayment ? AppColors.success : AppColors.primary)).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            isLoan ? Icons.account_balance_wallet : (isPayment ? Icons.arrow_downward : Icons.arrow_upward),
                                             color: isLoan ? AppColors.warning : (isPayment ? AppColors.success : AppColors.primary),
-                                            fontSize: 14,
                                           ),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(
-                                            color: (isLoan ? AppColors.warning : AppColors.success).withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                isLoan 
+                                                    ? 'Cliente: ${item['user']?['name'] ?? 'N/A'}'
+                                                    : 'Préstamo ID: ${item['loan']?['id'] ?? 'N/A'}',
+                                                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                isLoan 
+                                                    ? 'Préstamo • ${item['id']}'
+                                                    : '${isPayment ? 'Pago' : 'Transacción'} • ${item['id']}',
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                isLoan 
+                                                    ? DateFormat('dd/MM/yyyy').format(DateTime.parse(item['startDate']))
+                                                    : DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(item['date'])),
+                                                style: AppTextStyles.caption,
+                                              ),
+                                            ],
                                           ),
-                                          child: Text(
-                                            isLoan 
-                                                ? _getLoanStatusText(item['status']?.toString())
-                                                : _getPaymentMethodText(item['paymentMethod']?.toString() ?? ''),
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: isLoan ? AppColors.warning : AppColors.success,
-                                              fontWeight: FontWeight.w600,
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              currencyFormat.format(item['amount'] ?? 0),
+                                              style: AppTextStyles.body.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                                color: isLoan ? AppColors.warning : (isPayment ? AppColors.success : AppColors.primary),
+                                                fontSize: 14,
+                                              ),
                                             ),
-                                          ),
+                                            const SizedBox(height: 4),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: (isLoan ? AppColors.warning : AppColors.success).withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: Text(
+                                                isLoan 
+                                                    ? _getLoanStatusText(item['status']?.toString())
+                                                    : _getPaymentMethodText(item['paymentMethod']?.toString() ?? ''),
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: isLoan ? AppColors.warning : AppColors.success,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
+                              // Burbuja con código de usuario
+                              Positioned(
+                                top: 0,
+                                right: 8,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.1),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    isLoan 
+                                        ? '${item['user']?['userCode'] ?? 'N/A'}'
+                                        : '${item['loan']?['user']?['userCode'] ?? 'N/A'}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           );
                         },
                       ),
@@ -788,6 +1183,244 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         label: const Text('Resumen'),
       ),
     );
+  }
+
+  void _showEditPaymentBreakdown(BuildContext context, Map<String, dynamic> transaction, NumberFormat currencyFormat) {
+    final principalController = TextEditingController(
+      text: NumberFormat('#,###', 'es_CO').format(transaction['principalAmount'] ?? 0),
+    );
+    final interestController = TextEditingController(
+      text: NumberFormat('#,###', 'es_CO').format(transaction['interestAmount'] ?? 0),
+    );
+    final notesController = TextEditingController(
+      text: transaction['notes']?.toString() ?? '',
+    );
+    String selectedPaymentMethod = _getPaymentMethodFromBackend(transaction['paymentMethod']?.toString() ?? 'CASH');
+
+    // Variables locales para mostrar cambios inmediatos
+    double currentPrincipal = (transaction['principalAmount'] ?? 0).toDouble();
+    double currentInterest = (transaction['interestAmount'] ?? 0).toDouble();
+    String currentPaymentMethod = selectedPaymentMethod;
+    String currentNotes = transaction['notes']?.toString() ?? '';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => AlertDialog(
+          title: const Text('Editar Desglose del Pago'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('ID Transacción: ${transaction['id']}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: principalController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) async {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final formatted = NumberFormat('#,###', 'es_CO').format(int.parse(text));
+                      principalController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                      
+                      // Actualizar inmediatamente
+                      currentPrincipal = double.parse(text);
+                      await _updateTransactionField(transaction['id'].toString(), 'principalAmount', currentPrincipal);
+                      setState(() {}); // Actualizar la pantalla principal
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Capital',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: interestController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) async {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final formatted = NumberFormat('#,###', 'es_CO').format(int.parse(text));
+                      interestController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                      
+                      // Actualizar inmediatamente
+                      currentInterest = double.parse(text);
+                      await _updateTransactionField(transaction['id'].toString(), 'interestAmount', currentInterest);
+                      setState(() {}); // Actualizar la pantalla principal
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Interés/Ganancia',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Método de pago:'),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  value: selectedPaymentMethod,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    'Efectivo',
+                    'Transferencia',
+                    'Mixto']
+                      .map((method) => DropdownMenuItem(
+                            value: method,
+                            child: Text(method),
+                          ))
+                      .toList(),
+                  onChanged: (value) async {
+                    setModalState(() {
+                      selectedPaymentMethod = value!;
+                    });
+                    
+                    // Actualizar inmediatamente
+                    currentPaymentMethod = value!;
+                    await _updateTransactionField(transaction['id'].toString(), 'paymentMethod', _mapPaymentMethodToBackend(currentPaymentMethod));
+                    setState(() {}); // Actualizar la pantalla principal
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: notesController,
+                  onChanged: (value) async {
+                    // Actualizar inmediatamente con debounce
+                    currentNotes = value;
+                    Future.delayed(const Duration(milliseconds: 500), () async {
+                      if (currentNotes == value) { // Solo actualizar si no ha cambiado
+                        await _updateTransactionField(transaction['id'].toString(), 'notes', currentNotes);
+                        setState(() {}); // Actualizar la pantalla principal
+                      }
+                    });
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Notas',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 2,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppColors.success, size: 16),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Los cambios se guardan automáticamente',
+                        style: TextStyle(fontSize: 12, color: AppColors.success),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _loadTransactions(); // Recargar para asegurar sincronización
+              },
+              child: const Text('Cerrar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getPaymentMethodFromBackend(String backendMethod) {
+    switch (backendMethod) {
+      case 'CASH':
+        return 'Efectivo';
+      case 'TRANSFER':
+        return 'Transferencia';
+      case 'MIXED':
+        return 'Mixto';
+      default:
+        return 'Efectivo';
+    }
+  }
+
+  String _mapPaymentMethodToBackend(String frontendMethod) {
+    switch (frontendMethod) {
+      case 'Efectivo':
+        return 'CASH';
+      case 'Transferencia':
+        return 'TRANSFER';
+      case 'Mixto':
+        return 'MIXED';
+      default:
+        return 'CASH';
+    }
+  }
+
+  Future<void> _updateTransactionField(String transactionId, String field, dynamic value) async {
+    try {
+      await ApiService.updateTransactionField(
+        transactionId: transactionId,
+        field: field,
+        value: value,
+      );
+    } catch (e) {
+      // Silencioso para no interrumpir la edición
+      print('Error actualizando campo $field: $e');
+    }
+  }
+
+  Future<void> _updateTransactionBreakdown(
+    BuildContext context,
+    String transactionId,
+    double principalAmount,
+    double interestAmount,
+    String paymentMethod,
+    String notes,
+    NumberFormat currencyFormat,
+  ) async {
+    try {
+      await ApiService.updateTransaction(
+        transactionId: transactionId,
+        principalAmount: principalAmount,
+        interestAmount: interestAmount,
+        paymentMethod: paymentMethod,
+        notes: notes,
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Transacción actualizada correctamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      // Recargar las transacciones
+      await _loadTransactions();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al actualizar transacción: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }
 
@@ -934,6 +1567,8 @@ class _LoanInfoDialog extends StatelessWidget {
                       title: 'Detalles del Préstamo',
                       children: [
                         _DetailRow('Monto', currencyFormat.format(loan['amount'] ?? 0)),
+                        _DetailRow('Tipo de Préstamo', loan['loanType'] ?? 'N/A'),
+                        _DetailRow('Forma de Pago', loan['paymentFrequency'] ?? 'N/A'),
                         _DetailRow('Tasa de Interés', '${loan['interestRate'] ?? 0}%'),
                         _DetailRow('Cuotas Totales', '${loan['installments'] ?? 0}'),
                         _DetailRow('Cuotas Pagadas', '${loan['paidInstallments'] ?? 0}'),

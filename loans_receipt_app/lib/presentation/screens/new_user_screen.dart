@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/dialog_utils.dart';
 import '../atoms/app_button.dart';
 import '../widgets/app_drawer.dart';
 import '../../data/services/api_service.dart';
+import 'new_loan_screen.dart';
 
 class NewUserScreen extends StatefulWidget {
   const NewUserScreen({super.key});
@@ -15,17 +17,15 @@ class _NewUserScreenState extends State<NewUserScreen> {
   final nameController = TextEditingController();
   final userCodeController = TextEditingController();
   final phoneController = TextEditingController();
-  final emailController = TextEditingController();
+  final direccionController = TextEditingController();
   bool isLoading = false;
 
   Future<void> _registerUser() async {
     if (nameController.text.trim().isEmpty ||
         userCodeController.text.trim().isEmpty ||
         phoneController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor completa todos los campos')),
-      );
+        direccionController.text.trim().isEmpty) {
+      DialogUtils.showWarningDialog(context, 'Campos Incompletos', 'Por favor completa todos los campos antes de continuar.');
       return;
     }
 
@@ -38,20 +38,28 @@ class _NewUserScreenState extends State<NewUserScreen> {
         name: nameController.text.trim(),
         userCode: userCodeController.text.trim(),
         phone: phoneController.text.trim(),
-        email: emailController.text.trim(),
+        direccion: direccionController.text.trim(),
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario registrado exitosamente')),
+        DialogUtils.showSuccessDialog(
+          context, 
+          '¡Usuario Creado!', 
+          'El usuario ha sido registrado exitosamente. ¿Deseas registrar un préstamo ahora?',
+          onClose: () {
+            Navigator.pop(context); // Close dialog
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NewLoanScreen(),
+              ),
+            );
+          }
         );
-        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        DialogUtils.showErrorDialog(context, 'Error al Registrar', 'Ocurrió un problema al registrar el usuario. Verifica los datos e intenta nuevamente.');
       }
     } finally {
       if (mounted) {
@@ -108,11 +116,11 @@ class _NewUserScreenState extends State<NewUserScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
+            controller: direccionController,
+            keyboardType: TextInputType.streetAddress,
             decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email),
+              labelText: 'Dirección',
+              prefixIcon: Icon(Icons.location_on),
               border: OutlineInputBorder(),
             ),
           ),

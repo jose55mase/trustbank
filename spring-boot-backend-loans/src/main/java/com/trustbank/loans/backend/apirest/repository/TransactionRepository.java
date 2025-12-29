@@ -10,10 +10,13 @@ import java.time.LocalDateTime;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long> {
     
-    List<Transaction> findByLoanId(Long loanId);
+    List<Transaction> findByLoanIdOrderByDateDesc(Long loanId);
     
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = 'PAYMENT'")
     Double getTotalPayments();
     
-    List<Transaction> findByDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<Transaction> findByDateBetweenOrderByDateDesc(LocalDateTime startDate, LocalDateTime endDate);
+    
+    @Query("SELECT t FROM Transaction t ORDER BY t.date DESC")
+    List<Transaction> findAllOrderByDateDesc();
 }

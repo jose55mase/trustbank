@@ -1,0 +1,54 @@
+-- Crear tabla auth_users si no existe
+CREATE TABLE IF NOT EXISTS auth_users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'USER',
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Datos de prueba para usuarios de autenticación
+INSERT INTO auth_users (username, password, email, role, enabled, created_at) VALUES
+('admin', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9tYoHA8t0r5lDvO', 'admin@trustbank.com', 'ADMIN', true, '2024-01-01 00:00:00'),
+('viewer', '$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9tYoHA8t0r5lDvO', 'viewer@trustbank.com', 'VIEWER', true, '2024-01-01 00:00:00');
+
+-- Datos de prueba para usuarios
+INSERT INTO users (name, user_code, phone, direccion) VALUES
+('Juan Pérez', 'USR001', '+1234567890', 'Calle 123 #45-67, Bogotá'),
+('María García', 'USR002', '+1234567891', 'Carrera 89 #12-34, Medellín'),
+('Carlos Rodríguez', 'USR003', '+1234567892', 'Avenida 56 #78-90, Cali'),
+('Ana López', 'USR004', '+1234567893', 'Calle 45 #23-56, Barranquilla');
+
+-- Datos de prueba para préstamos (incluyendo uno vencido)
+INSERT INTO loans (user_id, amount, interest_rate, installments, paid_installments, start_date, status, loan_type, payment_frequency) VALUES
+(1, 5000000.00, 15.00, 12, 5, '2024-01-15 10:00:00', 'ACTIVE', 'Fijo', 'Mensual 30'),
+(2, 10000000.00, 12.00, 24, 10, '2024-02-01 14:30:00', 'ACTIVE', 'Rotativo', 'Mensual 15'),
+(1, 7500000.00, 14.00, 18, 8, '2024-03-10 09:15:00', 'ACTIVE', 'Ahorro', 'Mensual 15'),
+(3, 3000000.00, 18.00, 12, 2, '2023-10-15 11:00:00', 'OVERDUE', 'Fijo', 'Mensual 30');
+
+-- Datos de prueba para transacciones
+INSERT INTO transactions (type, loan_id, amount, date, payment_method, notes, interest_amount, principal_amount) VALUES
+('PAYMENT', 1, 625000.00, '2024-02-15 10:30:00', 'CASH', 'Pago cuota 1', 62500.00, 562500.00),
+('PAYMENT', 1, 625000.00, '2024-03-15 11:15:00', 'TRANSFER', 'Pago cuota 2', 62500.00, 562500.00),
+('PAYMENT', 2, 500000.00, '2024-03-01 16:45:00', 'CASH', 'Pago cuota 1', 100000.00, 400000.00);
+
+-- Datos de prueba para categorías de gastos
+INSERT INTO expense_categories (name, icon_name, color_value) VALUES
+('Oficina', 'business', '#2196F3'),
+('Marketing', 'campaign', '#FF9800'),
+('Servicios', 'build', '#4CAF50'),
+('Transporte', 'directions_car', '#9C27B0'),
+('Alimentación', 'restaurant', '#F44336'),
+('Tecnología', 'computer', '#607D8B'),
+('Mantenimiento', 'build', '#795548'),
+('Otros', 'category', '#9E9E9E');
+
+-- Datos de prueba para gastos
+INSERT INTO expenses (category_id, amount, description, expense_date) VALUES
+(1, 150000.00, 'Papelería y suministros de oficina', '2024-01-15 09:00:00'),
+(2, 300000.00, 'Campaña publicitaria en redes sociales', '2024-01-20 14:30:00'),
+(3, 80000.00, 'Servicio de internet mensual', '2024-01-25 10:15:00'),
+(4, 120000.00, 'Combustible vehículo empresa', '2024-02-01 16:45:00'),
+(5, 45000.00, 'Almuerzo reunión clientes', '2024-02-05 12:30:00');

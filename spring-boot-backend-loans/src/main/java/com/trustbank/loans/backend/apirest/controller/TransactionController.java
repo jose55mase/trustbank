@@ -11,6 +11,8 @@ import java.util.List;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import org.springframework.format.annotation.DateTimeFormat;
+import java.util.Map;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -52,9 +54,6 @@ public class TransactionController {
     
     @PostMapping
     public Transaction createTransaction(@RequestBody TransactionRequest request) {
-        System.out.println("Received request: " + request.getType() + ", loan ID: " + 
-            (request.getLoan() != null ? request.getLoan().getId() : "null"));
-        
         Transaction transaction = new Transaction();
         transaction.setType(request.getType());
         transaction.setAmount(request.getAmount());
@@ -91,5 +90,48 @@ public class TransactionController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.notFound().build();
+    }
+    
+    @GetMapping("/debug/loan/{loanId}")
+    public ResponseEntity<Map<String, Object>> debugLoanTransactions(@PathVariable Long loanId) {
+        List<Transaction> transactions = transactionService.findByLoanId(loanId);
+        Map<String, Object> debug = new java.util.HashMap<>();
+        debug.put("loanId", loanId);
+        debug.put("totalTransactions", transactions.size());
+        debug.put("transactions", transactions);
+        
+        double totalPrincipal = transactions.stream()
+            .filter(t -> t.getPrincipalAmount() != null)
+            .mapToDouble(t -> t.getPrincipalAmount().doubleValue())
+            .sum();
+        debug.put("totalPrincipalPaid", totalPrincipal);
+        
+        return ResponseEntity.ok(debug);
+    }
+    
+    @PostMapping("/fix-principal-amounts")
+    public ResponseEntity<Map<String, Object>> fixPrincipalAmounts() {
+        List<Transaction> allTransactions = transactionService.findAll();
+        int fixedCount = 0;
+        
+        for (Transaction transaction : allTransactions) {
+            // Solo corregir transacciones que tienen principalAmount diferente al amount
+            if (transaction.getPrincipalAmount() != null && 
+                transaction.getAmount() != null &&
+                transaction.getPrincipalAmount().compareTo(transaction.getAmount()) != 0) {
+                
+                // Corregir: principalAmount debe ser igual al amount total
+                transaction.setPrincipalAmount(transaction.getAmount());
+                transactionService.save(transaction);
+                fixedCount++;
+            }
+        }
+        
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("message", "Transacciones corregidas exitosamente");
+        result.put("totalTransactions", allTransactions.size());
+        result.put("fixedTransactions", fixedCount);
+        
+        return ResponseEntity.ok(result);
     }
 }

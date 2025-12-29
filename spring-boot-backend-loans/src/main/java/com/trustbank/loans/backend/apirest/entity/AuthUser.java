@@ -23,6 +23,9 @@ public class AuthUser {
     @Column(nullable = false)
     private Boolean enabled = true;
     
+    @Column(nullable = false, length = 20)
+    private String role = "USER";
+    
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
     
@@ -45,6 +48,9 @@ public class AuthUser {
     
     public Boolean getEnabled() { return enabled; }
     public void setEnabled(Boolean enabled) { this.enabled = enabled; }
+    
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

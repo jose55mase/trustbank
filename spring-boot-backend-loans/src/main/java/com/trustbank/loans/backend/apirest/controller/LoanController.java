@@ -46,6 +46,7 @@ public class LoanController {
         return ResponseEntity.ok(total != null ? total : 0.0);
     }
     
+
     @PostMapping
     public Loan createLoan(@RequestBody Loan loan) {
         return loanService.save(loan);
@@ -83,6 +84,16 @@ public class LoanController {
         }
     }
     
+    @PutMapping("/{id}/mark-overdue")
+    public ResponseEntity<Loan> markLoanAsOverdue(@PathVariable Long id) {
+        try {
+            Loan updatedLoan = loanService.updateStatus(id, LoanStatus.OVERDUE);
+            return ResponseEntity.ok(updatedLoan);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
     @PutMapping("/{id}/payment-status")
     public ResponseEntity<Loan> updatePaymentStatus(
             @PathVariable Long id,
@@ -90,6 +101,18 @@ public class LoanController {
             @RequestParam(required = false) Boolean pagoActual) {
         try {
             Loan updatedLoan = loanService.updatePaymentStatus(id, pagoAnterior, pagoActual);
+            return ResponseEntity.ok(updatedLoan);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @PutMapping("/{id}/installments")
+    public ResponseEntity<Loan> updatePaidInstallments(
+            @PathVariable Long id,
+            @RequestParam Integer paidInstallments) {
+        try {
+            Loan updatedLoan = loanService.updatePaidInstallments(id, paidInstallments);
             return ResponseEntity.ok(updatedLoan);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();

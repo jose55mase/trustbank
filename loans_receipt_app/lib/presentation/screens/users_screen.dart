@@ -5,6 +5,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/user.dart';
 import '../molecules/user_card.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/new_user_modal.dart';
 import 'user_detail_screen.dart';
 import '../../data/services/api_service.dart';
 
@@ -72,7 +73,8 @@ class _UsersScreenState extends State<UsersScreen> {
 
     if (searchQuery.isNotEmpty) {
       filteredList = filteredList.where((user) {
-        return user.name.toLowerCase().contains(searchQuery.toLowerCase());
+        return user.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+               user.userCode.toLowerCase().contains(searchQuery.toLowerCase());
       }).toList();
     }
 
@@ -115,7 +117,7 @@ class _UsersScreenState extends State<UsersScreen> {
               children: [
                 TextField(
                   decoration: InputDecoration(
-                    hintText: 'Buscar por nombre',
+                    hintText: 'Buscar por nombre o código',
                     prefixIcon: const Icon(Icons.search),
                     border: const OutlineInputBorder(),
                     suffixIcon: searchQuery.isNotEmpty
@@ -167,9 +169,24 @@ class _UsersScreenState extends State<UsersScreen> {
                       '${filteredUsersList.length} usuario${filteredUsersList.length != 1 ? 's' : ''} encontrado${filteredUsersList.length != 1 ? 's' : ''}',
                       style: AppTextStyles.h2,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.refresh),
-                      onPressed: _loadUsers,
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final result = await NewUserModal.show(context);
+                            if (result == true) {
+                              _loadUsers();
+                            }
+                          },
+                          icon: const Icon(Icons.person_add),
+                          label: const Text('Usuario Nuevo'),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.refresh),
+                          onPressed: _loadUsers,
+                        ),
+                      ],
                     ),
                   ],
                 ),

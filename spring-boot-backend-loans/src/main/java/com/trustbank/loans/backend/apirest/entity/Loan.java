@@ -51,7 +51,13 @@ public class Loan {
     @Column(name = "pago_actual")
     private Boolean pagoActual = false;
     
-    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Column(name = "loan_type", length = 50)
+    private String loanType;
+    
+    @Column(name = "payment_frequency", length = 50)
+    private String paymentFrequency;
+    
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Transaction> transactions;
     
@@ -62,15 +68,42 @@ public class Loan {
     
     // Calculated fields
     public BigDecimal getTotalAmount() {
-        return amount.add(amount.multiply(interestRate).divide(BigDecimal.valueOf(100)));
+        if ("Fijo".equals(loanType)) {
+            // Para préstamos fijos: monto + (monto * tasa de interés / 100 * cantidad de cuotas)
+            BigDecimal interestPerInstallment = amount.multiply(interestRate).divide(BigDecimal.valueOf(100));
+            BigDecimal totalInterest = interestPerInstallment.multiply(BigDecimal.valueOf(installments));
+            return amount.add(totalInterest);
+        } else {
+            // Para otros tipos: monto + (monto * tasa de interés / 100)
+            return amount.add(amount.multiply(interestRate).divide(BigDecimal.valueOf(100)));
+        }
     }
     
     public BigDecimal getInstallmentAmount() {
-        return getTotalAmount().divide(BigDecimal.valueOf(installments), 2, BigDecimal.ROUND_HALF_UP);
+        if ("Fijo".equals(loanType)) {
+            // Para préstamos fijos: valor por cuota es la tasa de interés mensual
+            return amount.multiply(interestRate).divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
+        } else {
+            // Para otros tipos: total dividido entre cuotas
+            return getTotalAmount().divide(BigDecimal.valueOf(installments), 2, BigDecimal.ROUND_HALF_UP);
+        }
     }
     
     public BigDecimal getRemainingAmount() {
-        return getInstallmentAmount().multiply(BigDecimal.valueOf(installments - paidInstallments));
+        // Calcular el total pagado en capital desde las transacciones
+        // Solo se resta el principalAmount (capital), NO los intereses
+        BigDecimal totalPrincipalPaid = BigDecimal.ZERO;
+        if (transactions != null && !transactions.isEmpty()) {
+            totalPrincipalPaid = transactions.stream()
+                .filter(t -> t.getPrincipalAmount() != null && t.getPrincipalAmount().compareTo(BigDecimal.ZERO) > 0)
+                .map(Transaction::getPrincipalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        
+        // El monto restante es el monto original menos SOLO el capital pagado
+        // Los intereses se registran por separado y no afectan el saldo del préstamo
+        BigDecimal remaining = amount.subtract(totalPrincipalPaid);
+        return remaining.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : remaining;
     }
     
     // Getters and Setters
@@ -118,4 +151,10 @@ public class Loan {
     
     public Boolean getPagoActual() { return pagoActual; }
     public void setPagoActual(Boolean pagoActual) { this.pagoActual = pagoActual; }
+    
+    public String getLoanType() { return loanType; }
+    public void setLoanType(String loanType) { this.loanType = loanType; }
+    
+    public String getPaymentFrequency() { return paymentFrequency; }
+    public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
 }
