@@ -12,6 +12,13 @@
 
 **Usuario Administrador (acceso completo):**
 ```bash
+curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"daniela","password":"123456","email":"viewer@inversiones.com","role":"VIEWER"}'
+```
+
+**Usuario Administrador (acceso completo):**
+```bash
 curl -k -X  POST https://guardianstrustbank.com:8084/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{"username":"admin2","password":"password123","email":"admin@inversiones.com","role":"ADMIN"}'
