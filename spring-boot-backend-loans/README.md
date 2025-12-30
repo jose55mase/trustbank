@@ -12,14 +12,14 @@
 
 **Usuario Administrador (acceso completo):**
 ```bash
-curl -X POST http://localhost:8082/api/auth/register \
+curl -X POST https://guardianstrustbank.com:8084/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{"username":"admin2","password":"password123","email":"admin@inversiones.com","role":"ADMIN"}'
 ```
 
 **Usuario Visualizador (solo lectura):**
 ```bash
-curl -X POST http://localhost:8082/api/auth/register \
+curl -X POST https://guardianstrustbank.com:8084/api/auth/register \
 -H "Content-Type: application/json" \
 -d '{"username":"viewer","password":"password123","email":"viewer@inversiones.com","role":"VIEWER"}'
 ```
