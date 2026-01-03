@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_text_styles.dart';
+import '../../core/utils/dialog_utils.dart';
 import '../atoms/app_button.dart';
 import '../widgets/app_drawer.dart';
+import '../../data/services/api_service.dart';
+import 'new_loan_screen.dart';
 
 class NewUserScreen extends StatefulWidget {
   const NewUserScreen({super.key});
@@ -12,8 +15,60 @@ class NewUserScreen extends StatefulWidget {
 
 class _NewUserScreenState extends State<NewUserScreen> {
   final nameController = TextEditingController();
+  final userCodeController = TextEditingController();
   final phoneController = TextEditingController();
-  final emailController = TextEditingController();
+  final direccionController = TextEditingController();
+  bool isLoading = false;
+
+  Future<void> _registerUser() async {
+    if (nameController.text.trim().isEmpty ||
+        userCodeController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty ||
+        direccionController.text.trim().isEmpty) {
+      DialogUtils.showWarningDialog(context, 'Campos Incompletos', 'Por favor completa todos los campos antes de continuar.');
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await ApiService.createUser(
+        name: nameController.text.trim(),
+        userCode: userCodeController.text.trim(),
+        phone: phoneController.text.trim(),
+        direccion: direccionController.text.trim(),
+      );
+
+      if (mounted) {
+        DialogUtils.showSuccessDialog(
+          context, 
+          '¡Usuario Creado!', 
+          'El usuario ha sido registrado exitosamente. ¿Deseas registrar un préstamo ahora?',
+          onClose: () {
+            Navigator.pop(context); // Close dialog
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NewLoanScreen(),
+              ),
+            );
+          }
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        DialogUtils.showErrorDialog(context, 'Error al Registrar', 'Ocurrió un problema al registrar el usuario. Verifica los datos e intenta nuevamente.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +96,16 @@ class _NewUserScreenState extends State<NewUserScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
+            controller: userCodeController,
+            decoration: const InputDecoration(
+              labelText: 'Código de Usuario (ej: USR0001)',
+              prefixIcon: Icon(Icons.tag),
+              border: OutlineInputBorder(),
+              hintText: 'USR0001',
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
@@ -51,23 +116,18 @@ class _NewUserScreenState extends State<NewUserScreen> {
           ),
           const SizedBox(height: 16),
           TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
+            controller: direccionController,
+            keyboardType: TextInputType.streetAddress,
             decoration: const InputDecoration(
-              labelText: 'Email',
-              prefixIcon: Icon(Icons.email),
+              labelText: 'Dirección',
+              prefixIcon: Icon(Icons.location_on),
               border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 32),
           AppButton(
-            text: 'Registrar Usuario',
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Usuario registrado exitosamente')),
-              );
-              Navigator.pop(context);
-            },
+            text: isLoading ? 'Registrando...' : 'Registrar Usuario',
+            onPressed: isLoading ? null : _registerUser,
           ),
         ],
       ),

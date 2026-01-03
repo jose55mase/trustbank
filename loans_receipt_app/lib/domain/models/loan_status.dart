@@ -1,0 +1,1 @@
+enum LoanStatus { active, completed, overdue }

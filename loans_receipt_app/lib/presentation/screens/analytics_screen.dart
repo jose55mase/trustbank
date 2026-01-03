@@ -3,7 +3,9 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../data/dummy_data.dart';
+import '../../data/services/api_service.dart';
+import '../../domain/models/loan.dart';
+import '../../domain/models/loan_status.dart';
 import '../widgets/app_drawer.dart';
 
 class AnalyticsScreen extends StatefulWidget {
@@ -15,14 +17,129 @@ class AnalyticsScreen extends StatefulWidget {
 
 class _AnalyticsScreenState extends State<AnalyticsScreen> {
   String selectedPeriod = 'Diario';
+  List<Loan> loans = [];
+  List<dynamic> transactions = [];
+  List<dynamic> expenses = [];
+  bool isLoading = true;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+  
+  Future<void> _loadData() async {
+    try {
+      final loansData = await ApiService.getAllLoansAsModels();
+      final transactionsData = await ApiService.getAllTransactions();
+      final expensesData = await ApiService.getAllExpenses();
+      setState(() {
+        loans = loansData;
+        transactions = transactionsData;
+        expenses = expensesData.map((e) => e.toJson()).toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        loans = [];
+        transactions = [];
+        expenses = [];
+        isLoading = false;
+      });
+    }
+  }
+  
+  List<Loan> _getDummyLoans() {
+    return [
+      Loan(
+        id: '1',
+        userId: '1',
+        amount: 5000000.0,
+        interestRate: 15.0,
+        installments: 12,
+        paidInstallments: 5,
+        startDate: DateTime(2024, 1, 15),
+        status: LoanStatus.active,
+        remainingAmount: 2500000.0,
+      ),
+      Loan(
+        id: '2',
+        userId: '2',
+        amount: 10000000.0,
+        interestRate: 12.0,
+        installments: 24,
+        paidInstallments: 10,
+        startDate: DateTime(2024, 1, 20),
+        status: LoanStatus.active,
+        remainingAmount: 6000000.0,
+      ),
+      Loan(
+        id: '3',
+        userId: '1',
+        amount: 7500000.0,
+        interestRate: 14.0,
+        installments: 18,
+        paidInstallments: 8,
+        startDate: DateTime(2024, 2, 1),
+        status: LoanStatus.active,
+        remainingAmount: 4000000.0,
+      ),
+    ];
+  }
+  
+  List<dynamic> _getDummyTransactions() {
+    return [
+      {
+        'id': 1,
+        'amount': 520833.33,
+        'interestAmount': 62500.00,
+        'principalAmount': 458333.33,
+        'date': '2024-02-15T10:00:00',
+        'loan': {'id': 1}
+      },
+      {
+        'id': 2,
+        'amount': 520833.33,
+        'interestAmount': 60729.17,
+        'principalAmount': 460104.16,
+        'date': '2024-03-15T10:00:00',
+        'loan': {'id': 1}
+      },
+      {
+        'id': 3,
+        'amount': 520833.33,
+        'interestAmount': 100000.00,
+        'principalAmount': 420833.33,
+        'date': '2024-02-20T14:00:00',
+        'loan': {'id': 2}
+      },
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Análisis'),
+        ),
+        drawer: const AppDrawer(),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Análisis de Ganancias'),
+        title: const Text('Análisis'),
       ),
       drawer: const AppDrawer(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showFinancialSummaryModal,
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.analytics, color: Colors.white),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -60,9 +177,184 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           ),
           const SizedBox(height: 16),
           _buildSummaryCard(),
+          const SizedBox(height: 16),
+          _buildLoansSummary(),
+          const SizedBox(height: 16),
+          _buildTransactionsSummary(),
         ],
       ),
     );
+  }
+  
+  DateTime? startDate = DateTime.now();
+  DateTime? endDate = DateTime.now();
+  
+  void _showFinancialSummaryModal() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Resumen Financiero'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: startDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              startDate = date;
+                            });
+                          }
+                        },
+                        child: Text(startDate != null 
+                            ? 'Desde: ${DateFormat('dd/MM/yyyy').format(startDate!)}'
+                            : 'Fecha Inicio'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: endDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (date != null) {
+                            setState(() {
+                              endDate = date;
+                            });
+                          }
+                        },
+                        child: Text(endDate != null 
+                            ? 'Hasta: ${DateFormat('dd/MM/yyyy').format(endDate!)}'
+                            : 'Fecha Fin'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildModalSummaryItem(
+                  'Entradas',
+                  '\$${NumberFormat('#,##0', 'es_CO').format(_calculateEntradasByDate())}',
+                  Icons.trending_up,
+                  Colors.green,
+                ),
+                const SizedBox(height: 16),
+                _buildModalSummaryItem(
+                  'Salidas',
+                  '\$${NumberFormat('#,##0', 'es_CO').format(_calculateSalidasByDate())}',
+                  Icons.trending_down,
+                  Colors.red,
+                ),
+                const SizedBox(height: 16),
+                _buildModalSummaryItem(
+                  'Gastos',
+                  '\$${NumberFormat('#,##0', 'es_CO').format(_calculateGastosByDate())}',
+                  Icons.receipt,
+                  Colors.orange,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildModalSummaryItem(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.h3.copyWith(color: color)),
+                Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  double _calculateEntradasByDate() {
+    if (startDate == null || endDate == null) {
+      return _getTotalInterestFromTransactions();
+    }
+    
+    return transactions.where((transaction) {
+      final transactionDate = DateTime.parse(transaction['date']);
+      return transactionDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+             transactionDate.isBefore(endDate!.add(const Duration(days: 1)));
+    }).fold<double>(0, (sum, transaction) {
+      final interestAmount = transaction['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
+  }
+  
+  double _calculateSalidasByDate() {
+    if (startDate == null || endDate == null) {
+      return _calculateSalidas();
+    }
+    
+    return loans.where((loan) {
+      return loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+             loan.startDate.isBefore(endDate!.add(const Duration(days: 1)));
+    }).fold<double>(0, (sum, loan) => sum + loan.amount);
+  }
+  
+  double _calculateSalidas() {
+    return loans.fold<double>(0, (sum, loan) => sum + loan.amount);
+  }
+  
+  double _calculateGastosByDate() {
+    if (startDate == null || endDate == null) {
+      return _calculateGastos();
+    }
+    
+    return expenses.where((expense) {
+      final expenseDate = DateTime.parse(expense['expenseDate']);
+      return expenseDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+             expenseDate.isBefore(endDate!.add(const Duration(days: 1)));
+    }).fold<double>(0, (sum, expense) {
+      final amount = expense['amount'] ?? 0.0;
+      return sum + (amount as num).toDouble();
+    });
+  }
+  
+  double _calculateGastos() {
+    return expenses.fold<double>(0, (sum, expense) {
+      final amount = expense['amount'] ?? 0.0;
+      return sum + (amount as num).toDouble();
+    });
   }
 
   Widget _buildChart() {
@@ -106,50 +398,111 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 
   List<ChartData> _getChartData() {
-    final totalProfit = DummyData.loans.fold<double>(0, (sum, loan) => sum + loan.profit);
+    final totalInterest = _getTotalInterestFromTransactions();
     
     switch (selectedPeriod) {
       case 'Diario':
-        return [
-          ChartData('Lun', totalProfit * 0.12),
-          ChartData('Mar', totalProfit * 0.15),
-          ChartData('Mié', totalProfit * 0.18),
-          ChartData('Jue', totalProfit * 0.14),
-          ChartData('Vie', totalProfit * 0.20),
-          ChartData('Sáb', totalProfit * 0.11),
-          ChartData('Dom', totalProfit * 0.10),
-        ];
+        return _getDailyData(totalInterest);
       case '15 Días':
-        return [
-          ChartData('1-5', totalProfit * 0.35),
-          ChartData('6-10', totalProfit * 0.40),
-          ChartData('11-15', totalProfit * 0.25),
-        ];
+        return _getBiweeklyData(totalInterest);
       case 'Mensual':
-        return [
-          ChartData('Ene', totalProfit * 0.08),
-          ChartData('Feb', totalProfit * 0.09),
-          ChartData('Mar', totalProfit * 0.11),
-          ChartData('Abr', totalProfit * 0.10),
-          ChartData('May', totalProfit * 0.12),
-          ChartData('Jun', totalProfit * 0.09),
-          ChartData('Jul', totalProfit * 0.08),
-          ChartData('Ago', totalProfit * 0.10),
-          ChartData('Sep', totalProfit * 0.09),
-          ChartData('Oct', totalProfit * 0.07),
-          ChartData('Nov', totalProfit * 0.04),
-          ChartData('Dic', totalProfit * 0.03),
-        ];
+        return _getMonthlyData(totalInterest);
       default:
         return [];
     }
+  }
+  
+  double _getTotalInterestFromTransactions() {
+    return transactions.fold<double>(0, (sum, transaction) {
+      final interestAmount = transaction['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
+  }
+  
+  List<ChartData> _getDailyData(double totalInterest) {
+    final now = DateTime.now();
+    final data = <ChartData>[];
+    
+    for (int i = 6; i >= 0; i--) {
+      final date = now.subtract(Duration(days: i));
+      final dayName = DateFormat('EEE').format(date);
+      final dayInterest = _getInterestForDate(date);
+      data.add(ChartData(dayName, dayInterest));
+    }
+    
+    return data;
+  }
+  
+  List<ChartData> _getBiweeklyData(double totalInterest) {
+    final now = DateTime.now();
+    final data = <ChartData>[];
+    
+    for (int period = 1; period <= 3; period++) {
+      final startDay = (period - 1) * 5 + 1;
+      final endDay = period * 5;
+      final periodInterest = _getInterestForPeriod(startDay, endDay);
+      data.add(ChartData('$startDay-$endDay', periodInterest));
+    }
+    
+    return data;
+  }
+  
+  List<ChartData> _getMonthlyData(double totalInterest) {
+    final now = DateTime.now();
+    final data = <ChartData>[];
+    
+    for (int i = 11; i >= 0; i--) {
+      final month = DateTime(now.year, now.month - i, 1);
+      final monthName = DateFormat('MMM').format(month);
+      final monthInterest = _getInterestForMonth(month);
+      data.add(ChartData(monthName, monthInterest));
+    }
+    
+    return data;
+  }
+  
+  double _getInterestForDate(DateTime date) {
+    return transactions.where((transaction) {
+      final transactionDate = DateTime.parse(transaction['date']);
+      return transactionDate.year == date.year &&
+             transactionDate.month == date.month &&
+             transactionDate.day == date.day;
+    }).fold<double>(0, (sum, transaction) {
+      final interestAmount = transaction['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
+  }
+  
+  double _getInterestForMonth(DateTime month) {
+    return transactions.where((transaction) {
+      final transactionDate = DateTime.parse(transaction['date']);
+      return transactionDate.year == month.year &&
+             transactionDate.month == month.month;
+    }).fold<double>(0, (sum, transaction) {
+      final interestAmount = transaction['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
+  }
+  
+  double _getInterestForPeriod(int startDay, int endDay) {
+    final now = DateTime.now();
+    return transactions.where((transaction) {
+      final transactionDate = DateTime.parse(transaction['date']);
+      return transactionDate.year == now.year &&
+             transactionDate.month == now.month &&
+             transactionDate.day >= startDay &&
+             transactionDate.day <= endDay;
+    }).fold<double>(0, (sum, transaction) {
+      final interestAmount = transaction['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
   }
 
   Widget _buildSummaryCard() {
     final data = _getChartData();
     final total = data.fold<double>(0, (sum, item) => sum + item.value);
     final average = total / data.length;
-    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO');
+    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
 
     return Card(
       child: Padding(
@@ -173,6 +526,131 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   value: currencyFormat.format(average),
                   icon: Icons.trending_up,
                   color: AppColors.secondary,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLoansSummary() {
+    final activeLoans = loans.where((loan) => loan.status == LoanStatus.active).length;
+    final overdueLoans = loans.where((loan) => loan.status == LoanStatus.overdue).length;
+    final completedLoans = loans.where((loan) => loan.status == LoanStatus.completed).length;
+    final totalLent = loans.fold<double>(0, (sum, loan) => sum + loan.amount);
+    final totalProfit = _getTotalInterestFromTransactions();
+    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
+    
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resumen de Préstamos', style: AppTextStyles.h3),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SummaryItem(
+                  label: 'Activos',
+                  value: activeLoans.toString(),
+                  icon: Icons.trending_up,
+                  color: AppColors.success,
+                ),
+                _SummaryItem(
+                  label: 'Vencidos',
+                  value: overdueLoans.toString(),
+                  icon: Icons.warning,
+                  color: AppColors.error,
+                ),
+                _SummaryItem(
+                  label: 'Completados',
+                  value: completedLoans.toString(),
+                  icon: Icons.check_circle,
+                  color: AppColors.primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SummaryItem(
+                  label: 'Total Prestado',
+                  value: currencyFormat.format(totalLent),
+                  icon: Icons.account_balance,
+                  color: AppColors.secondary,
+                ),
+                _SummaryItem(
+                  label: 'Ganancia Esperada',
+                  value: currencyFormat.format(totalProfit),
+                  icon: Icons.attach_money,
+                  color: Colors.green,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildTransactionsSummary() {
+    final totalTransactions = transactions.length;
+    final totalInterest = _getTotalInterestFromTransactions();
+    final totalPrincipal = transactions.fold<double>(0, (sum, transaction) {
+      final principalAmount = transaction['principalAmount'] ?? 0.0;
+      return sum + (principalAmount as num).toDouble();
+    });
+    final totalAmount = transactions.fold<double>(0, (sum, transaction) {
+      final amount = transaction['amount'] ?? 0.0;
+      return sum + (amount as num).toDouble();
+    });
+    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
+    
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Resumen de Transacciones', style: AppTextStyles.h3),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SummaryItem(
+                  label: 'Total Pagos',
+                  value: totalTransactions.toString(),
+                  icon: Icons.payment,
+                  color: AppColors.primary,
+                ),
+                _SummaryItem(
+                  label: 'Intereses Cobrados',
+                  value: currencyFormat.format(totalInterest),
+                  icon: Icons.trending_up,
+                  color: Colors.green,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _SummaryItem(
+                  label: 'Capital Recuperado',
+                  value: currencyFormat.format(totalPrincipal),
+                  icon: Icons.account_balance_wallet,
+                  color: AppColors.secondary,
+                ),
+                _SummaryItem(
+                  label: 'Total Recaudado',
+                  value: currencyFormat.format(totalAmount),
+                  icon: Icons.attach_money,
+                  color: Colors.orange,
                 ),
               ],
             ),

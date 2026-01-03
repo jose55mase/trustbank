@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
-import '../../domain/models/loan.dart';
+import '../../domain/models/loan_status.dart';
 
 class StatusBadge extends StatelessWidget {
   final LoanStatus status;
@@ -38,7 +38,7 @@ class StatusBadge extends StatelessWidget {
       case LoanStatus.active:
         return _StatusConfig('Activo', AppColors.success);
       case LoanStatus.completed:
-        return _StatusConfig('Completado', AppColors.info);
+        return _StatusConfig('Completado', AppColors.primary);
       case LoanStatus.overdue:
         return _StatusConfig('Vencido', AppColors.error);
     }

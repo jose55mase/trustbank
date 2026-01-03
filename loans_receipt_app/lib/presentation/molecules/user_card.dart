@@ -9,6 +9,7 @@ class UserCard extends StatelessWidget {
   final int activeLoans;
   final double totalLent;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const UserCard({
     super.key,
@@ -16,6 +17,7 @@ class UserCard extends StatelessWidget {
     required this.activeLoans,
     required this.totalLent,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -35,7 +37,7 @@ class UserCard extends StatelessWidget {
                 radius: 28,
                 backgroundColor: AppColors.primary.withOpacity(0.1),
                 child: Text(
-                  user.name[0].toUpperCase(),
+                  user.userCode.isNotEmpty ? user.userCode[0].toUpperCase() : user.name[0].toUpperCase(),
                   style: AppTextStyles.h3.copyWith(color: AppColors.primary),
                 ),
               ),
@@ -44,9 +46,9 @@ class UserCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(user.name, style: AppTextStyles.h3),
+                    Text(user.userCode, style: AppTextStyles.h3),
                     const SizedBox(height: 4),
-                    Text(user.phone, style: AppTextStyles.caption),
+                    Text('${user.name} • ${user.phone}', style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -67,6 +69,37 @@ class UserCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (onDelete != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: AppColors.error),
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Eliminar Usuario'),
+                        content: Text('¿Estás seguro de eliminar a ${user.name}?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancelar'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              onDelete!();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                            ),
+                            child: const Text('Eliminar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ]
             ],
           ),
         ),

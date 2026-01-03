@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../data/dummy_data.dart';
-import '../../domain/models/loan.dart';
+import '../../domain/models/loan_status.dart';
 import '../widgets/app_drawer.dart';
 
 class LoansAnalyticsScreen extends StatefulWidget {

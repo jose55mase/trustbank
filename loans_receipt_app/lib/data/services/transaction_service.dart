@@ -18,7 +18,7 @@ class TransactionService {
     required double amount,
     required PaymentMethod paymentMethod,
     String? notes,
-    LoanType? loanType,
+    String? loanType,
   }) {
     final transaction = Transaction(
       id: 'T${DateTime.now().millisecondsSinceEpoch}',
@@ -41,7 +41,7 @@ class TransactionService {
     required String userId,
     required double amount,
     String? notes,
-    LoanType? loanType,
+    String? loanType,
   }) {
     final transaction = Transaction(
       id: 'T${DateTime.now().millisecondsSinceEpoch}',
@@ -57,6 +57,12 @@ class TransactionService {
     
     addTransaction(transaction);
     return transaction;
+  }
+
+  static double getTotalPayments() {
+    return _transactions
+        .where((t) => t.type == TransactionType.payment)
+        .fold(0.0, (sum, transaction) => sum + transaction.amount);
   }
 
   static Map<String, double> calculateAccountingSummary(List<Transaction> transactions) {
