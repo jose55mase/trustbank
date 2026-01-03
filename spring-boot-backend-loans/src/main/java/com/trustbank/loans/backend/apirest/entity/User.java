@@ -33,7 +33,10 @@ public class User {
     private List<Loan> loans;
     
     public User() {
-        this.registrationDate = LocalDateTime.now();
+        // La fecha de registro se establecerá manualmente o por defecto será la fecha actual
+        if (this.registrationDate == null) {
+            this.registrationDate = LocalDateTime.now();
+        }
     }
     
     // Getters and Setters

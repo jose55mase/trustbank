@@ -18,7 +18,22 @@ class _NewUserScreenState extends State<NewUserScreen> {
   final userCodeController = TextEditingController();
   final phoneController = TextEditingController();
   final direccionController = TextEditingController();
+  DateTime? selectedDate;
   bool isLoading = false;
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+      });
+    }
+  }
 
   Future<void> _registerUser() async {
     if (nameController.text.trim().isEmpty ||
@@ -39,6 +54,7 @@ class _NewUserScreenState extends State<NewUserScreen> {
         userCode: userCodeController.text.trim(),
         phone: phoneController.text.trim(),
         direccion: direccionController.text.trim(),
+        registrationDate: selectedDate,
       );
 
       if (mounted) {
@@ -122,6 +138,32 @@ class _NewUserScreenState extends State<NewUserScreen> {
               labelText: 'Dirección',
               prefixIcon: Icon(Icons.location_on),
               border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: _selectDate,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: Colors.grey),
+                  const SizedBox(width: 12),
+                  Text(
+                    selectedDate != null
+                        ? 'Fecha de Registro: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                        : 'Seleccionar Fecha de Registro (Opcional)',
+                    style: TextStyle(
+                      color: selectedDate != null ? Colors.black : Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 32),
