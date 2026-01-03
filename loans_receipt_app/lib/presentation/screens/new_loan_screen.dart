@@ -390,7 +390,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nuevo Préstamo'),
+        title: const Text('Nuevo Préstamooo'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -422,7 +422,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
               child: Center(child: CircularProgressIndicator()),
             ),
           const SizedBox(height: 16),
-          TextField(
+          /*TextField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -431,7 +431,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
               prefixIcon: Icon(Icons.phone),
               border: OutlineInputBorder(),
             ),
-          ),
+          ),*/
           const SizedBox(height: 16),
           TextField(
             controller: amountController,

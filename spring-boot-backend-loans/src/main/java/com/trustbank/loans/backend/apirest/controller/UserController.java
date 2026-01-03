@@ -1,10 +1,12 @@
 package com.trustbank.loans.backend.apirest.controller;
 
+import com.trustbank.loans.backend.apirest.dto.UserRequest;
 import com.trustbank.loans.backend.apirest.entity.User;
 import com.trustbank.loans.backend.apirest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -28,7 +30,20 @@ public class UserController {
     }
     
     @PostMapping
-    public User createUser(@RequestBody User user) {
+    public User createUser(@RequestBody UserRequest userRequest) {
+        User user = new User();
+        user.setName(userRequest.getName());
+        user.setUserCode(userRequest.getUserCode());
+        user.setPhone(userRequest.getPhone());
+        user.setDireccion(userRequest.getDireccion());
+        
+        // Si se proporciona fecha de registro, usarla; si no, usar fecha actual
+        if (userRequest.getRegistrationDate() != null) {
+            user.setRegistrationDate(userRequest.getRegistrationDate());
+        } else {
+            user.setRegistrationDate(LocalDateTime.now());
+        }
+        
         return userService.save(user);
     }
     

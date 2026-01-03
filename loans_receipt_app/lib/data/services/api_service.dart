@@ -7,8 +7,8 @@ import '../../domain/models/expense_model.dart';
 import '../../services/auth_service.dart';
 
 class ApiService {
-  //static const String baseUrl = 'http://localhost:8082/api';
-  static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
+  static const String baseUrl = 'http://localhost:8082/api';
+  //static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
 
   static Future<bool> login({
     required String username,
@@ -44,20 +44,27 @@ class ApiService {
     required String userCode,
     required String phone,
     required String direccion,
+    DateTime? registrationDate,
   }) async {
     final url = Uri.parse('$baseUrl/users');
+    
+    final requestBody = {
+      'name': name,
+      'userCode': userCode,
+      'phone': phone,
+      'direccion': direccion,
+    };
+    
+    if (registrationDate != null) {
+      requestBody['registrationDate'] = registrationDate.toIso8601String();
+    }
     
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'name': name,
-        'userCode': userCode,
-        'phone': phone,
-        'direccion': direccion,
-      }),
+      body: jsonEncode(requestBody),
     );
     
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -132,6 +139,16 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Error al crear préstamo: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> deleteLoan(String loanId) async {
+    final url = Uri.parse('$baseUrl/loans/$loanId');
+    
+    final response = await http.delete(url);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar préstamo: ${response.statusCode}');
     }
   }
   

@@ -202,7 +202,7 @@ class _AppDrawerState extends State<AppDrawer> {
               );
             },
           ),
-          _buildMenuItem(
+          /*_buildMenuItem(
             icon: Icons.analytics,
             title: 'Análisis de Préstamos',
             iconColor: Colors.blue,
@@ -214,7 +214,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 MaterialPageRoute(builder: (_) => const LoansAnalyticsScreen()),
               );
             },
-          ),
+          ),*/
           _buildMenuItem(
             icon: Icons.receipt,
             title: 'Gastos Diarios',

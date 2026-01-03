@@ -47,6 +47,11 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
             onPressed: () => _showEditDialog(context),
             tooltip: 'Editar Préstamo',
           ),
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.red),
+            onPressed: () => _showDeleteDialog(context),
+            tooltip: 'Eliminar Préstamo',
+          ),
         ],
       ),
       drawer: const AppDrawer(),
@@ -759,6 +764,86 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
 
   void _reloadLoanData(BuildContext context) async {
     await _refreshLoanData();
+  }
+
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red, size: 28),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Eliminar Préstamo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '¿Estás seguro de que deseas eliminar este préstamo?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text('ID: ${currentLoan.id}'),
+            Text('Usuario: ${widget.user.name}'),
+            Text('Monto: \$ ${NumberFormat('#,###', 'es_CO').format(currentLoan.amount)}'),
+            const SizedBox(height: 12),
+            const Text(
+              'Esta acción no se puede deshacer y eliminará todas las transacciones asociadas.',
+              style: TextStyle(color: Colors.red, fontSize: 14),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteLoan(context);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteLoan(BuildContext context) async {
+    try {
+      await ApiService.deleteLoan(currentLoan.id);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Préstamo eliminado exitosamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      // Regresar a la pantalla anterior
+      Navigator.pop(context, true); // true indica que se eliminó el préstamo
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar préstamo: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   void _showEditDialog(BuildContext context) {
