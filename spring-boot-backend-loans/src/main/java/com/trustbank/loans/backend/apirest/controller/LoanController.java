@@ -1,11 +1,15 @@
 package com.trustbank.loans.backend.apirest.controller;
 
+import com.trustbank.loans.backend.apirest.dto.LoanRequest;
 import com.trustbank.loans.backend.apirest.entity.Loan;
 import com.trustbank.loans.backend.apirest.entity.LoanStatus;
+import com.trustbank.loans.backend.apirest.entity.User;
 import com.trustbank.loans.backend.apirest.service.LoanService;
+import com.trustbank.loans.backend.apirest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -15,6 +19,9 @@ public class LoanController {
     
     @Autowired
     private LoanService loanService;
+    
+    @Autowired
+    private UserService userService;
     
     @GetMapping
     public List<Loan> getAllLoans() {
@@ -48,7 +55,25 @@ public class LoanController {
     
 
     @PostMapping
-    public Loan createLoan(@RequestBody Loan loan) {
+    public Loan createLoan(@RequestBody LoanRequest loanRequest) {
+        User user = userService.findById(loanRequest.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        
+        Loan loan = new Loan();
+        loan.setUser(user);
+        loan.setAmount(loanRequest.getAmount());
+        loan.setInterestRate(loanRequest.getInterestRate());
+        loan.setInstallments(loanRequest.getInstallments());
+        loan.setLoanType(loanRequest.getLoanType());
+        loan.setPaymentFrequency(loanRequest.getPaymentFrequency());
+        
+        // Si se proporciona fecha de inicio, usarla; si no, usar fecha actual
+        if (loanRequest.getStartDate() != null) {
+            loan.setStartDate(loanRequest.getStartDate());
+        } else {
+            loan.setStartDate(LocalDateTime.now());
+        }
+        
         return loanService.save(loan);
     }
     

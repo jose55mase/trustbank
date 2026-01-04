@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 
                 // Default credentials info
-                Container(
+                /*Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.secondary.withOpacity(0.1),
@@ -195,7 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                ),
+                ),*/
               ],
             ),
           ),

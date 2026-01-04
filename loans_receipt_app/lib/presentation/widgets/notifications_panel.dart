@@ -27,6 +27,10 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
 
   Future<void> _loadOverdueLoans() async {
     try {
+      // Primero ejecutar la verificación de préstamos vencidos
+      await ApiService.checkOverdueLoans();
+      
+      // Luego cargar los préstamos vencidos
       final loans = await ApiService.getOverdueLoans();
       setState(() {
         overdueLoans = loans;

@@ -153,12 +153,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.success.withOpacity(0.1),
+                                  color: _getStatusColor(loan.status.name).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _getStatusColor(loan.status.name),
+                                    width: 1,
+                                  ),
                                 ),
                                 child: Text(
-                                  loan.status.name.toUpperCase(),
-                                  style: TextStyle(color: AppColors.success, fontSize: 12),
+                                  _getStatusText(loan.status.name),
+                                  style: TextStyle(
+                                    color: _getStatusColor(loan.status.name),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -171,7 +179,38 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       Text('Monto: \$${NumberFormat('#,###').format(loan.amount)}'),
                       Text('Tasa de Interés: ${loan.interestRate}%'),
                       Text('Cuotas: ${loan.paidInstallments}/${loan.installments}'),
-                      Text('Fecha de Inicio: ${DateFormat('dd/MM/yyyy').format(loan.startDate)}'),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Inicio: ${DateFormat('dd/MM/yyyy').format(loan.startDate)}',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                      if (_calculateNextPaymentDate(loan) != null) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              size: 14,
+                              color: loan.status.name.toLowerCase() == 'overdue' ? Colors.red : Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Próximo pago: ${DateFormat('dd/MM/yyyy').format(_calculateNextPaymentDate(loan)!)}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: loan.status.name.toLowerCase() == 'overdue' ? Colors.red : Colors.orange,
+                                fontWeight: loan.status.name.toLowerCase() == 'overdue' ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -182,7 +221,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Pago Ant: ${loan.pagoAnterior ? "Pagado" : "Pendiente"}',
+                            'Pago Anterior: ${loan.pagoAnterior ? "Pagado" : "Pendiente"}',
                             style: TextStyle(
                               fontSize: 12,
                               color: loan.pagoAnterior ? AppColors.success : AppColors.error,
@@ -196,7 +235,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Pago Act: ${loan.pagoActual ? "Pagado" : "Pendiente"}',
+                            'Pago Actual: ${loan.pagoActual ? "Pagado" : "Pendiente"}',
                             style: TextStyle(
                               fontSize: 12,
                               color: loan.pagoActual ? AppColors.success : AppColors.warning,
@@ -227,6 +266,81 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'overdue':
+        return Colors.red;
+      case 'completed':
+        return Colors.blue;
+      case 'cancelled':
+        return Colors.grey;
+      default:
+        return AppColors.primary;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return 'ACTIVO';
+      case 'overdue':
+        return 'VENCIDO';
+      case 'completed':
+        return 'COMPLETADO';
+      case 'cancelled':
+        return 'CANCELADO';
+      default:
+        return status.toUpperCase();
+    }
+  }
+
+  DateTime? _calculateNextPaymentDate(Loan loan) {
+    if (loan.paidInstallments >= loan.installments) {
+      return null; // Préstamo completamente pagado
+    }
+
+    final startDate = loan.startDate;
+    final paymentFrequency = loan.paymentFrequency;
+    final nextInstallmentNumber = loan.paidInstallments + 1;
+
+    switch (paymentFrequency) {
+      case 'Mensual 15':
+        return DateTime(startDate.year, startDate.month + nextInstallmentNumber, 15);
+      case 'Mensual 30':
+        return DateTime(startDate.year, startDate.month + nextInstallmentNumber + 1, 1);
+      case 'Quincenal':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 15);
+        } else {
+          final monthsToAdd = nextInstallmentNumber ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd + 1, 1);
+        }
+      case 'Quincenal 5':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
+        } else {
+          final monthsToAdd = (nextInstallmentNumber - 2) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
+        }
+      case 'Quincenal 20':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
+        } else {
+          final monthsToAdd = nextInstallmentNumber ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
+        }
+      case 'Semanal':
+        return startDate.add(Duration(days: 7 * nextInstallmentNumber));
+      default:
+        return null;
+    }
   }
 
   void _showPaymentModal(BuildContext context) {

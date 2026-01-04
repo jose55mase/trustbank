@@ -19,6 +19,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   String? selectedUserId;
   String? paymentFrequency = 'Mensual 30';
   String? loanType;
+  DateTime? selectedDate;
   final amountController = TextEditingController();
   final interestController = TextEditingController();
   final installmentsController = TextEditingController();
@@ -37,6 +38,21 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   }
   
 
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked != null && picked != selectedDate) {
+      setState(() {
+        selectedDate = picked;
+        // Forzar recálculo de fechas de pago
+      });
+    }
+  }
 
   Future<void> _loadUsers() async {
     try {
@@ -76,7 +92,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     if (installments <= 0) return [];
     
     List<DateTime> dates = [];
-    DateTime loanDate = DateTime.now(); // Fecha del préstamo (hoy)
+    DateTime loanDate = selectedDate ?? DateTime.now(); // Usar fecha seleccionada o actual
     DateTime firstPaymentDate;
     
     switch (paymentFrequency) {
@@ -265,6 +281,8 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     final dates = _calculatePaymentDates();
     if (dates.isEmpty) return const SizedBox.shrink();
     
+    final loanDate = selectedDate ?? DateTime.now();
+    
     Color color;
     String title;
     
@@ -291,7 +309,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         break;
       case 'Semanal':
         color = Colors.red;
-        title = 'Fechas de Pago (Semanal - ${_getWeekdayName(DateTime.now().weekday)}):';
+        title = 'Fechas de Pago (Semanal - ${_getWeekdayName(loanDate.weekday)}):';
         break;
       default:
         return const SizedBox.shrink();
@@ -358,6 +376,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         installments: installments,
         loanType: loanType,
         paymentFrequency: paymentFrequency,
+        startDate: selectedDate,
       );
       
       if (mounted) {
@@ -462,6 +481,32 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             decoration: const InputDecoration(
               labelText: 'Número de Cuotas *',
               border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          GestureDetector(
+            onTap: _selectDate,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: Colors.grey),
+                  const SizedBox(width: 12),
+                  Text(
+                    selectedDate != null
+                        ? 'Fecha de Creación: ${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                        : 'Seleccionar Fecha de Creación (Opcional)',
+                    style: TextStyle(
+                      color: selectedDate != null ? Colors.black : Colors.grey[600],
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 16),
