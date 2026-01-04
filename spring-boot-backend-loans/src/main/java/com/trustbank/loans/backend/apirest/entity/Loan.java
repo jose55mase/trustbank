@@ -62,7 +62,10 @@ public class Loan {
     private List<Transaction> transactions;
     
     public Loan() {
-        this.startDate = LocalDateTime.now();
+        // La fecha de inicio se establecerá manualmente o por defecto será la fecha actual
+        if (this.startDate == null) {
+            this.startDate = LocalDateTime.now();
+        }
         this.status = LoanStatus.ACTIVE;
     }
     

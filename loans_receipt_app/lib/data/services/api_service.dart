@@ -117,22 +117,29 @@ class ApiService {
     required int installments,
     String? loanType,
     String? paymentFrequency,
+    DateTime? startDate,
   }) async {
     final url = Uri.parse('$baseUrl/loans');
+    
+    final requestBody = {
+      'user': {'id': int.parse(userId)},
+      'amount': amount,
+      'interestRate': interestRate,
+      'installments': installments,
+      'loanType': loanType,
+      'paymentFrequency': paymentFrequency,
+    };
+    
+    if (startDate != null) {
+      requestBody['startDate'] = startDate.toIso8601String();
+    }
     
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'user': {'id': int.parse(userId)},
-        'amount': amount,
-        'interestRate': interestRate,
-        'installments': installments,
-        'loanType': loanType,
-        'paymentFrequency': paymentFrequency,
-      }),
+      body: jsonEncode(requestBody),
     );
     
     if (response.statusCode == 200 || response.statusCode == 201) {

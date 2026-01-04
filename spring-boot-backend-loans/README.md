@@ -10,6 +10,13 @@
 
 ### Crear Usuarios del Sistema:
 
+**Usuario ADMIND (Solo para desarrollo):**
+```bash
+curl -X POST http://localhost:8082/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"username":"develop","password":"12345","email":"viewer@inversiones.com","role":"VIEWER"}'
+```
+
 **Usuario Administrador (acceso completo):**
 ```bash
 curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \

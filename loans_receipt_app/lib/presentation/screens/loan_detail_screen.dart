@@ -140,6 +140,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
 
                   const Divider(height: 24),
                   InfoRow(label: 'Fecha de Inicio', value: DateFormat('dd/MM/yyyy').format(currentLoan.startDate)),
+                  if (_calculateNextPaymentDate(currentLoan) != null)
+                    InfoRow(
+                      label: 'Próxima Fecha de Pago',
+                      value: DateFormat('dd/MM/yyyy').format(_calculateNextPaymentDate(currentLoan)!),
+                      valueColor: currentLoan.status.name.toLowerCase() == 'overdue' ? AppColors.error : AppColors.warning,
+                    ),
                   const SizedBox(height: 16),
                   const Text('Progreso', style: AppTextStyles.caption),
                   const SizedBox(height: 8),
@@ -968,6 +974,51 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
           backgroundColor: AppColors.error,
         ),
       );
+    }
+  }
+
+  DateTime? _calculateNextPaymentDate(Loan loan) {
+    if (loan.paidInstallments >= loan.installments) {
+      return null; // Préstamo completamente pagado
+    }
+
+    final startDate = loan.startDate;
+    final paymentFrequency = loan.paymentFrequency;
+    final nextInstallmentNumber = loan.paidInstallments + 1;
+
+    switch (paymentFrequency) {
+      case 'Mensual 15':
+        return DateTime(startDate.year, startDate.month + nextInstallmentNumber, 15);
+      case 'Mensual 30':
+        return DateTime(startDate.year, startDate.month + nextInstallmentNumber + 1, 1);
+      case 'Quincenal':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 15);
+        } else {
+          final monthsToAdd = nextInstallmentNumber ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd + 1, 1);
+        }
+      case 'Quincenal 5':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
+        } else {
+          final monthsToAdd = (nextInstallmentNumber - 2) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
+        }
+      case 'Quincenal 20':
+        if (nextInstallmentNumber % 2 == 1) {
+          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
+        } else {
+          final monthsToAdd = nextInstallmentNumber ~/ 2;
+          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
+        }
+      case 'Semanal':
+        return startDate.add(Duration(days: 7 * nextInstallmentNumber));
+      default:
+        return null;
     }
   }
 }
