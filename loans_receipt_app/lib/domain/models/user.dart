@@ -4,6 +4,8 @@ class User {
   final String userCode;
   final String phone;
   final String direccion;
+  final String? referenceName;
+  final String? referencePhone;
   final DateTime registrationDate;
 
   User({
@@ -12,6 +14,8 @@ class User {
     required this.userCode,
     required this.phone,
     required this.direccion,
+    this.referenceName,
+    this.referencePhone,
     required this.registrationDate,
   });
 
@@ -22,6 +26,8 @@ class User {
       userCode: json['userCode'] ?? 'N/A',
       phone: json['phone'] ?? 'N/A',
       direccion: json['direccion'] ?? 'N/A',
+      referenceName: json['referenceName'],
+      referencePhone: json['referencePhone'],
       registrationDate: json['registrationDate'] != null 
           ? DateTime.parse(json['registrationDate']) 
           : DateTime.now(),

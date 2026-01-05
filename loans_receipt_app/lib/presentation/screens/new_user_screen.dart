@@ -18,6 +18,8 @@ class _NewUserScreenState extends State<NewUserScreen> {
   final userCodeController = TextEditingController();
   final phoneController = TextEditingController();
   final direccionController = TextEditingController();
+  final referenceNameController = TextEditingController();
+  final referencePhoneController = TextEditingController();
   DateTime? selectedDate;
   bool isLoading = false;
 
@@ -54,6 +56,8 @@ class _NewUserScreenState extends State<NewUserScreen> {
         userCode: userCodeController.text.trim(),
         phone: phoneController.text.trim(),
         direccion: direccionController.text.trim(),
+        referenceName: referenceNameController.text.trim().isNotEmpty ? referenceNameController.text.trim() : null,
+        referencePhone: referencePhoneController.text.trim().isNotEmpty ? referencePhoneController.text.trim() : null,
         registrationDate: selectedDate,
       );
 
@@ -137,6 +141,25 @@ class _NewUserScreenState extends State<NewUserScreen> {
             decoration: const InputDecoration(
               labelText: 'Dirección',
               prefixIcon: Icon(Icons.location_on),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: referenceNameController,
+            decoration: const InputDecoration(
+              labelText: 'Nombre Referencia (Opcional)',
+              prefixIcon: Icon(Icons.person_outline),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: referencePhoneController,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(
+              labelText: 'Teléfono Referencia (Opcional)',
+              prefixIcon: Icon(Icons.phone_outlined),
               border: OutlineInputBorder(),
             ),
           ),

@@ -25,6 +25,12 @@ public class User {
     @Column(nullable = false, length = 200)
     private String direccion;
     
+    @Column(name = "reference_name", length = 100)
+    private String referenceName;
+    
+    @Column(name = "reference_phone", length = 20)
+    private String referencePhone;
+    
     @Column(name = "registration_date", nullable = false)
     private LocalDateTime registrationDate;
     
@@ -54,6 +60,12 @@ public class User {
     
     public String getDireccion() { return direccion; }
     public void setDireccion(String direccion) { this.direccion = direccion; }
+    
+    public String getReferenceName() { return referenceName; }
+    public void setReferenceName(String referenceName) { this.referenceName = referenceName; }
+    
+    public String getReferencePhone() { return referencePhone; }
+    public void setReferencePhone(String referencePhone) { this.referencePhone = referencePhone; }
     
     public LocalDateTime getRegistrationDate() { return registrationDate; }
     public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }

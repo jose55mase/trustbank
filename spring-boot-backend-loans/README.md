@@ -14,7 +14,7 @@
 ```bash
 curl -X POST http://localhost:8082/api/auth/register \
 -H "Content-Type: application/json" \
--d '{"username":"develop","password":"12345","email":"viewer@inversiones.com","role":"VIEWER"}'
+-d '{"username":"developAdmin","password":"12345","email":"viewer@inversiones.com","role":"ADMIN"}'
 ```
 
 **Usuario Administrador (acceso completo):**

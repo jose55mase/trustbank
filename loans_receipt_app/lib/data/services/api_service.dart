@@ -44,6 +44,8 @@ class ApiService {
     required String userCode,
     required String phone,
     required String direccion,
+    String? referenceName,
+    String? referencePhone,
     DateTime? registrationDate,
   }) async {
     final url = Uri.parse('$baseUrl/users');
@@ -54,6 +56,14 @@ class ApiService {
       'phone': phone,
       'direccion': direccion,
     };
+    
+    if (referenceName != null && referenceName.isNotEmpty) {
+      requestBody['referenceName'] = referenceName;
+    }
+    
+    if (referencePhone != null && referencePhone.isNotEmpty) {
+      requestBody['referencePhone'] = referencePhone;
+    }
     
     if (registrationDate != null) {
       requestBody['registrationDate'] = registrationDate.toIso8601String();
