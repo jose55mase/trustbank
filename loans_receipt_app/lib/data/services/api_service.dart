@@ -468,6 +468,36 @@ class ApiService {
     }
   }
   
+  static Future<ExpenseModel> updateExpense({
+    required int expenseId,
+    required int categoryId,
+    required double amount,
+    required String description,
+    required DateTime expenseDate,
+  }) async {
+    final url = Uri.parse('$baseUrl/expenses/$expenseId');
+    
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'category': {'id': categoryId},
+        'amount': amount,
+        'description': description,
+        'expenseDate': expenseDate.toIso8601String(),
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ExpenseModel.fromJson(data);
+    } else {
+      throw Exception('Error al actualizar gasto: ${response.statusCode}');
+    }
+  }
+  
   static Future<void> deleteExpense(int expenseId) async {
     final url = Uri.parse('$baseUrl/expenses/$expenseId');
     

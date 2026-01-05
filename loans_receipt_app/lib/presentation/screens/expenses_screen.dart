@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/theme/app_colors.dart';
@@ -569,7 +570,11 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   void _showExpensesModal() {
     showDialog(
       context: context,
-      builder: (context) => _ExpensesModalWidget(),
+      builder: (context) => _ExpensesModalWidget(
+        onExpenseUpdated: () {
+          _loadExpenses(); // Recargar gastos en la pantalla principal
+        },
+      ),
     );
   }
 
@@ -637,6 +642,10 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
 }
 
 class _ExpensesModalWidget extends StatefulWidget {
+  final VoidCallback? onExpenseUpdated;
+  
+  const _ExpensesModalWidget({this.onExpenseUpdated});
+  
   @override
   _ExpensesModalWidgetState createState() => _ExpensesModalWidgetState();
 }
@@ -870,12 +879,23 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
                                       subtitle: Text(
                                         '${expense.category.name} • ${DateFormat('dd/MM/yyyy HH:mm').format(expense.expenseDate)}',
                                       ),
-                                      trailing: Text(
-                                        NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(expense.amount),
-                                        style: AppTextStyles.body.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.error,
-                                        ),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(expense.amount),
+                                            style: AppTextStyles.body.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.error,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          IconButton(
+                                            onPressed: () => _showEditExpenseModal(expense),
+                                            icon: const Icon(Icons.edit, size: 20),
+                                            tooltip: 'Editar gasto',
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   );
@@ -971,6 +991,414 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
           ),
         ],
       ),
+    );
+  }
+  
+  void _showEditExpenseModal(ExpenseModel expense) {
+    showDialog(
+      context: context,
+      builder: (context) => _EditExpenseModal(
+        expense: expense,
+        onExpenseUpdated: () {
+          loadFilteredExpenses();
+          if (widget.onExpenseUpdated != null) {
+            widget.onExpenseUpdated!();
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _EditExpenseModal extends StatefulWidget {
+  final ExpenseModel expense;
+  final VoidCallback onExpenseUpdated;
+  
+  const _EditExpenseModal({
+    required this.expense,
+    required this.onExpenseUpdated,
+  });
+  
+  @override
+  _EditExpenseModalState createState() => _EditExpenseModalState();
+}
+
+class _EditExpenseModalState extends State<_EditExpenseModal> {
+  final _formKey = GlobalKey<FormState>();
+  final _amountController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  
+  List<ExpenseCategory> _categories = [];
+  ExpenseCategory? _selectedCategory;
+  DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _initializeFields();
+    _loadCategories();
+  }
+  
+  void _initializeFields() {
+    final formatter = NumberFormat.currency(symbol: '', decimalDigits: 0, locale: 'es_CO');
+    _amountController.text = formatter.format(widget.expense.amount);
+    _descriptionController.text = widget.expense.description;
+    _selectedDate = widget.expense.expenseDate;
+  }
+  
+  Future<void> _loadCategories() async {
+    try {
+      final categories = await ApiService.getAllExpenseCategories();
+      setState(() {
+        _categories = categories;
+        // Buscar la categoría correspondiente por ID
+        _selectedCategory = categories.firstWhere(
+          (cat) => cat.id == widget.expense.category.id,
+          orElse: () => categories.isNotEmpty ? categories.first : widget.expense.category,
+        );
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al cargar categorías: $e')),
+        );
+      }
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.9,
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.edit, color: AppColors.primary),
+                  const SizedBox(width: 8),
+                  const Text('Editar Gasto', style: AppTextStyles.h2),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              
+              DropdownButtonFormField<ExpenseCategory>(
+                value: _selectedCategory,
+                decoration: const InputDecoration(
+                  labelText: 'Categoría',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.category),
+                ),
+                items: _categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getIconFromName(category.iconName),
+                          color: Color(int.parse('ff${category.colorValue}', radix: 16)),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(category.name),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                onChanged: (value) => setState(() => _selectedCategory = value),
+                validator: (value) => value == null ? 'Selecciona una categoría' : null,
+              ),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _amountController,
+                decoration: const InputDecoration(
+                  labelText: 'Monto (COP)',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.attach_money),
+                  prefixText: '\$ ',
+                ),
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  _CurrencyInputFormatter(),
+                ],
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'El monto es requerido';
+                  }
+                  final numericValue = value.replaceAll(RegExp(r'[^0-9]'), '');
+                  if (numericValue.isEmpty || int.parse(numericValue) <= 0) {
+                    return 'Ingresa un monto válido';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description),
+                ),
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'La descripción es requerida';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              
+              InkWell(
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: _selectedDate,
+                    firstDate: DateTime(2020),
+                    lastDate: DateTime.now(),
+                  );
+                  if (date != null) {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.fromDateTime(_selectedDate),
+                    );
+                    if (time != null) {
+                      setState(() {
+                        _selectedDate = DateTime(
+                          date.year,
+                          date.month,
+                          date.day,
+                          time.hour,
+                          time.minute,
+                        );
+                      });
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.calendar_today),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Fecha: ${DateFormat('dd/MM/yyyy HH:mm').format(_selectedDate)}',
+                        style: AppTextStyles.body,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _isLoading ? null : _deleteExpense,
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _updateExpense,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Actualizar'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  Future<void> _updateExpense() async {
+    if (!_formKey.currentState!.validate() || _selectedCategory == null) {
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final numericAmount = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      await ApiService.updateExpense(
+        expenseId: widget.expense.id ?? 0,
+        categoryId: _selectedCategory!.id ?? 0,
+        amount: double.parse(numericAmount),
+        description: _descriptionController.text.trim(),
+        expenseDate: _selectedDate,
+      );
+      
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onExpenseUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gasto actualizado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al actualizar gasto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+  
+  Future<void> _deleteExpense() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Gasto'),
+        content: const Text('¿Estás seguro de que deseas eliminar este gasto? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm != true) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      await ApiService.deleteExpense(widget.expense.id ?? 0);
+      
+      if (mounted) {
+        Navigator.pop(context);
+        widget.onExpenseUpdated();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Gasto eliminado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar gasto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+  
+  IconData _getIconFromName(String iconName) {
+    switch (iconName) {
+      case 'restaurant': return Icons.restaurant;
+      case 'shopping_bag': return Icons.shopping_bag;
+      case 'directions_car': return Icons.directions_car;
+      case 'movie': return Icons.movie;
+      case 'medical_services': return Icons.medical_services;
+      case 'home': return Icons.home;
+      case 'school': return Icons.school;
+      case 'build': return Icons.build;
+      case 'shopping_cart': return Icons.shopping_cart;
+      case 'work': return Icons.work;
+      case 'sports': return Icons.sports;
+      case 'pets': return Icons.pets;
+      case 'local_gas_station': return Icons.local_gas_station;
+      case 'coffee': return Icons.coffee;
+      case 'flight': return Icons.flight;
+      case 'hotel': return Icons.hotel;
+      case 'phone': return Icons.phone;
+      case 'wifi': return Icons.wifi;
+      case 'electric_bolt': return Icons.electric_bolt;
+      case 'water_drop': return Icons.water_drop;
+      case 'savings': return Icons.savings;
+      case 'credit_card': return Icons.credit_card;
+      case 'account_balance': return Icons.account_balance;
+      case 'attach_money': return Icons.attach_money;
+      default: return Icons.category;
+    }
+  }
+}
+
+class _CurrencyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final numericValue = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (numericValue.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    final formatter = NumberFormat.currency(symbol: '', decimalDigits: 0, locale: 'es_CO');
+    final formattedValue = formatter.format(int.parse(numericValue));
+
+    return newValue.copyWith(
+      text: formattedValue,
+      selection: TextSelection.collapsed(offset: formattedValue.length),
     );
   }
 }
