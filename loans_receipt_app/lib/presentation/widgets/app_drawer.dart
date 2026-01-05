@@ -5,10 +5,10 @@ import '../screens/users_screen.dart';
 import '../screens/new_loan_screen.dart';
 import '../screens/new_user_screen.dart';
 import '../screens/analytics_screen.dart';
-import '../screens/loans_analytics_screen.dart';
 import '../screens/expenses_screen.dart';
 import '../screens/transactions_screen.dart';
 import '../screens/unregistered_payments_screen.dart';
+import '../screens/user_permissions_screen.dart';
 import '../screens/login_screen.dart';
 import '../../services/auth_service.dart';
 
@@ -22,6 +22,7 @@ class AppDrawer extends StatefulWidget {
 class _AppDrawerState extends State<AppDrawer> {
   String? userRole;
   String? username;
+  List<String> userPermissions = [];
 
   @override
   void initState() {
@@ -35,7 +36,9 @@ class _AppDrawerState extends State<AppDrawer> {
       setState(() {
         userRole = user?['role'];
         username = user?['username'];
+        userPermissions = List<String>.from(user?['permissions'] ?? []);
       });
+      print('Usuario cargado: $username, Rol: $userRole, Permisos: $userPermissions');
     }
   }
 
@@ -57,17 +60,28 @@ class _AppDrawerState extends State<AppDrawer> {
     Color? iconColor,
     String? permission,
   }) {
-    return FutureBuilder<bool>(
-      future: permission != null ? AuthService.hasPermission(permission) : Future.value(true),
-      builder: (context, snapshot) {
-        if (snapshot.data == false) return const SizedBox.shrink();
-        
-        return ListTile(
-          leading: Icon(icon, color: iconColor ?? AppColors.primary),
-          title: Text(title),
-          onTap: onTap,
-        );
-      },
+    // Si no se especifica permiso, mostrar siempre
+    if (permission == null) {
+      return ListTile(
+        leading: Icon(icon, color: iconColor ?? AppColors.primary),
+        title: Text(title),
+        onTap: onTap,
+      );
+    }
+    
+    // Verificar permiso directamente desde el estado
+    bool hasPermission = userRole == 'ADMIN' || userPermissions.contains(permission);
+    
+    print('Verificando $title - Permiso: $permission - Tiene: $hasPermission');
+    
+    if (!hasPermission) {
+      return const SizedBox.shrink();
+    }
+    
+    return ListTile(
+      leading: Icon(icon, color: iconColor ?? AppColors.primary),
+      title: Text(title),
+      onTap: onTap,
     );
   }
 
@@ -153,7 +167,7 @@ class _AppDrawerState extends State<AppDrawer> {
           _buildMenuItem(
             icon: Icons.people,
             title: 'Usuarios',
-            permission: 'view_users',
+            permission: 'users',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -166,7 +180,7 @@ class _AppDrawerState extends State<AppDrawer> {
             icon: Icons.person_add,
             title: 'Registrar Usuario',
             iconColor: AppColors.secondary,
-            permission: 'create_user',
+            permission: 'users',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -179,7 +193,7 @@ class _AppDrawerState extends State<AppDrawer> {
           _buildMenuItem(
             icon: Icons.add_circle,
             title: 'Nuevo Préstamo',
-            permission: 'create_loan',
+            permission: 'loans',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -193,7 +207,7 @@ class _AppDrawerState extends State<AppDrawer> {
             icon: Icons.bar_chart,
             title: 'Análisis',
             iconColor: AppColors.warning,
-            permission: 'view_analytics',
+            permission: 'reports',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -202,24 +216,11 @@ class _AppDrawerState extends State<AppDrawer> {
               );
             },
           ),
-          /*_buildMenuItem(
-            icon: Icons.analytics,
-            title: 'Análisis de Préstamos',
-            iconColor: Colors.blue,
-            permission: 'view_analytics',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LoansAnalyticsScreen()),
-              );
-            },
-          ),*/
           _buildMenuItem(
             icon: Icons.receipt,
             title: 'Gastos Diarios',
             iconColor: AppColors.error,
-            permission: 'view_expenses',
+            permission: 'expenses',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -233,7 +234,7 @@ class _AppDrawerState extends State<AppDrawer> {
             icon: Icons.swap_horiz,
             title: 'Transacciones',
             iconColor: Colors.purple,
-            permission: 'view_transactions',
+            permission: 'transactions',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -246,7 +247,7 @@ class _AppDrawerState extends State<AppDrawer> {
             icon: Icons.money_off,
             title: 'Entradas y Salidas',
             iconColor: Colors.orange,
-            permission: 'view_payments',
+            permission: 'transactions',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -255,6 +256,19 @@ class _AppDrawerState extends State<AppDrawer> {
               );
             },
           ),
+          if (userRole == 'ADMIN')
+            _buildMenuItem(
+              icon: Icons.security,
+              title: 'Gestión de Permisos',
+              iconColor: Colors.deepPurple,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const UserPermissionsScreen()),
+                );
+              },
+            ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),

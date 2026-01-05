@@ -733,6 +733,77 @@ class ApiService {
     }
   }
 
+  // Métodos para permisos
+  static Future<List<dynamic>> getAuthUsers() async {
+    final url = Uri.parse('$baseUrl/auth/users');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener usuarios: ${response.statusCode}');
+    }
+  }
+  
+  static Future<List<dynamic>> getAllPermissions() async {
+    final url = Uri.parse('$baseUrl/permissions');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener permisos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<List<dynamic>> getUserPermissions(int userId) async {
+    final url = Uri.parse('$baseUrl/permissions/user/$userId');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al obtener permisos del usuario: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> updateUserPermissions(int userId, List<Map<String, dynamic>> permissions) async {
+    final url = Uri.parse('$baseUrl/permissions/user/$userId');
+    
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(permissions),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar permisos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> initializePermissions() async {
+    final url = Uri.parse('$baseUrl/permissions/init');
+    
+    final response = await http.post(url);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al inicializar permisos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> deleteAuthUser(int userId) async {
+    final url = Uri.parse('$baseUrl/auth/users/$userId');
+    
+    final response = await http.delete(url);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar usuario: ${response.statusCode}');
+    }
+  }
+
   static Future<Map<String, dynamic>> updateTransactionBreakdown({
     required String transactionId,
     required double principalAmount,

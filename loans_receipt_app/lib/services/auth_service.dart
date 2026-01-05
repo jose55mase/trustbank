@@ -24,23 +24,25 @@ class AuthService {
   }
   
   static Future<bool> hasPermission(String permission) async {
-    final role = await getUserRole();
+    final user = await getUser();
+    final role = user?['role'];
+    final permissions = user?['permissions'] as List<dynamic>? ?? [];
     
-    switch (role) {
-      case 'ADMIN':
-        return true; // Admin tiene todos los permisos
-      case 'VIEWER':
-        return _viewerPermissions.contains(permission);
-      default:
-        return false;
+    print('DEBUG - Verificando permiso: $permission');
+    print('DEBUG - Permisos del usuario: $permissions');
+    print('DEBUG - Rol: $role');
+    
+    // Admin siempre tiene todos los permisos
+    if (role == 'ADMIN') {
+      print('DEBUG - Es ADMIN, permiso concedido');
+      return true;
     }
+    
+    // Verificar si el usuario tiene el permiso específico
+    final hasPermission = permissions.contains(permission);
+    print('DEBUG - Tiene permiso $permission: $hasPermission');
+    return hasPermission;
   }
-  
-  static const List<String> _viewerPermissions = [
-    'view_loans',
-    'view_users',
-    'view_expenses',
-  ];
   
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
