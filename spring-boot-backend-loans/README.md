@@ -10,6 +10,14 @@
 
 ### Crear Usuarios del Sistema:
 
+
+**Usuario USUAIO (crear usuairio nuevo):**
+```bash
+curl -X POST http://localhost:8082/api/auth/register \
+-H "Content-Type: application/json" \
+-d '{"username":"develop","password":"123456","email":"develop@inversiones.com","role":"USER"}'
+```
+
 **Usuario ADMIND (Solo para desarrollo):**
 ```bash
 curl -X POST http://localhost:8082/api/auth/register \
