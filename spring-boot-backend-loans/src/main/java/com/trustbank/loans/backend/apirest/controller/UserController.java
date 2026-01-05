@@ -36,6 +36,8 @@ public class UserController {
         user.setUserCode(userRequest.getUserCode());
         user.setPhone(userRequest.getPhone());
         user.setDireccion(userRequest.getDireccion());
+        user.setReferenceName(userRequest.getReferenceName());
+        user.setReferencePhone(userRequest.getReferencePhone());
         
         // Si se proporciona fecha de registro, usarla; si no, usar fecha actual
         if (userRequest.getRegistrationDate() != null) {

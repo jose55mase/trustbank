@@ -394,17 +394,21 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final excelFile = excel.Excel.createExcel();
       final sheet = excelFile['Transacciones'];
       
+      // Cargar todos los usuarios para tener acceso completo a los datos de referencia
+      final users = await ApiService.getUsers();
+      final userMap = {for (var user in users) user.id: user};
+      
       // Encabezados principales
       final headers1 = [
         'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
-        'FORMA', 'ID', 'CLIENTE', 'TELEFONO', 'CUOTAS', 
+        'FORMA', 'ID', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
         'CUOTAS', 'CUOTAS', 'CAPITAL', 'INTERES', 'NOTAS'
       ];
       
       // Encabezados secundarios
       final headers2 = [
         '', '', '', '', 'DE PAGO', 'PRESTAMO', 
-        'DE PAGO', 'PRESTAMO', '', '', 'TOTALES', 
+        'DE PAGO', 'PRESTAMO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
         'PAGADAS', 'RESTANTES', '', '', ''
       ];
       
@@ -453,6 +457,35 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         
         final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO');
         
+        // Obtener datos del usuario desde el mapa cargado
+        String userId = '';
+        String userName = '';
+        String userPhone = '';
+        String referenceName = '';
+        String referencePhone = '';
+        
+        if (isLoan) {
+          userId = item['user']?['id']?.toString() ?? '';
+          userName = item['user']?['name']?.toString() ?? '';
+          userPhone = item['user']?['phone']?.toString() ?? '';
+        } else {
+          userId = item['loan']?['user']?['id']?.toString() ?? '';
+          userName = item['loan']?['user']?['name']?.toString() ?? '';
+          userPhone = item['loan']?['user']?['phone']?.toString() ?? '';
+        }
+        
+        // Buscar datos completos del usuario en el mapa
+        if (userId.isNotEmpty) {
+          final user = userMap[userId];
+          if (user != null) {
+            userName = user.name;
+            userPhone = user.phone;
+            referenceName = user.referenceName ?? '';
+            referencePhone = user.referencePhone ?? '';
+          }
+        }
+        
+        
         final row = [
           item['id']?.toString() ?? '',
           isLoan ? 'Prestamo' : (isPayment ? 'Pago' : 'Transaccion'),
@@ -468,12 +501,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ? (item['paymentFrequency']?.toString() ?? '')
             : (item['loan']?['paymentFrequency']?.toString() ?? ''),
           isLoan ? item['id']?.toString() ?? '' : (item['loan']?['id']?.toString() ?? ''),
-          isLoan 
-            ? (item['user']?['name']?.toString() ?? '')
-            : (item['loan']?['user']?['name']?.toString() ?? ''),
-          isLoan 
-            ? (item['user']?['phone']?.toString() ?? '')
-            : (item['loan']?['user']?['phone']?.toString() ?? ''),
+          userName,
+          userPhone,
+          referenceName,
+          referencePhone,
           isLoan 
             ? (item['installments']?.toString() ?? '')
             : (item['loan']?['installments']?.toString() ?? ''),
