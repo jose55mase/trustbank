@@ -15,6 +15,7 @@ class Transaction {
   final double? principalAmount;
   final String? loanType;
   final String? paymentFrequency;
+  final double? valorRealCuota;
 
   Transaction({
     required this.id,
@@ -29,6 +30,7 @@ class Transaction {
     this.principalAmount,
     this.loanType,
     this.paymentFrequency,
+    this.valorRealCuota,
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +46,7 @@ class Transaction {
     'principalAmount': principalAmount,
     'loanType': loanType,
     'paymentFrequency': paymentFrequency,
+    'valorRealCuota': valorRealCuota,
   };
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
@@ -59,5 +62,6 @@ class Transaction {
     principalAmount: json['principalAmount']?.toDouble(),
     loanType: json['loanType'],
     paymentFrequency: json['paymentFrequency'],
+    valorRealCuota: json['valorRealCuota']?.toDouble(),
   );
 }

@@ -40,6 +40,9 @@ public class Payment {
     @Column(name = "salida", nullable = false)
     private Boolean salida;
     
+    @Column(name = "valor_real_cuota", precision = 15, scale = 2)
+    private BigDecimal valorRealCuota;
+    
     public Payment() {
         this.paymentDate = LocalDateTime.now();
         this.registered = false; // Por defecto sin registrar
@@ -76,4 +79,7 @@ public class Payment {
     
     public Boolean getSalida() { return salida; }
     public void setSalida(Boolean salida) { this.salida = salida; }
+    
+    public BigDecimal getValorRealCuota() { return valorRealCuota; }
+    public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
 }

@@ -46,6 +46,9 @@ public class Transaction {
     @Column(name = "payment_frequency", length = 50)
     private String paymentFrequency;
     
+    @Column(name = "valor_real_cuota", precision = 15, scale = 2)
+    private BigDecimal valorRealCuota;
+    
     public Transaction() {
         this.date = LocalDateTime.now();
     }
@@ -83,6 +86,9 @@ public class Transaction {
     
     public String getPaymentFrequency() { return paymentFrequency; }
     public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
+    
+    public BigDecimal getValorRealCuota() { return valorRealCuota; }
+    public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
     
     @Override
     public String toString() {

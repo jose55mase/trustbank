@@ -7,8 +7,8 @@ import '../../domain/models/expense_model.dart';
 import '../../services/auth_service.dart';
 
 class ApiService {
-  //static const String baseUrl = 'http://localhost:8082/api';
-  static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
+  static const String baseUrl = 'http://localhost:8082/api';
+  //static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
 
   static Future<bool> login({
     required String username,
@@ -248,26 +248,33 @@ class ApiService {
     double? principalAmount,
     String? loanType,
     String? paymentFrequency,
+    double? valorRealCuota,
   }) async {
     final url = Uri.parse('$baseUrl/transactions');
+    final requestBody = {
+      'type': 'PAYMENT',
+      'loan': {
+        'id': int.parse(loanId)
+      },
+      'amount': amount,
+      'paymentMethod': _mapPaymentMethod(paymentMethod),
+      'notes': notes ?? '',
+      'interestAmount': interestAmount,
+      'principalAmount': principalAmount,
+      'loanType': loanType,
+      'paymentFrequency': paymentFrequency,
+    };
+    
+    if (valorRealCuota != null) {
+      requestBody['valorRealCuota'] = valorRealCuota;
+    }
+    
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({
-        'type': 'PAYMENT',
-        'loan': {
-          'id': int.parse(loanId)
-        },
-        'amount': amount,
-        'paymentMethod': _mapPaymentMethod(paymentMethod),
-        'notes': notes ?? '',
-        'interestAmount': interestAmount,
-        'principalAmount': principalAmount,
-        'loanType': loanType,
-        'paymentFrequency': paymentFrequency,
-      }),
+      body: jsonEncode(requestBody),
     );
     
     if (response.statusCode == 200 || response.statusCode == 201) {
@@ -647,6 +654,7 @@ class ApiService {
     String? description,
     required double debtPayment,
     required double interestPayment,
+    double? valorRealCuota,
     bool salida = false,
   }) async {
     final url = Uri.parse('$baseUrl/payments');
@@ -660,6 +668,10 @@ class ApiService {
       'interestPayment': interestPayment,
       'salida': salida,
     };
+    
+    if (valorRealCuota != null) {
+      requestBody['valorRealCuota'] = valorRealCuota;
+    }
     
     print('Enviando al backend: ${jsonEncode(requestBody)}');
     

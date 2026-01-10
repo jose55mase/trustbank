@@ -211,6 +211,8 @@ class TransactionLoanDetailModal extends StatelessWidget {
                         _InfoRow('Tipo', transaction.type == TransactionType.loan ? 'Préstamo' : 'Pago'),
                         _InfoRow('Monto', currencyFormat.format(transaction.amount)),
                         _InfoRow('Forma de Pago', _getPaymentMethodText(transaction.paymentMethod)),
+                        if (transaction.valorRealCuota != null)
+                          _InfoRow('Valor Real Cuota', currencyFormat.format(transaction.valorRealCuota!)),
                         _InfoRow('Fecha', DateFormat('dd/MM/yyyy HH:mm').format(transaction.date)),
                         if (transaction.notes?.isNotEmpty == true)
                           _InfoRow('Notas', transaction.notes!),

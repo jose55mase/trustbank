@@ -517,31 +517,36 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           }
           valorRealCuota = currencyFormat.format(cuotaReal);
         } else if (isPayment) {
-          // Para pagos, obtener el valor real de cuota del préstamo asociado
-          final loan = item['loan'];
-          if (loan != null) {
-            final amount = loan['amount'] ?? 0;
-            final interestRate = loan['interestRate'] ?? 0;
-            final installments = loan['installments'] ?? 1;
-            final remainingAmount = loan['remainingAmount'] ?? amount;
-            final loanType = loan['loanType']?.toString() ?? '';
-            
-            double cuotaReal = 0.0;
-            if (loanType == 'Fijo') {
-              final capitalPorCuota = amount / installments;
-              final interesPorCuota = amount * interestRate / 100;
-              cuotaReal = capitalPorCuota + interesPorCuota;
-            } else if (loanType == 'Rotativo') {
-              final paidInstallments = loan['paidInstallments'] ?? 0;
-              final remainingInstallments = (installments - paidInstallments).clamp(1, installments);
-              final capitalPorCuota = remainingAmount / remainingInstallments;
-              final interesPorCuota = remainingAmount * interestRate / 100;
-              cuotaReal = capitalPorCuota + interesPorCuota;
-            } else {
-              final totalWithInterest = amount + (amount * interestRate / 100);
-              cuotaReal = totalWithInterest / installments;
+          // Para pagos, usar el valor real de cuota de la transacción si existe
+          if (item['valorRealCuota'] != null) {
+            valorRealCuota = currencyFormat.format(item['valorRealCuota']);
+          } else {
+            // Fallback: calcular desde el préstamo asociado
+            final loan = item['loan'];
+            if (loan != null) {
+              final amount = loan['amount'] ?? 0;
+              final interestRate = loan['interestRate'] ?? 0;
+              final installments = loan['installments'] ?? 1;
+              final remainingAmount = loan['remainingAmount'] ?? amount;
+              final loanType = loan['loanType']?.toString() ?? '';
+              
+              double cuotaReal = 0.0;
+              if (loanType == 'Fijo') {
+                final capitalPorCuota = amount / installments;
+                final interesPorCuota = amount * interestRate / 100;
+                cuotaReal = capitalPorCuota + interesPorCuota;
+              } else if (loanType == 'Rotativo') {
+                final paidInstallments = loan['paidInstallments'] ?? 0;
+                final remainingInstallments = (installments - paidInstallments).clamp(1, installments);
+                final capitalPorCuota = remainingAmount / remainingInstallments;
+                final interesPorCuota = remainingAmount * interestRate / 100;
+                cuotaReal = capitalPorCuota + interesPorCuota;
+              } else {
+                final totalWithInterest = amount + (amount * interestRate / 100);
+                cuotaReal = totalWithInterest / installments;
+              }
+              valorRealCuota = currencyFormat.format(cuotaReal);
             }
-            valorRealCuota = currencyFormat.format(cuotaReal);
           }
         }
         
@@ -996,6 +1001,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               _DetailRow('Capital', currencyFormat.format(transaction['principalAmount'])),
                             if (transaction['interestAmount'] != null)
                               _DetailRow('Interés', currencyFormat.format(transaction['interestAmount'])),
+                            if (transaction['valorRealCuota'] != null)
+                              _DetailRow('Valor Real Cuota', currencyFormat.format(transaction['valorRealCuota'])),
                           ],
                         ),
                       ],

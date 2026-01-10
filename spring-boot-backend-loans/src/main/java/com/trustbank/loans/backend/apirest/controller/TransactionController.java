@@ -61,6 +61,7 @@ public class TransactionController {
         transaction.setNotes(request.getNotes());
         transaction.setInterestAmount(request.getInterestAmount());
         transaction.setPrincipalAmount(request.getPrincipalAmount());
+        transaction.setValorRealCuota(request.getValorRealCuota());
         transaction.setDate(LocalDateTime.now());
         
         // Set loan reference

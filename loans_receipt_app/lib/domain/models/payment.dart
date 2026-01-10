@@ -8,6 +8,7 @@ class Payment {
   final double interestPayment;
   final DateTime paymentDate;
   final bool registered;
+  final double? valorRealCuota;
 
   Payment({
     required this.id,
@@ -19,6 +20,7 @@ class Payment {
     required this.interestPayment,
     required this.paymentDate,
     this.registered = false,
+    this.valorRealCuota,
   });
 
   factory Payment.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Payment {
       interestPayment: (json['interestPayment'] as num).toDouble(),
       paymentDate: DateTime.parse(json['paymentDate']),
       registered: json['registered'] as bool? ?? false,
+      valorRealCuota: json['valorRealCuota'] != null ? (json['valorRealCuota'] as num).toDouble() : null,
     );
   }
 
@@ -44,6 +47,7 @@ class Payment {
       'debtPayment': debtPayment,
       'interestPayment': interestPayment,
       'registered': registered,
+      'valorRealCuota': valorRealCuota,
     };
   }
 }
