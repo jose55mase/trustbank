@@ -22,6 +22,11 @@ public class UserController {
         return userService.findAll();
     }
     
+    @GetMapping("/search-by-code")
+    public List<User> getUsersByCodeAlphabetical(@RequestParam String code) {
+        return userService.findByUserCodeOrderedAlphabetically(code);
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         return userService.findById(id)

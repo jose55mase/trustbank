@@ -394,6 +394,34 @@ class ApiService {
     }
   }
   
+  static Future<ExpenseCategory> updateExpenseCategory({
+    required int categoryId,
+    required String name,
+    required String iconName,
+    required String colorValue,
+  }) async {
+    final url = Uri.parse('$baseUrl/expense-categories/$categoryId');
+    
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'name': name,
+        'iconName': iconName,
+        'colorValue': colorValue,
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return ExpenseCategory.fromJson(data);
+    } else {
+      throw Exception('Error al actualizar categoría: ${response.statusCode}');
+    }
+  }
+  
   static Future<void> deleteExpenseCategory(int categoryId) async {
     final url = Uri.parse('$baseUrl/expense-categories/$categoryId');
     

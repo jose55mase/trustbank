@@ -401,15 +401,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       // Encabezados principales
       final headers1 = [
         'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
-        'FORMA', 'ID', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
-        'CUOTAS', 'CUOTAS', 'CAPITAL', 'INTERES', 'NOTAS'
+        'FORMA', 'ID', 'CODIGO', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
+        'CUOTAS', 'CUOTAS', 'VALOR REAL', 'CAPITAL', 'INTERES', 'NOTAS'
       ];
       
       // Encabezados secundarios
       final headers2 = [
         '', '', '', '', 'DE PAGO', 'PRESTAMO', 
-        'DE PAGO', 'PRESTAMO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
-        'PAGADAS', 'RESTANTES', '', '', ''
+        'DE PAGO', 'PRESTAMO', 'USUARIO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
+        'PAGADAS', 'RESTANTES', 'DE CUOTA', '', '', ''
       ];
       
       // Ajustar altura de las filas de encabezados
@@ -461,6 +461,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         String userId = '';
         String userName = '';
         String userPhone = '';
+        String userCode = '';
         String referenceName = '';
         String referencePhone = '';
         
@@ -480,11 +481,69 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           if (user != null) {
             userName = user.name;
             userPhone = user.phone;
+            userCode = user.userCode ?? '';
             referenceName = user.referenceName ?? '';
             referencePhone = user.referencePhone ?? '';
           }
         }
         
+        // Calcular valor real de cuota desde el préstamo (incluyendo ganancias)
+        String valorRealCuota = '';
+        if (isLoan) {
+          // Para préstamos, obtener el valor real de cuota calculado
+          final amount = item['amount'] ?? 0;
+          final interestRate = item['interestRate'] ?? 0;
+          final installments = item['installments'] ?? 1;
+          final remainingAmount = item['remainingAmount'] ?? amount;
+          final loanType = item['loanType']?.toString() ?? '';
+          
+          double cuotaReal = 0.0;
+          if (loanType == 'Fijo') {
+            // Para préstamos fijos: valor por cuota es la tasa de interés mensual + capital
+            final capitalPorCuota = amount / installments;
+            final interesPorCuota = amount * interestRate / 100;
+            cuotaReal = capitalPorCuota + interesPorCuota;
+          } else if (loanType == 'Rotativo') {
+            // Para préstamos rotativos: cuota basada en monto restante + interés
+            final paidInstallments = item['paidInstallments'] ?? 0;
+            final remainingInstallments = (installments - paidInstallments).clamp(1, installments);
+            final capitalPorCuota = remainingAmount / remainingInstallments;
+            final interesPorCuota = remainingAmount * interestRate / 100;
+            cuotaReal = capitalPorCuota + interesPorCuota;
+          } else {
+            // Para otros tipos: total con interés dividido entre cuotas
+            final totalWithInterest = amount + (amount * interestRate / 100);
+            cuotaReal = totalWithInterest / installments;
+          }
+          valorRealCuota = currencyFormat.format(cuotaReal);
+        } else if (isPayment) {
+          // Para pagos, obtener el valor real de cuota del préstamo asociado
+          final loan = item['loan'];
+          if (loan != null) {
+            final amount = loan['amount'] ?? 0;
+            final interestRate = loan['interestRate'] ?? 0;
+            final installments = loan['installments'] ?? 1;
+            final remainingAmount = loan['remainingAmount'] ?? amount;
+            final loanType = loan['loanType']?.toString() ?? '';
+            
+            double cuotaReal = 0.0;
+            if (loanType == 'Fijo') {
+              final capitalPorCuota = amount / installments;
+              final interesPorCuota = amount * interestRate / 100;
+              cuotaReal = capitalPorCuota + interesPorCuota;
+            } else if (loanType == 'Rotativo') {
+              final paidInstallments = loan['paidInstallments'] ?? 0;
+              final remainingInstallments = (installments - paidInstallments).clamp(1, installments);
+              final capitalPorCuota = remainingAmount / remainingInstallments;
+              final interesPorCuota = remainingAmount * interestRate / 100;
+              cuotaReal = capitalPorCuota + interesPorCuota;
+            } else {
+              final totalWithInterest = amount + (amount * interestRate / 100);
+              cuotaReal = totalWithInterest / installments;
+            }
+            valorRealCuota = currencyFormat.format(cuotaReal);
+          }
+        }
         
         final row = [
           item['id']?.toString() ?? '',
@@ -501,6 +560,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ? (item['paymentFrequency']?.toString() ?? '')
             : (item['loan']?['paymentFrequency']?.toString() ?? ''),
           isLoan ? item['id']?.toString() ?? '' : (item['loan']?['id']?.toString() ?? ''),
+          userCode,
           userName,
           userPhone,
           referenceName,
@@ -514,6 +574,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           isLoan 
             ? ((item['installments'] ?? 0) - (item['paidInstallments'] ?? 0)).toString()
             : ((item['loan']?['installments'] ?? 0) - (item['loan']?['paidInstallments'] ?? 0)).toString(),
+          valorRealCuota,
           isPayment ? currencyFormat.format(item['principalAmount'] ?? 0) : '',
           isPayment ? currencyFormat.format(item['interestAmount'] ?? 0) : '',
           item['notes']?.toString() ?? ''

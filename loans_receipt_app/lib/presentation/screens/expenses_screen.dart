@@ -285,7 +285,17 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
             ),
           const SizedBox(height: 16),
           if (_categories.isNotEmpty) ...[
-            const Text('Categorías Disponibles', style: AppTextStyles.h3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Categorías Disponibles', style: AppTextStyles.h3),
+                TextButton.icon(
+                  onPressed: _showManageCategoriesModal,
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Gestionar'),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             SizedBox(
               height: 100,
@@ -565,6 +575,23 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         ),
       ),
     );
+  }
+  
+  void _showManageCategoriesModal() {
+    showDialog(
+      context: context,
+      builder: (context) => _ManageCategoriesModal(
+        onCategoriesChanged: _loadCategories,
+      ),
+    );
+  }
+  
+  void _showEditCategoryModal(ExpenseCategory category) {
+    // Este método ya no se usa, se movió al widget _ManageCategoriesModal
+  }
+  
+  void _showDeleteCategoryConfirmation(ExpenseCategory category) {
+    // Este método ya no se usa, se movió al widget _ManageCategoriesModal
   }
   
   void _showExpensesModal() {
@@ -1400,5 +1427,606 @@ class _CurrencyInputFormatter extends TextInputFormatter {
       text: formattedValue,
       selection: TextSelection.collapsed(offset: formattedValue.length),
     );
+  }
+}
+
+class _ManageCategoriesModal extends StatefulWidget {
+  final VoidCallback onCategoriesChanged;
+  
+  const _ManageCategoriesModal({required this.onCategoriesChanged});
+  
+  @override
+  _ManageCategoriesModalState createState() => _ManageCategoriesModalState();
+}
+
+class _ManageCategoriesModalState extends State<_ManageCategoriesModal> {
+  List<ExpenseCategory> _categories = [];
+  bool _isLoading = true;
+  
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+  
+  Future<void> _loadCategories() async {
+    setState(() => _isLoading = true);
+    try {
+      final categories = await ApiService.getAllExpenseCategories();
+      setState(() {
+        _categories = categories;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 0.9,
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.category, color: Colors.white),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Gestionar Categorías',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _categories.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No hay categorías disponibles',
+                            style: AppTextStyles.body,
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: _categories.length,
+                          itemBuilder: (context, index) {
+                            final category = _categories[index];
+                            return Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: Color(int.parse('ff${category.colorValue}', radix: 16)).withOpacity(0.1),
+                                  child: Icon(
+                                    _getIconFromName(category.iconName),
+                                    color: Color(int.parse('ff${category.colorValue}', radix: 16)),
+                                  ),
+                                ),
+                                title: Text(category.name),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => _showEditCategoryModal(category),
+                                      icon: const Icon(Icons.edit, color: AppColors.primary),
+                                      tooltip: 'Editar categoría',
+                                    ),
+                                    IconButton(
+                                      onPressed: () => _showDeleteCategoryConfirmation(category),
+                                      icon: const Icon(Icons.delete, color: Colors.red),
+                                      tooltip: 'Eliminar categoría',
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAddCategoryModal(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Agregar Nueva Categoría'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _showAddCategoryModal() {
+    final nameController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    IconData selectedIcon = Icons.category;
+    Color selectedColor = AppColors.primary;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.add_circle, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      const Text('Nueva Categoría', style: AppTextStyles.h2),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre de la categoría',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.label),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'El nombre es requerido';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Icono:', style: AppTextStyles.body),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Icons.category,
+                      Icons.shopping_cart,
+                      Icons.restaurant,
+                      Icons.shopping_bag,
+                      Icons.directions_car,
+                      Icons.movie,
+                      Icons.medical_services,
+                      Icons.home,
+                      Icons.work,
+                      Icons.school,
+                      Icons.sports,
+                      Icons.pets,
+                      Icons.local_gas_station,
+                      Icons.coffee,
+                      Icons.flight,
+                      Icons.hotel,
+                      Icons.phone,
+                      Icons.wifi,
+                      Icons.electric_bolt,
+                      Icons.water_drop,
+                      Icons.savings,
+                      Icons.credit_card,
+                      Icons.account_balance,
+                      Icons.attach_money,
+                    ].map((icon) => GestureDetector(
+                      onTap: () => setModalState(() => selectedIcon = icon),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: selectedIcon == icon ? AppColors.primary.withOpacity(0.2) : null,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selectedIcon == icon ? AppColors.primary : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Icon(icon, color: selectedIcon == icon ? AppColors.primary : Colors.grey),
+                      ),
+                    )).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Color:', style: AppTextStyles.body),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Colors.blue,
+                      Colors.green,
+                      Colors.orange,
+                      Colors.purple,
+                      Colors.red,
+                      Colors.teal,
+                      Colors.indigo,
+                      Colors.brown,
+                    ].map((color) => GestureDetector(
+                      onTap: () => setModalState(() => selectedColor = color),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedColor == color ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: selectedColor == color ? const Icon(Icons.check, color: Colors.white) : null,
+                      ),
+                    )).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              try {
+                                await ApiService.createExpenseCategory(
+                                  name: nameController.text.trim(),
+                                  iconName: _getIconName(selectedIcon),
+                                  colorValue: _getColorValue(selectedColor),
+                                );
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  _loadCategories(); // Actualizar modal
+                                  widget.onCategoriesChanged(); // Actualizar pantalla principal
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Categoría "${nameController.text.trim()}" creada'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error al crear categoría: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          child: const Text('Crear'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _showEditCategoryModal(ExpenseCategory category) {
+    final nameController = TextEditingController(text: category.name);
+    final formKey = GlobalKey<FormState>();
+    IconData selectedIcon = _getIconFromName(category.iconName);
+    Color selectedColor = Color(int.parse('ff${category.colorValue}', radix: 16));
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.9,
+            padding: const EdgeInsets.all(24),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.edit, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      const Text('Editar Categoría', style: AppTextStyles.h2),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nombre de la categoría',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.label),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'El nombre es requerido';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Icono:', style: AppTextStyles.body),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Icons.category,
+                      Icons.shopping_cart,
+                      Icons.restaurant,
+                      Icons.shopping_bag,
+                      Icons.directions_car,
+                      Icons.movie,
+                      Icons.medical_services,
+                      Icons.home,
+                      Icons.work,
+                      Icons.school,
+                      Icons.sports,
+                      Icons.pets,
+                      Icons.local_gas_station,
+                      Icons.coffee,
+                      Icons.flight,
+                      Icons.hotel,
+                      Icons.phone,
+                      Icons.wifi,
+                      Icons.electric_bolt,
+                      Icons.water_drop,
+                      Icons.savings,
+                      Icons.credit_card,
+                      Icons.account_balance,
+                      Icons.attach_money,
+                    ].map((icon) => GestureDetector(
+                      onTap: () => setModalState(() => selectedIcon = icon),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: selectedIcon == icon ? AppColors.primary.withOpacity(0.2) : null,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: selectedIcon == icon ? AppColors.primary : Colors.grey.shade300,
+                          ),
+                        ),
+                        child: Icon(icon, color: selectedIcon == icon ? AppColors.primary : Colors.grey),
+                      ),
+                    )).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Color:', style: AppTextStyles.body),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      Colors.blue,
+                      Colors.green,
+                      Colors.orange,
+                      Colors.purple,
+                      Colors.red,
+                      Colors.teal,
+                      Colors.indigo,
+                      Colors.brown,
+                    ].map((color) => GestureDetector(
+                      onTap: () => setModalState(() => selectedColor = color),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedColor == color ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: selectedColor == color ? const Icon(Icons.check, color: Colors.white) : null,
+                      ),
+                    )).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancelar'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            if (formKey.currentState!.validate()) {
+                              try {
+                                await ApiService.updateExpenseCategory(
+                                  categoryId: category.id!,
+                                  name: nameController.text.trim(),
+                                  iconName: _getIconName(selectedIcon),
+                                  colorValue: _getColorValue(selectedColor),
+                                );
+                                if (mounted) {
+                                  Navigator.pop(context);
+                                  _loadCategories(); // Actualizar modal
+                                  widget.onCategoriesChanged(); // Actualizar pantalla principal
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Categoría "${nameController.text.trim()}" actualizada'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error al actualizar categoría: $e'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                          child: const Text('Actualizar'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  void _showDeleteCategoryConfirmation(ExpenseCategory category) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar Categoría'),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar la categoría "${category.name}"?\n\nEsta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              try {
+                await ApiService.deleteExpenseCategory(category.id!);
+                if (mounted) {
+                  _loadCategories(); // Actualizar modal
+                  widget.onCategoriesChanged(); // Actualizar pantalla principal
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Categoría "${category.name}" eliminada'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al eliminar categoría: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  IconData _getIconFromName(String iconName) {
+    switch (iconName) {
+      case 'restaurant': return Icons.restaurant;
+      case 'shopping_bag': return Icons.shopping_bag;
+      case 'directions_car': return Icons.directions_car;
+      case 'movie': return Icons.movie;
+      case 'medical_services': return Icons.medical_services;
+      case 'home': return Icons.home;
+      case 'school': return Icons.school;
+      case 'build': return Icons.build;
+      case 'shopping_cart': return Icons.shopping_cart;
+      case 'work': return Icons.work;
+      case 'sports': return Icons.sports;
+      case 'pets': return Icons.pets;
+      case 'local_gas_station': return Icons.local_gas_station;
+      case 'coffee': return Icons.coffee;
+      case 'flight': return Icons.flight;
+      case 'hotel': return Icons.hotel;
+      case 'phone': return Icons.phone;
+      case 'wifi': return Icons.wifi;
+      case 'electric_bolt': return Icons.electric_bolt;
+      case 'water_drop': return Icons.water_drop;
+      case 'savings': return Icons.savings;
+      case 'credit_card': return Icons.credit_card;
+      case 'account_balance': return Icons.account_balance;
+      case 'attach_money': return Icons.attach_money;
+      default: return Icons.category;
+    }
+  }
+  
+  String _getIconName(IconData icon) {
+    if (icon == Icons.category) return 'category';
+    if (icon == Icons.shopping_cart) return 'shopping_cart';
+    if (icon == Icons.restaurant) return 'restaurant';
+    if (icon == Icons.shopping_bag) return 'shopping_bag';
+    if (icon == Icons.directions_car) return 'directions_car';
+    if (icon == Icons.movie) return 'movie';
+    if (icon == Icons.medical_services) return 'medical_services';
+    if (icon == Icons.home) return 'home';
+    if (icon == Icons.work) return 'work';
+    if (icon == Icons.school) return 'school';
+    if (icon == Icons.sports) return 'sports';
+    if (icon == Icons.pets) return 'pets';
+    if (icon == Icons.local_gas_station) return 'local_gas_station';
+    if (icon == Icons.coffee) return 'coffee';
+    if (icon == Icons.flight) return 'flight';
+    if (icon == Icons.hotel) return 'hotel';
+    if (icon == Icons.phone) return 'phone';
+    if (icon == Icons.wifi) return 'wifi';
+    if (icon == Icons.electric_bolt) return 'electric_bolt';
+    if (icon == Icons.water_drop) return 'water_drop';
+    if (icon == Icons.savings) return 'savings';
+    if (icon == Icons.credit_card) return 'credit_card';
+    if (icon == Icons.account_balance) return 'account_balance';
+    if (icon == Icons.attach_money) return 'attach_money';
+    return 'category';
+  }
+  
+  String _getColorValue(Color color) {
+    return color.value.toRadixString(16);
   }
 }
