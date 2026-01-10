@@ -2,6 +2,8 @@ package com.trustbank.loans.backend.apirest.service;
 
 import com.trustbank.loans.backend.apirest.entity.User;
 import com.trustbank.loans.backend.apirest.repository.UserRepository;
+import com.trustbank.loans.backend.apirest.repository.LoanRepository;
+import com.trustbank.loans.backend.apirest.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -14,8 +16,18 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
+    @Autowired
+    private LoanRepository loanRepository;
+    
+    @Autowired
+    private PaymentRepository paymentRepository;
+    
     public List<User> findAll() {
-        return userRepository.findAllByOrderByRegistrationDateDesc();
+        return userRepository.findAllByOrderByUserCodeAsc();
+    }
+    
+    public List<User> findByUserCodeOrderedAlphabetically(String userCode) {
+        return userRepository.findByUserCodeContainingIgnoreCaseOrderByUserCodeAsc(userCode);
     }
     
     public Optional<User> findById(Long id) {
@@ -43,6 +55,30 @@ public class UserService {
     }
     
     public void deleteById(Long id) {
+        // Verificar si el usuario existe
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+        
+        // Verificar si el usuario tiene préstamos asociados
+        if (hasRelatedLoans(id)) {
+            throw new RuntimeException("No se puede eliminar el usuario porque tiene préstamos asociados. Primero elimine todos los préstamos del usuario.");
+        }
+        
+        // Verificar si el usuario tiene pagos asociados
+        if (hasRelatedPayments(id)) {
+            throw new RuntimeException("No se puede eliminar el usuario porque tiene pagos asociados. Primero elimine todos los pagos del usuario.");
+        }
+        
         userRepository.deleteById(id);
+    }
+    
+    private boolean hasRelatedLoans(Long userId) {
+        List<com.trustbank.loans.backend.apirest.entity.Loan> loans = loanRepository.findByUserId(userId);
+        return !loans.isEmpty();
+    }
+    
+    private boolean hasRelatedPayments(Long userId) {
+        List<com.trustbank.loans.backend.apirest.entity.Payment> payments = paymentRepository.findByUserId(userId);
+        return !payments.isEmpty();
     }
 }

@@ -70,6 +70,7 @@ curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
 ### Usuarios (`/api/users`)
 - `GET /api/users` - Listar todos
 - `GET /api/users/{id}` - Por ID
+- `GET /api/users/search-by-code?code={codigo}` - Buscar por código (orden alfabético)
 - `POST /api/users` - Crear
 - `PUT /api/users/{id}` - Actualizar
 - `DELETE /api/users/{id}` - Eliminar

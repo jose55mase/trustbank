@@ -10,4 +10,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserCode(String userCode);
     User findByUserCode(String userCode);
     List<User> findAllByOrderByRegistrationDateDesc();
+    List<User> findByUserCodeContainingIgnoreCaseOrderByUserCodeAsc(String userCode);
+    List<User> findByUserCodeContainingIgnoreCaseOrderByNameAsc(String userCode);
+    List<User> findAllByOrderByNameAsc();
+    List<User> findAllByOrderByUserCodeAsc();
 }
