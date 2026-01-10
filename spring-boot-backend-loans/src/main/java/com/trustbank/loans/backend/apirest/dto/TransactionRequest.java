@@ -12,6 +12,7 @@ public class TransactionRequest {
     private String notes;
     private BigDecimal interestAmount;
     private BigDecimal principalAmount;
+    private BigDecimal valorRealCuota;
     
     public static class LoanRef {
         private Long id;
@@ -41,4 +42,7 @@ public class TransactionRequest {
     
     public BigDecimal getPrincipalAmount() { return principalAmount; }
     public void setPrincipalAmount(BigDecimal principalAmount) { this.principalAmount = principalAmount; }
+    
+    public BigDecimal getValorRealCuota() { return valorRealCuota; }
+    public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
 }

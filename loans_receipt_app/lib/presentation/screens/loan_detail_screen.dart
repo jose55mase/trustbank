@@ -221,6 +221,9 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     final interestController = TextEditingController(
       text: NumberFormat('#,###', 'es_CO').format(defaultInterest),
     );
+    final valorRealCuotaController = TextEditingController(
+      text: '\$ ${NumberFormat('#,###', 'es_CO').format(loan.installmentAmount.toInt())}',
+    );
     final notesController = TextEditingController();
     bool useCustomAmount = false;
     String selectedPaymentMethod = 'Efectivo';
@@ -304,6 +307,27 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                TextField(
+                  controller: valorRealCuotaController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final number = int.parse(text);
+                      final formatted = '\$ ${NumberFormat('#,###', 'es_CO').format(number)}';
+                      valorRealCuotaController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Valor Real Cuota',
+                    border: OutlineInputBorder(),
+                    helperText: 'Valor real de la cuota pagada',
+                  ),
+                ),
+                const SizedBox(height: 16),
                 const Text('Método de pago:'),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
@@ -350,6 +374,8 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     ? (double.tryParse(paymentController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0)
                     : loan.installmentAmount;
                 final interestAmount = double.tryParse(interestController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                
+                final valorRealCuota = double.tryParse(valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
                 
                 if (amount < 0) {
                   showDialog(
@@ -438,7 +464,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   default:
                     backendPaymentMethod = 'CASH';
                 }
-                _processPaymentWithCustomInterest(context, loan, amount, interestAmount, backendPaymentMethod, notesController.text, currencyFormat);
+                                _processPaymentWithCustomInterest(context, loan, amount, interestAmount, backendPaymentMethod, notesController.text, currencyFormat, valorRealCuota);
               },
               child: const Text('Confirmar Pago'),
             ),
@@ -485,7 +511,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     }
   }
 
-  void _processPaymentWithCustomInterest(BuildContext context, Loan loan, double amount, double interestAmount, String paymentMethod, String notes, NumberFormat currencyFormat) async {
+  void _processPaymentWithCustomInterest(BuildContext context, Loan loan, double amount, double interestAmount, String paymentMethod, String notes, NumberFormat currencyFormat, double valorRealCuota) async {
     try {
       // El principalAmount debe ser el monto completo del pago
       // Los intereses se registran por separado y no se restan del capital
@@ -500,6 +526,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         principalAmount: principalPortion.toDouble(),
         loanType: loan.loanType,
         paymentFrequency: loan.paymentFrequency,
+        valorRealCuota: valorRealCuota,
       );
       
       // Actualizar cuotas pagadas siempre al hacer un pago
@@ -537,6 +564,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
               Text('Monto total: ${currencyFormat.format(amount)}'),
               Text('Capital: ${currencyFormat.format(principalPortion)}'),
               Text('Ganancia: ${currencyFormat.format(interestAmount)}'),
+              Text('Valor Real Cuota: ${currencyFormat.format(valorRealCuota)}'),
               Text('Método: $paymentMethod'),
               if (notes.isNotEmpty) Text('Notas: $notes'),
               const SizedBox(height: 8),

@@ -59,16 +59,19 @@ public class UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
         
-        // Verificar si el usuario tiene préstamos asociados
-        if (hasRelatedLoans(id)) {
-            throw new RuntimeException("No se puede eliminar el usuario porque tiene préstamos asociados. Primero elimine todos los préstamos del usuario.");
+        // Eliminar todos los pagos asociados
+        List<com.trustbank.loans.backend.apirest.entity.Payment> payments = paymentRepository.findByUserId(id);
+        if (!payments.isEmpty()) {
+            paymentRepository.deleteAll(payments);
         }
         
-        // Verificar si el usuario tiene pagos asociados
-        if (hasRelatedPayments(id)) {
-            throw new RuntimeException("No se puede eliminar el usuario porque tiene pagos asociados. Primero elimine todos los pagos del usuario.");
+        // Eliminar todos los préstamos asociados
+        List<com.trustbank.loans.backend.apirest.entity.Loan> loans = loanRepository.findByUserId(id);
+        if (!loans.isEmpty()) {
+            loanRepository.deleteAll(loans);
         }
         
+        // Finalmente eliminar el usuario
         userRepository.deleteById(id);
     }
     
