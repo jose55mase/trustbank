@@ -11,6 +11,7 @@ public class LoanRequest {
     private String loanType;
     private String paymentFrequency;
     private LocalDateTime startDate;
+    private BigDecimal valorRealCuota;
     
     // Nested class for user reference
     public static class UserReference {
@@ -41,4 +42,7 @@ public class LoanRequest {
     
     public LocalDateTime getStartDate() { return startDate; }
     public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
+    
+    public BigDecimal getValorRealCuota() { return valorRealCuota; }
+    public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
 }
