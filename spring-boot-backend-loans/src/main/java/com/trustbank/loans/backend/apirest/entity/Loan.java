@@ -57,6 +57,9 @@ public class Loan {
     @Column(name = "payment_frequency", length = 50)
     private String paymentFrequency;
     
+    @Column(name = "valor_real_cuota", precision = 15, scale = 2)
+    private BigDecimal valorRealCuota;
+    
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Transaction> transactions;
@@ -160,4 +163,7 @@ public class Loan {
     
     public String getPaymentFrequency() { return paymentFrequency; }
     public void setPaymentFrequency(String paymentFrequency) { this.paymentFrequency = paymentFrequency; }
+    
+    public BigDecimal getValorRealCuota() { return valorRealCuota; }
+    public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
 }

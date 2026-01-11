@@ -128,6 +128,7 @@ class ApiService {
     String? loanType,
     String? paymentFrequency,
     DateTime? startDate,
+    double? valorRealCuota,
   }) async {
     final url = Uri.parse('$baseUrl/loans');
     
@@ -142,6 +143,10 @@ class ApiService {
     
     if (startDate != null) {
       requestBody['startDate'] = startDate.toIso8601String();
+    }
+    
+    if (valorRealCuota != null) {
+      requestBody['valorRealCuota'] = valorRealCuota;
     }
     
     final response = await http.post(
@@ -549,6 +554,7 @@ class ApiService {
     required int installments,
     required String loanType,
     required String paymentFrequency,
+    double? valorRealCuota,
   }) async {
     final url = Uri.parse('$baseUrl/loans/$loanId');
     
@@ -557,6 +563,10 @@ class ApiService {
     currentLoan['installments'] = installments;
     currentLoan['loanType'] = loanType;
     currentLoan['paymentFrequency'] = paymentFrequency;
+    
+    if (valorRealCuota != null) {
+      currentLoan['valorRealCuota'] = valorRealCuota;
+    }
     
     final response = await http.put(
       url,
