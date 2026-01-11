@@ -14,6 +14,7 @@ class Loan {
   final double remainingAmount;
   final String? loanType;
   final String? paymentFrequency;
+  final double? valorRealCuota;
 
   Loan({
     required this.id,
@@ -29,6 +30,7 @@ class Loan {
     this.pagoActual = false,
     this.loanType,
     this.paymentFrequency,
+    this.valorRealCuota,
   });
 
   factory Loan.fromJson(Map<String, dynamic> json) {
@@ -46,6 +48,7 @@ class Loan {
       pagoActual: json['pagoActual'] ?? false,
       loanType: json['loanType'],
       paymentFrequency: json['paymentFrequency'],
+      valorRealCuota: json['valorRealCuota'] != null ? (json['valorRealCuota'] as num).toDouble() : null,
     );
   }
 

@@ -106,6 +106,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   InfoRow(label: 'Cuotas Pagadas', value: '${currentLoan.paidInstallments}'),
                   InfoRow(label: 'Cuotas Pendientes', value: '${currentLoan.installments - currentLoan.paidInstallments}'),
                   InfoRow(label: 'Valor por Cuota', value: currencyFormat.format(currentLoan.installmentAmount)),
+                  if (currentLoan.valorRealCuota != null)
+                    InfoRow(
+                      label: 'Valor Real Cuota',
+                      value: currencyFormat.format(currentLoan.valorRealCuota!),
+                      valueColor: AppColors.secondary,
+                    ),
                   InfoRow(
                     label: 'Monto Restante',
                     value: currencyFormat.format(currentLoan.remainingAmount),
@@ -883,6 +889,9 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   void _showEditDialog(BuildContext context) {
     final interestController = TextEditingController(text: currentLoan.interestRate.toString());
     final installmentsController = TextEditingController(text: currentLoan.installments.toString());
+    final valorRealCuotaController = TextEditingController(
+      text: currentLoan.valorRealCuota != null ? currentLoan.valorRealCuota!.toStringAsFixed(0) : '',
+    );
     String selectedLoanType = currentLoan.loanType ?? 'Fijo';
     String selectedPaymentFrequency = currentLoan.paymentFrequency ?? 'Mensual 30';
 
@@ -910,6 +919,17 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Número de Cuotas',
                     border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: valorRealCuotaController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: 'Valor Real Cuota',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(),
+                    helperText: 'Valor real de cada cuota',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -955,6 +975,9 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
               onPressed: () async {
                 final interestRate = double.tryParse(interestController.text);
                 final installments = int.tryParse(installmentsController.text);
+                final valorRealCuota = valorRealCuotaController.text.isNotEmpty 
+                    ? double.tryParse(valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9.]'), '')) 
+                    : null;
                 
                 if (interestRate == null || installments == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -967,7 +990,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                 }
                 
                 Navigator.pop(context);
-                await _updateLoan(interestRate, installments, selectedLoanType, selectedPaymentFrequency);
+                await _updateLoan(interestRate, installments, selectedLoanType, selectedPaymentFrequency, valorRealCuota);
               },
               child: const Text('Guardar'),
             ),
@@ -977,7 +1000,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     );
   }
 
-  Future<void> _updateLoan(double interestRate, int installments, String loanType, String paymentFrequency) async {
+  Future<void> _updateLoan(double interestRate, int installments, String loanType, String paymentFrequency, double? valorRealCuota) async {
     try {
       await ApiService.updateLoan(
         loanId: currentLoan.id,
@@ -985,6 +1008,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         installments: installments,
         loanType: loanType,
         paymentFrequency: paymentFrequency,
+        valorRealCuota: valorRealCuota,
       );
       
       ScaffoldMessenger.of(context).showSnackBar(

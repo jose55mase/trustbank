@@ -24,6 +24,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   final interestController = TextEditingController();
   final installmentsController = TextEditingController();
   final phoneController = TextEditingController();
+  final valorRealCuotaController = TextEditingController();
   final numberFormat = NumberFormat('#,###', 'es_CO');
   List<User> users = [];
   bool isLoading = true;
@@ -33,7 +34,13 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   void initState() {
     super.initState();
     amountController.addListener(_formatAmount);
-    installmentsController.addListener(() => setState(() {}));
+    amountController.addListener(_calculateValorRealCuota);
+    interestController.addListener(_calculateValorRealCuota);
+    valorRealCuotaController.addListener(_formatValorRealCuota);
+    installmentsController.addListener(() {
+      setState(() {});
+      _calculateValorRealCuota();
+    });
     _loadUsers();
   }
   
@@ -82,6 +89,63 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     amountController.value = TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: cursorPosition),
+    );
+  }
+  
+  void _formatValorRealCuota() {
+    String text = valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (text.isEmpty) return;
+    
+    final value = int.parse(text);
+    final formatted = '\$ ${numberFormat.format(value)}';
+    
+    valorRealCuotaController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
+  }
+  
+  void _calculateValorRealCuota() {
+    final amountText = amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    final interestText = interestController.text;
+    final installmentsText = installmentsController.text;
+    
+    if (amountText.isEmpty || interestText.isEmpty || installmentsText.isEmpty || loanType == null) {
+      valorRealCuotaController.clear();
+      return;
+    }
+    
+    final amount = double.parse(amountText);
+    final interestRate = double.parse(interestText);
+    final installments = int.parse(installmentsText);
+    
+    double valorRealCuota = 0.0;
+    
+    switch (loanType) {
+      case 'Fijo':
+        // Para préstamos fijos: capital por cuota + interés por cuota
+        final capitalPorCuota = amount / installments;
+        final interesPorCuota = amount * interestRate / 100;
+        valorRealCuota = capitalPorCuota + interesPorCuota;
+        break;
+      case 'Rotativo':
+        // Para préstamos rotativos: similar al fijo pero se recalcula con el saldo restante
+        final capitalPorCuota = amount / installments;
+        final interesPorCuota = amount * interestRate / 100;
+        valorRealCuota = capitalPorCuota + interesPorCuota;
+        break;
+      case 'Ahorro':
+      default:
+        // Para otros tipos: total con interés dividido entre cuotas
+        final totalWithInterest = amount + (amount * interestRate / 100);
+        valorRealCuota = totalWithInterest / installments;
+        break;
+    }
+    
+    final formatted = '\$ ${numberFormat.format(valorRealCuota.round())}';
+    valorRealCuotaController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
   
@@ -369,6 +433,10 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       final interestRate = double.parse(interestController.text);
       final installments = int.parse(installmentsController.text);
       
+      // Obtener el valor real de cuota calculado
+      final valorRealCuotaText = valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final valorRealCuota = valorRealCuotaText.isNotEmpty ? double.parse(valorRealCuotaText) : null;
+      
       await ApiService.createLoan(
         userId: selectedUserId!,
         amount: amount,
@@ -377,6 +445,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         loanType: loanType,
         paymentFrequency: paymentFrequency,
         startDate: selectedDate,
+        valorRealCuota: valorRealCuota,
       );
       
       if (mounted) {
@@ -398,10 +467,14 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   @override
   void dispose() {
     amountController.removeListener(_formatAmount);
+    amountController.removeListener(_calculateValorRealCuota);
+    interestController.removeListener(_calculateValorRealCuota);
+    valorRealCuotaController.removeListener(_formatValorRealCuota);
     amountController.dispose();
     interestController.dispose();
     installmentsController.dispose();
     phoneController.dispose();
+    valorRealCuotaController.dispose();
     super.dispose();
   }
 
@@ -531,6 +604,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
                   paymentFrequency = 'Mensual 15';
                 }
                 // Rotativo mantiene la selección libre
+                _calculateValorRealCuota();
               });
             },
           ),
@@ -577,6 +651,31 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
                 paymentFrequency = value;
               });
             } : null,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: valorRealCuotaController,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'Valor Real Cuota',
+              border: const OutlineInputBorder(),
+              helperText: 'Valor real de cada cuota (se calcula automáticamente)',
+              suffixIcon: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.blue),
+                    onPressed: _calculateValorRealCuota,
+                    tooltip: 'Recalcular automáticamente',
+                  ),
+                  const Icon(Icons.edit, color: Colors.orange),
+                ],
+              ),
+            ),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+            ),
           ),
           _buildPaymentDatesWidget(),
           const SizedBox(height: 32),
