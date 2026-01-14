@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/user.dart';
+import '../screens/user_detail_screen.dart';
 
 class LoanDetailModal extends StatelessWidget {
   final Map<String, dynamic> loan;
@@ -259,8 +260,28 @@ class LoanDetailModal extends StatelessWidget {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => UserDetailScreen(user: user),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.person),
+                      label: const Text('Ver Usuario'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text('Cerrar'),

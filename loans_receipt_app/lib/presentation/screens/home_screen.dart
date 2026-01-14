@@ -444,83 +444,140 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 )
               else
-                ...activeLoans.take(5).map((loan) => Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: InkWell(
-                    onTap: () async {
-                      try {
-                        final users = await ApiService.getUsers();
-                        final user = users.firstWhere(
-                          (u) => u.id == loan.userId,
-                          orElse: () => User(
+                ...activeLoans.take(5).map((loan) => FutureBuilder<List<User>>(
+                  future: ApiService.getUsers(),
+                  builder: (context, snapshot) {
+                    final users = snapshot.data ?? [];
+                    final user = users.isNotEmpty
+                        ? users.firstWhere(
+                            (u) => u.id == loan.userId,
+                            orElse: () => User(
+                              id: '0',
+                              name: 'Usuario Desconocido',
+                              userCode: 'N/A',
+                              phone: 'N/A',
+                              direccion: 'N/A',
+                              registrationDate: DateTime.now(),
+                            ),
+                          )
+                        : User(
                             id: '0',
-                            name: 'Usuario Desconocido',
-                            userCode: 'N/A',
+                            name: 'Cargando...',
+                            userCode: '...',
                             phone: 'N/A',
                             direccion: 'N/A',
                             registrationDate: DateTime.now(),
-                          ),
-                        );
-                        if (mounted) {
-                          // Convertir Loan a Map para el modal
-                          final loanMap = {
-                            'id': loan.id,
-                            'amount': loan.amount,
-                            'interestRate': loan.interestRate,
-                            'installments': loan.installments,
-                            'paidInstallments': loan.paidInstallments,
-                            'startDate': loan.startDate.toIso8601String(),
-                            'status': loan.status.name.toUpperCase(),
-                            'totalAmount': loan.totalAmount,
-                            'installmentAmount': loan.installmentAmount,
-                            'remainingAmount': loan.remainingAmount,
-                          };
-                          LoanDetailModal.show(context, loanMap, user);
-                        }
-                      } catch (e) {
-                        debugPrint('Error cargando detalles: $e');
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Error al cargar detalles del préstamo')),
                           );
-                        }
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () async {
+                          try {
+                            final users = await ApiService.getUsers();
+                            final user = users.firstWhere(
+                              (u) => u.id == loan.userId,
+                              orElse: () => User(
+                                id: '0',
+                                name: 'Usuario Desconocido',
+                                userCode: 'N/A',
+                                phone: 'N/A',
+                                direccion: 'N/A',
+                                registrationDate: DateTime.now(),
+                              ),
+                            );
+                            if (mounted) {
+                              final loanMap = {
+                                'id': loan.id,
+                                'amount': loan.amount,
+                                'interestRate': loan.interestRate,
+                                'installments': loan.installments,
+                                'paidInstallments': loan.paidInstallments,
+                                'startDate': loan.startDate.toIso8601String(),
+                                'status': loan.status.name.toUpperCase(),
+                                'totalAmount': loan.totalAmount,
+                                'installmentAmount': loan.installmentAmount,
+                                'remainingAmount': loan.remainingAmount,
+                              };
+                              LoanDetailModal.show(context, loanMap, user);
+                            }
+                          } catch (e) {
+                            debugPrint('Error cargando detalles: $e');
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Error al cargar detalles del préstamo')),
+                              );
+                            }
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Préstamo #${loan.id}', style: AppTextStyles.h3),
-                              const SizedBox(height: 4),
-                              Text(NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(loan.amount), style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(loan.status).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  _getStatusText(loan.status),
-                                  style: TextStyle(color: _getStatusColor(loan.status), fontSize: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text('Préstamo #${loan.id}', style: AppTextStyles.h3),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            user.userCode,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      user.name,
+                                      style: AppTextStyles.caption.copyWith(color: Colors.grey[600]),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(loan.amount),
+                                      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(loan.status).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      _getStatusText(loan.status),
+                                      style: TextStyle(color: _getStatusColor(loan.status), fontSize: 12),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 )),
             ],
           ),
