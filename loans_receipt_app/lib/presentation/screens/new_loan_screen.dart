@@ -451,7 +451,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     // Validación: todos los campos requeridos
     if (selectedUserId == null || 
         amountController.text.isEmpty || 
-        (!capitalFijo && interestController.text.isEmpty) || 
+        interestController.text.isEmpty || 
         installmentsController.text.isEmpty ||
         loanType == null ||
         paymentFrequency == null) {
@@ -465,7 +465,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     
     try {
       final amount = double.parse(amountController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-      final interestRate = capitalFijo ? 0.0 : double.parse(interestController.text);
+      final interestRate = double.parse(interestController.text);
       final installments = int.parse(installmentsController.text);
       
       // Obtener el valor real de cuota calculado
@@ -597,17 +597,11 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             onChanged: (value) {
               setState(() {
                 capitalFijo = value ?? false;
-                if (capitalFijo) {
-                  interestController.text = '0';
-                } else {
-                  interestController.clear();
-                }
                 _calculateValorRealCuota();
               });
             },
           ),
-          if (!capitalFijo) const SizedBox(height: 16),
-          if (!capitalFijo)
+          const SizedBox(height: 16),
           TextField(
             controller: interestController,
             keyboardType: TextInputType.number,
@@ -725,7 +719,6 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             } : null,
           ),
           const SizedBox(height: 16),
-          if (!capitalFijo)
           TextField(
             controller: valorRealCuotaController,
             keyboardType: TextInputType.number,
