@@ -179,7 +179,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       Text('Monto: \$${NumberFormat('#,###').format(loan.amount)}'),
                       Text('Tasa de Interés: ${loan.interestRate}%'),
                       Text('Cuotas: ${loan.paidInstallments}/${loan.installments}'),
-                      Text('Valor Real Cuota: \$${NumberFormat('#,###').format(loan.valorRealCuota ?? loan.backendInstallmentAmount ?? loan.installmentAmount)}'),
+                      loan.sinCuotas
+                        ? Text(
+                            'Valor Fijo: \$${NumberFormat('#,###').format(loan.amount)}',
+                            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                          )
+                        : Text('Valor Real Cuota: \$${NumberFormat('#,###').format(loan.valorRealCuota ?? loan.backendInstallmentAmount ?? loan.installmentAmount)}'),
                       const SizedBox(height: 4),
                       Row(
                         children: [

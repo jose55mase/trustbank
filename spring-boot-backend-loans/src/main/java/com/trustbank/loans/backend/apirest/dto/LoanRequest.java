@@ -12,6 +12,7 @@ public class LoanRequest {
     private String paymentFrequency;
     private LocalDateTime startDate;
     private BigDecimal valorRealCuota;
+    private Boolean sinCuotas;
     
     // Nested class for user reference
     public static class UserReference {
@@ -45,4 +46,7 @@ public class LoanRequest {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public Boolean getSinCuotas() { return sinCuotas; }
+    public void setSinCuotas(Boolean sinCuotas) { this.sinCuotas = sinCuotas; }
 }

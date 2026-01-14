@@ -67,6 +67,7 @@ public class LoanController {
         loan.setLoanType(loanRequest.getLoanType());
         loan.setPaymentFrequency(loanRequest.getPaymentFrequency());
         loan.setValorRealCuota(loanRequest.getValorRealCuota());
+        loan.setSinCuotas(loanRequest.getSinCuotas() != null ? loanRequest.getSinCuotas() : false);
         
         // Si se proporciona fecha de inicio, usarla; si no, usar fecha actual
         if (loanRequest.getStartDate() != null) {

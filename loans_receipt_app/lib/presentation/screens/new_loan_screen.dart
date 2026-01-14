@@ -25,6 +25,8 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   final installmentsController = TextEditingController();
   final phoneController = TextEditingController();
   final valorRealCuotaController = TextEditingController();
+  final capitalController = TextEditingController();
+  bool capitalFijo = false;
   final numberFormat = NumberFormat('#,###', 'es_CO');
   List<User> users = [];
   bool isLoading = true;
@@ -37,6 +39,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     amountController.addListener(_calculateValorRealCuota);
     interestController.addListener(_calculateValorRealCuota);
     valorRealCuotaController.addListener(_formatValorRealCuota);
+    capitalController.addListener(_formatCapital);
     installmentsController.addListener(() {
       setState(() {});
       _calculateValorRealCuota();
@@ -105,10 +108,41 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     );
   }
   
+  void _formatCapital() {
+    String text = capitalController.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (text.isEmpty) return;
+    
+    final value = int.parse(text);
+    final formatted = numberFormat.format(value);
+    
+    final cursorPosition = formatted.length;
+    capitalController.value = TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: cursorPosition),
+    );
+  }
+  
   void _calculateValorRealCuota() {
     final amountText = amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final interestText = interestController.text;
     final installmentsText = installmentsController.text;
+    
+    // Si está marcado "capital fijo", calcular sin interés
+    if (capitalFijo) {
+      if (amountText.isEmpty || installmentsText.isEmpty) {
+        valorRealCuotaController.clear();
+        return;
+      }
+      final amount = double.parse(amountText);
+      final installments = int.parse(installmentsText);
+      final valorRealCuota = amount / installments;
+      final formatted = '\$ ${numberFormat.format(valorRealCuota.round())}';
+      valorRealCuotaController.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+      return;
+    }
     
     if (amountText.isEmpty || interestText.isEmpty || installmentsText.isEmpty || loanType == null) {
       valorRealCuotaController.clear();
@@ -414,9 +448,10 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       return;
     }
     
+    // Validación: todos los campos requeridos
     if (selectedUserId == null || 
         amountController.text.isEmpty || 
-        interestController.text.isEmpty || 
+        (!capitalFijo && interestController.text.isEmpty) || 
         installmentsController.text.isEmpty ||
         loanType == null ||
         paymentFrequency == null) {
@@ -430,12 +465,27 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     
     try {
       final amount = double.parse(amountController.text.replaceAll(RegExp(r'[^0-9]'), ''));
-      final interestRate = double.parse(interestController.text);
+      final interestRate = capitalFijo ? 0.0 : double.parse(interestController.text);
       final installments = int.parse(installmentsController.text);
       
       // Obtener el valor real de cuota calculado
       final valorRealCuotaText = valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9]'), '');
       final valorRealCuota = valorRealCuotaText.isNotEmpty ? double.parse(valorRealCuotaText) : null;
+      
+      // Obtener el capital
+      final capitalText = capitalController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      final capital = capitalText.isNotEmpty ? double.parse(capitalText) : null;
+      
+      print('========== CREANDO PRÉSTAMO ==========');
+      print('capitalFijo (checkbox): $capitalFijo');
+      print('amount: $amount');
+      print('interestRate: $interestRate');
+      print('installments: $installments');
+      print('loanType: $loanType');
+      print('paymentFrequency: $paymentFrequency');
+      print('valorRealCuota: $valorRealCuota');
+      print('sinCuotas (enviando al backend): $capitalFijo');
+      print('======================================');
       
       await ApiService.createLoan(
         userId: selectedUserId!,
@@ -446,6 +496,8 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         paymentFrequency: paymentFrequency,
         startDate: selectedDate,
         valorRealCuota: valorRealCuota,
+        capital: capital,
+        sinCuotas: capitalFijo,
       );
       
       if (mounted) {
@@ -470,11 +522,13 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     amountController.removeListener(_calculateValorRealCuota);
     interestController.removeListener(_calculateValorRealCuota);
     valorRealCuotaController.removeListener(_formatValorRealCuota);
+    capitalController.removeListener(_formatCapital);
     amountController.dispose();
     interestController.dispose();
     installmentsController.dispose();
     phoneController.dispose();
     valorRealCuotaController.dispose();
+    capitalController.dispose();
     super.dispose();
   }
 
@@ -536,6 +590,24 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             ),
           ),
           const SizedBox(height: 16),
+          CheckboxListTile(
+            title: const Text('Capital Fijo'),
+            subtitle: const Text('Marcar si el préstamo no aplica tasa de interés (solo capital)'),
+            value: capitalFijo,
+            onChanged: (value) {
+              setState(() {
+                capitalFijo = value ?? false;
+                if (capitalFijo) {
+                  interestController.text = '0';
+                } else {
+                  interestController.clear();
+                }
+                _calculateValorRealCuota();
+              });
+            },
+          ),
+          if (!capitalFijo) const SizedBox(height: 16),
+          if (!capitalFijo)
           TextField(
             controller: interestController,
             keyboardType: TextInputType.number,
@@ -653,6 +725,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             } : null,
           ),
           const SizedBox(height: 16),
+          if (!capitalFijo)
           TextField(
             controller: valorRealCuotaController,
             keyboardType: TextInputType.number,

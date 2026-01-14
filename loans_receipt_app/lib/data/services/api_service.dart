@@ -129,6 +129,8 @@ class ApiService {
     String? paymentFrequency,
     DateTime? startDate,
     double? valorRealCuota,
+    double? capital,
+    bool sinCuotas = false,
   }) async {
     final url = Uri.parse('$baseUrl/loans');
     
@@ -139,6 +141,7 @@ class ApiService {
       'installments': installments,
       'loanType': loanType,
       'paymentFrequency': paymentFrequency,
+      'sinCuotas': sinCuotas,
     };
     
     if (startDate != null) {
@@ -149,6 +152,14 @@ class ApiService {
       requestBody['valorRealCuota'] = valorRealCuota;
     }
     
+    if (capital != null) {
+      requestBody['capital'] = capital;
+    }
+    
+    print('========== API SERVICE - REQUEST BODY ==========');
+    print(jsonEncode(requestBody));
+    print('===============================================');
+    
     final response = await http.post(
       url,
       headers: {
@@ -156,6 +167,11 @@ class ApiService {
       },
       body: jsonEncode(requestBody),
     );
+    
+    print('========== API SERVICE - RESPONSE ==========');
+    print('Status Code: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    print('===========================================');
     
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
