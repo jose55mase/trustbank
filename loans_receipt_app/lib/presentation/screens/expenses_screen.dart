@@ -22,8 +22,6 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   String selectedPeriod = 'Día';
   List<ExpenseCategory> _categories = [];
   List<ExpenseModel> _expenses = [];
-  bool _isLoadingCategories = true;
-  bool _isLoadingExpenses = true;
   
   @override
   void initState() {
@@ -33,15 +31,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
   
   Future<void> _loadCategories() async {
-    setState(() => _isLoadingCategories = true);
     try {
       final categories = await ApiService.getAllExpenseCategories();
       setState(() {
         _categories = categories;
-        _isLoadingCategories = false;
       });
     } catch (e) {
-      setState(() => _isLoadingCategories = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar categorías: $e')),
@@ -51,15 +46,12 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
   }
   
   Future<void> _loadExpenses() async {
-    setState(() => _isLoadingExpenses = true);
     try {
       final expenses = await ApiService.getAllExpenses();
       setState(() {
         _expenses = expenses;
-        _isLoadingExpenses = false;
       });
     } catch (e) {
-      setState(() => _isLoadingExpenses = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error al cargar gastos: $e')),

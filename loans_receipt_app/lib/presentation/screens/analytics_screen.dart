@@ -420,11 +420,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
   
   List<ChartData> _getDailyData(double totalInterest) {
-    final now = DateTime.now();
     final data = <ChartData>[];
     
     for (int i = 6; i >= 0; i--) {
-      final date = now.subtract(Duration(days: i));
+      final date = DateTime.now().subtract(Duration(days: i));
       final dayName = DateFormat('EEE').format(date);
       final dayInterest = _getInterestForDate(date);
       data.add(ChartData(dayName, dayInterest));

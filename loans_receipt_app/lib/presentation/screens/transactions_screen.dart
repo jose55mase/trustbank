@@ -402,14 +402,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final headers1 = [
         'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
         'FORMA', 'ID', 'CODIGO', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
-        'CUOTAS', 'CUOTAS', 'VALOR REAL', 'CAPITAL', 'INTERES', 'NOTAS'
+        'CUOTAS', 'CUOTAS', 'VALOR REAL', 'CAPITAL', 'CAPITAL', 'INTERES', 'NOTAS'
       ];
       
       // Encabezados secundarios
       final headers2 = [
         '', '', '', '', 'DE PAGO', 'PRESTAMO', 
         'DE PAGO', 'PRESTAMO', 'USUARIO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
-        'PAGADAS', 'RESTANTES', 'DE CUOTA', '', '', ''
+        'PAGADAS', 'RESTANTES', 'DE CUOTA', '', 'FIJO', '', ''
       ];
       
       // Ajustar altura de las filas de encabezados
@@ -561,6 +561,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           }
         }
         
+        // Obtener el valor de sinCuotas (Capital Fijo)
+        final sinCuotas = isLoan 
+            ? (item['sinCuotas'] == true)
+            : (item['loan']?['sinCuotas'] == true);
+        
         final row = [
           item['id']?.toString() ?? '',
           isLoan ? 'Prestamo' : (isPayment ? 'Pago' : 'Transaccion'),
@@ -592,6 +597,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             : ((item['loan']?['installments'] ?? 0) - (item['loan']?['paidInstallments'] ?? 0)).toString(),
           valorRealCuota,
           isPayment ? currencyFormat.format(item['principalAmount'] ?? 0) : '',
+          sinCuotas ? 'Verdadero' : 'Falso',
           isPayment ? currencyFormat.format(item['interestAmount'] ?? 0) : '',
           item['notes']?.toString() ?? ''
         ];

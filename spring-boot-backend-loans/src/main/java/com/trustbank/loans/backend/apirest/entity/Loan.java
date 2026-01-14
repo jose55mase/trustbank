@@ -60,6 +60,9 @@ public class Loan {
     @Column(name = "valor_real_cuota", precision = 15, scale = 2)
     private BigDecimal valorRealCuota;
     
+    @Column(name = "sin_cuotas")
+    private Boolean sinCuotas = false;
+    
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Transaction> transactions;
@@ -166,4 +169,7 @@ public class Loan {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public Boolean getSinCuotas() { return sinCuotas; }
+    public void setSinCuotas(Boolean sinCuotas) { this.sinCuotas = sinCuotas; }
 }
