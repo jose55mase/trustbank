@@ -99,10 +99,21 @@ public class TransactionController {
         transaction.setPrincipalAmount(request.getPrincipalAmount());
         transaction.setValorRealCuota(request.getValorRealCuota());
         
-        // Usar fecha actual sin zona horaria para evitar problemas de día siguiente
+        // Usar fecha actual local sin zona horaria para evitar problemas de día siguiente
         LocalDateTime now = LocalDateTime.now();
-        transaction.setDate(now);
-        logger.info("Fecha asignada a la transacción: {}", now);
+        // Forzar fecha actual del sistema local
+        LocalDateTime localNow = LocalDateTime.of(
+            java.time.LocalDate.now().getYear(),
+            java.time.LocalDate.now().getMonth(),
+            java.time.LocalDate.now().getDayOfMonth(),
+            LocalDateTime.now().getHour(),
+            LocalDateTime.now().getMinute(),
+            LocalDateTime.now().getSecond()
+        );
+        transaction.setDate(localNow);
+        logger.info("Fecha del sistema: {}", now);
+        logger.info("Fecha local forzada: {}", localNow);
+        logger.info("Fecha actual real: {}", java.time.LocalDate.now());
         
         // Set loan reference
         if (request.getLoan() != null && request.getLoan().getId() != null) {
@@ -138,7 +149,26 @@ public class TransactionController {
         return ResponseEntity.notFound().build();
     }
     
-    @GetMapping("/debug/all")
+    @GetMapping("/debug/datetime")
+    public ResponseEntity<Map<String, Object>> debugDateTime() {
+        Map<String, Object> debug = new java.util.HashMap<>();
+        debug.put("LocalDateTime.now()", LocalDateTime.now());
+        debug.put("LocalDate.now()", java.time.LocalDate.now());
+        debug.put("System.currentTimeMillis()", System.currentTimeMillis());
+        debug.put("new Date()", new java.util.Date());
+        debug.put("ZoneId.systemDefault()", java.time.ZoneId.systemDefault().toString());
+        debug.put("Year.now()", java.time.Year.now().getValue());
+        debug.put("Month.now()", java.time.MonthDay.now().getMonth());
+        debug.put("Day.now()", java.time.MonthDay.now().getDayOfMonth());
+        
+        logger.info("=== DEBUG FECHA/HORA ===");
+        logger.info("LocalDateTime.now(): {}", LocalDateTime.now());
+        logger.info("LocalDate.now(): {}", java.time.LocalDate.now());
+        logger.info("ZoneId.systemDefault(): {}", java.time.ZoneId.systemDefault());
+        logger.info("Year.now(): {}", java.time.Year.now().getValue());
+        
+        return ResponseEntity.ok(debug);
+    }
     public ResponseEntity<Map<String, Object>> debugAllTransactions() {
         logger.info("=== DEBUG: Analizando todas las transacciones ===");
         List<Transaction> transactions = transactionService.findAll();
@@ -147,6 +177,10 @@ public class TransactionController {
         debug.put("totalTransactions", transactions.size());
         debug.put("serverDateTime", LocalDateTime.now());
         debug.put("serverDate", LocalDateTime.now().toLocalDate());
+        debug.put("systemDate", java.time.LocalDate.now());
+        debug.put("systemDateTime", java.time.LocalDateTime.now());
+        debug.put("timeZone", java.time.ZoneId.systemDefault().toString());
+        debug.put("currentYear", java.time.Year.now().getValue());
         
         BigDecimal totalAmount = BigDecimal.ZERO;
         BigDecimal totalPrincipal = BigDecimal.ZERO;
