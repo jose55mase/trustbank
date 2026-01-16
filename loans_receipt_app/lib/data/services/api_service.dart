@@ -578,6 +578,9 @@ class ApiService {
   }) async {
     final url = Uri.parse('$baseUrl/expenses');
     
+    // Si la descripción está vacía o es null, usar "Sin descripción"
+    final finalDescription = description.trim().isEmpty ? 'Sin descripción' : description.trim();
+    
     final response = await http.post(
       url,
       headers: {
@@ -586,7 +589,7 @@ class ApiService {
       body: jsonEncode({
         'category': {'id': categoryId},
         'amount': amount,
-        'description': description,
+        'description': finalDescription,
         'expenseDate': expenseDate.toIso8601String(),
       }),
     );
@@ -629,6 +632,9 @@ class ApiService {
   }) async {
     final url = Uri.parse('$baseUrl/expenses/$expenseId');
     
+    // Si la descripción está vacía o es null, usar "Sin descripción"
+    final finalDescription = description.trim().isEmpty ? 'Sin descripción' : description.trim();
+    
     final response = await http.put(
       url,
       headers: {
@@ -637,7 +643,7 @@ class ApiService {
       body: jsonEncode({
         'category': {'id': categoryId},
         'amount': amount,
-        'description': description,
+        'description': finalDescription,
         'expenseDate': expenseDate.toIso8601String(),
       }),
     );

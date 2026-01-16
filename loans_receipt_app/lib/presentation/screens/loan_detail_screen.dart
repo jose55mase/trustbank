@@ -312,27 +312,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     helperText: 'Ganancia que obtienes por este pago',
                   ),
                 ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: valorRealCuotaController,
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
-                    if (text.isNotEmpty) {
-                      final number = int.parse(text);
-                      final formatted = '\$ ${NumberFormat('#,###', 'es_CO').format(number)}';
-                      valorRealCuotaController.value = TextEditingValue(
-                        text: formatted,
-                        selection: TextSelection.collapsed(offset: formatted.length),
-                      );
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Valor Real Cuota',
-                    border: OutlineInputBorder(),
-                    helperText: 'Valor real de la cuota pagada',
-                  ),
-                ),
+
                 const SizedBox(height: 16),
                 const Text('Método de pago:'),
                 const SizedBox(height: 8),

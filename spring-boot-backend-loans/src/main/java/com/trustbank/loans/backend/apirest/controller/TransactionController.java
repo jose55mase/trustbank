@@ -164,6 +164,7 @@ public class TransactionController {
         
         return ResponseEntity.ok(debug);
     }
+    @GetMapping("/debug/all")
     public ResponseEntity<Map<String, Object>> debugAllTransactions() {
         logger.info("=== DEBUG: Analizando todas las transacciones ===");
         List<Transaction> transactions = transactionService.findAll();
@@ -208,31 +209,5 @@ public class TransactionController {
             totalAmount, totalPrincipal, totalInterest);
         
         return ResponseEntity.ok(debug);
-    }
-    
-    @PostMapping("/fix-principal-amounts")
-    public ResponseEntity<Map<String, Object>> fixPrincipalAmounts() {
-        List<Transaction> allTransactions = transactionService.findAll();
-        int fixedCount = 0;
-        
-        for (Transaction transaction : allTransactions) {
-            // Solo corregir transacciones que tienen principalAmount diferente al amount
-            if (transaction.getPrincipalAmount() != null && 
-                transaction.getAmount() != null &&
-                transaction.getPrincipalAmount().compareTo(transaction.getAmount()) != 0) {
-                
-                // Corregir: principalAmount debe ser igual al amount total
-                transaction.setPrincipalAmount(transaction.getAmount());
-                transactionService.save(transaction);
-                fixedCount++;
-            }
-        }
-        
-        Map<String, Object> result = new java.util.HashMap<>();
-        result.put("message", "Transacciones corregidas exitosamente");
-        result.put("totalTransactions", allTransactions.size());
-        result.put("fixedTransactions", fixedCount);
-        
-        return ResponseEntity.ok(result);
     }
 }
