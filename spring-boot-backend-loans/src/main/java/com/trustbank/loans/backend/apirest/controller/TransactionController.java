@@ -99,14 +99,16 @@ public class TransactionController {
         transaction.setPrincipalAmount(request.getPrincipalAmount());
         transaction.setValorRealCuota(request.getValorRealCuota());
         
-        // FORZAR FECHA CORRECTA - El servidor está adelantado un día
-        LocalDateTime correctDate = LocalDateTime.of(2026, 1, 15, 
-            LocalDateTime.now().getHour(), 
-            LocalDateTime.now().getMinute(), 
-            LocalDateTime.now().getSecond());
-        transaction.setDate(correctDate);
-        logger.info("Fecha del sistema (adelantada): {}", LocalDateTime.now());
-        logger.info("Fecha corregida aplicada: {}", correctDate);
+        // Usar fecha enviada desde Flutter o fecha actual como fallback
+        LocalDateTime transactionDate;
+        if (request.getDate() != null) {
+            transactionDate = request.getDate();
+            logger.info("Usando fecha enviada desde Flutter: {}", transactionDate);
+        } else {
+            transactionDate = LocalDateTime.now();
+            logger.info("Usando fecha del servidor como fallback: {}", transactionDate);
+        }
+        transaction.setDate(transactionDate);
         
         // Set loan reference
         if (request.getLoan() != null && request.getLoan().getId() != null) {

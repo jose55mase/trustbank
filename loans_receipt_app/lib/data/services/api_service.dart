@@ -335,6 +335,7 @@ class ApiService {
       'principalAmount': principalAmount,
       'loanType': loanType,
       'paymentFrequency': paymentFrequency,
+      'date': DateTime.now().toIso8601String(), // Enviar fecha actual desde Flutter
     };
     
     if (valorRealCuota != null) {
@@ -344,6 +345,7 @@ class ApiService {
     print('=== FLUTTER: Creando transacción ===');
     print('URL: $url');
     print('Request Body: ${jsonEncode(requestBody)}');
+    print('Fecha enviada: ${DateTime.now().toIso8601String()}');
     
     final response = await http.post(
       url,

@@ -3,6 +3,7 @@ package com.trustbank.loans.backend.apirest.dto;
 import com.trustbank.loans.backend.apirest.entity.PaymentMethod;
 import com.trustbank.loans.backend.apirest.entity.TransactionType;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 public class TransactionRequest {
     private TransactionType type;
@@ -13,6 +14,7 @@ public class TransactionRequest {
     private BigDecimal interestAmount;
     private BigDecimal principalAmount;
     private BigDecimal valorRealCuota;
+    private LocalDateTime date;
     
     public static class LoanRef {
         private Long id;
@@ -45,4 +47,7 @@ public class TransactionRequest {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public LocalDateTime getDate() { return date; }
+    public void setDate(LocalDateTime date) { this.date = date; }
 }
