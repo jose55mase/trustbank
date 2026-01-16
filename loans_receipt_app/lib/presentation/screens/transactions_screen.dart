@@ -59,24 +59,42 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       List<dynamic> transactions;
       List<dynamic> loans;
       
+      print('=== FLUTTER: Cargando transacciones ===');
+      print('Filtro seleccionado: $selectedFilter');
+      print('Fecha seleccionada: $selectedDate');
+      print('Rango de fechas: $selectedDateRange');
+      print('Filtro tipo préstamo: $loanTypeFilter');
+      print('Filtro frecuencia pago: $paymentFrequencyFilter');
+      
       // Aplicar filtros al backend
       if (selectedDateRange != null) {
+        print('Consultando por rango de fechas: ${selectedDateRange!.start} - ${selectedDateRange!.end}');
         transactions = await ApiService.getTransactionsByDateRange(
           startDate: selectedDateRange!.start,
           endDate: selectedDateRange!.end,
         );
       } else {
+        print('Consultando todas las transacciones');
         transactions = await ApiService.getAllTransactions();
       }
       
       loans = await ApiService.getAllLoans();
+      
+      print('Transacciones obtenidas del backend: ${transactions.length}');
+      print('Préstamos obtenidos del backend: ${loans.length}');
       
       setState(() {
         _transactions = transactions;
         _loans = loans;
         _isLoading = false;
       });
+      
+      // Mostrar transacciones filtradas
+      final filtered = filteredTransactions;
+      print('Transacciones después de filtros: ${filtered.length}');
+      
     } catch (e) {
+      print('Error cargando transacciones: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -87,19 +105,31 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 
   List<dynamic> get filteredTransactions {
+    print('=== APLICANDO FILTROS ===');
+    print('selectedFilter: $selectedFilter');
+    print('selectedDate: $selectedDate');
+    print('selectedDateRange: $selectedDateRange');
+    print('_transactions.length: ${_transactions.length}');
+    print('_loans.length: ${_loans.length}');
+    
     var filtered = <dynamic>[];
     
     if (selectedFilter == 'Préstamo') {
       filtered = List.from(_loans);
+      print('Usando préstamos: ${filtered.length}');
     } else {
       filtered = List.from(_transactions);
+      print('Usando transacciones: ${filtered.length}');
       
       if (selectedFilter == 'Pago') {
+        final beforePaymentFilter = filtered.length;
         filtered = filtered.where((t) => t['type'] == 'PAYMENT').toList();
+        print('Filtro PAYMENT: $beforePaymentFilter -> ${filtered.length}');
       }
     }
     
     if (loanTypeFilter != null) {
+      final beforeLoanTypeFilter = filtered.length;
       if (selectedFilter == 'Préstamo') {
         filtered = filtered.where((loan) {
           final loanType = loan['loanType']?.toString();
@@ -117,9 +147,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                  (loanTypeFilter == 'Ahorro' && (loanType == 'SAVINGS' || loanType == 'Ahorro'));
         }).toList();
       }
+      print('Filtro loanType ($loanTypeFilter): $beforeLoanTypeFilter -> ${filtered.length}');
     }
     
     if (paymentFrequencyFilter != null) {
+      final beforeFrequencyFilter = filtered.length;
       if (selectedFilter == 'Préstamo') {
         filtered = filtered.where((loan) {
           final frequency = loan['paymentFrequency']?.toString();
@@ -133,24 +165,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           return frequency == paymentFrequencyFilter;
         }).toList();
       }
+      print('Filtro frequency ($paymentFrequencyFilter): $beforeFrequencyFilter -> ${filtered.length}');
     }
     
     if (selectedDate != null) {
+      final beforeDateFilter = filtered.length;
+      print('Aplicando filtro de fecha: $selectedDate');
       filtered = filtered.where((item) {
         try {
           final dateField = selectedFilter == 'Préstamo' ? 'startDate' : 'date';
-          if (item[dateField] == null) return false;
+          if (item[dateField] == null) {
+            print('Item sin fecha: ${item['id']}');
+            return false;
+          }
           final itemDate = DateTime.parse(item[dateField]);
-          return itemDate.year == selectedDate!.year &&
+          final matches = itemDate.year == selectedDate!.year &&
                  itemDate.month == selectedDate!.month &&
                  itemDate.day == selectedDate!.day;
+          if (!matches) {
+            print('Fecha no coincide - Item: ${DateFormat('yyyy-MM-dd').format(itemDate)}, Filtro: ${DateFormat('yyyy-MM-dd').format(selectedDate!)}');
+          }
+          return matches;
         } catch (e) {
+          print('Error parseando fecha del item ${item['id']}: $e');
           return false;
         }
       }).toList();
+      print('Filtro fecha: $beforeDateFilter -> ${filtered.length}');
     }
     
     if (selectedDateRange != null) {
+      final beforeRangeFilter = filtered.length;
       filtered = filtered.where((item) {
         try {
           final dateField = selectedFilter == 'Préstamo' ? 'startDate' : 'date';
@@ -162,8 +207,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           return false;
         }
       }).toList();
+      print('Filtro rango: $beforeRangeFilter -> ${filtered.length}');
     }
     
+    print('RESULTADO FINAL: ${filtered.length} elementos');
     return filtered;
   }
   

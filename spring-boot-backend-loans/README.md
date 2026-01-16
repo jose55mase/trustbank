@@ -91,6 +91,7 @@ curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
 - `GET /api/transactions/{id}` - Por ID
 - `GET /api/transactions/loan/{loanId}` - Por préstamo
 - `GET /api/transactions/total-payments` - Total pagos
+- `GET /api/transactions/debug/all` - Debug: Analizar todas las transacciones
 - `POST /api/transactions` - Crear
 - `PUT /api/transactions/{id}` - Actualizar
 - `DELETE /api/transactions/{id}` - Eliminar
@@ -119,6 +120,11 @@ curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
 5. Probar endpoints con Postman o desde Flutter
 
 ## 🧪 **Ejemplos de Prueba**
+
+### Debug de Transacciones:
+```bash
+curl -X GET http://localhost:8082/api/transactions/debug/all
+```
 
 ### Recalcular Todos los Saldos:
 ```bash

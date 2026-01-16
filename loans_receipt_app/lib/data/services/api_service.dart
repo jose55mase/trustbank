@@ -226,6 +226,33 @@ class ApiService {
     }
   }
   
+  static Future<Map<String, dynamic>> debugAllTransactions() async {
+    final url = Uri.parse('$baseUrl/transactions/debug/all');
+    
+    print('=== FLUTTER: Debug de todas las transacciones ===');
+    print('URL: $url');
+    
+    final response = await http.get(url);
+    
+    print('Status Code: ${response.statusCode}');
+    
+    if (response.statusCode == 200) {
+      final result = jsonDecode(response.body);
+      print('=== RESULTADO DEBUG ===');
+      print('Total transacciones: ${result['totalTransactions']}');
+      print('Total amount: ${result['totalAmount']}');
+      print('Total principal: ${result['totalPrincipal']}');
+      print('Total interest: ${result['totalInterest']}');
+      print('Con principal: ${result['transactionsWithPrincipal']}');
+      print('Sin principal: ${result['transactionsWithoutPrincipal']}');
+      print('=====================');
+      return result;
+    } else {
+      print('Error en debug: ${response.statusCode} - ${response.body}');
+      throw Exception('Error al obtener debug de transacciones: ${response.statusCode}');
+    }
+  }
+  
   static Future<Map<String, dynamic>> getLoanById(String loanId) async {
     final url = Uri.parse('$baseUrl/loans/$loanId');
     
@@ -308,11 +335,17 @@ class ApiService {
       'principalAmount': principalAmount,
       'loanType': loanType,
       'paymentFrequency': paymentFrequency,
+      'date': DateTime.now().toIso8601String(), // Enviar fecha actual desde Flutter
     };
     
     if (valorRealCuota != null) {
       requestBody['valorRealCuota'] = valorRealCuota;
     }
+    
+    print('=== FLUTTER: Creando transacción ===');
+    print('URL: $url');
+    print('Request Body: ${jsonEncode(requestBody)}');
+    print('Fecha enviada: ${DateTime.now().toIso8601String()}');
     
     final response = await http.post(
       url,
@@ -322,9 +355,15 @@ class ApiService {
       body: jsonEncode(requestBody),
     );
     
+    print('Status Code: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return jsonDecode(response.body);
+      final result = jsonDecode(response.body);
+      print('Transacción creada exitosamente: ID=${result['id']}, Amount=${result['amount']}, Principal=${result['principalAmount']}');
+      return result;
     } else {
+      print('Error creando transacción: ${response.statusCode} - ${response.body}');
       throw Exception('Error al crear transacción: ${response.statusCode}');
     }
   }
@@ -349,11 +388,26 @@ class ApiService {
   static Future<List<dynamic>> getAllTransactions() async {
     final url = Uri.parse('$baseUrl/transactions');
     
+    print('=== FLUTTER: Obteniendo todas las transacciones ===');
+    print('URL: $url');
+    
     final response = await http.get(url);
     
+    print('Status Code: ${response.statusCode}');
+    print('Response Body Length: ${response.body.length}');
+    
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final List<dynamic> transactions = jsonDecode(response.body);
+      print('Total transacciones recibidas: ${transactions.length}');
+      
+      for (int i = 0; i < transactions.length && i < 5; i++) {
+        final t = transactions[i];
+        print('Transacción $i: ID=${t['id']}, Amount=${t['amount']}, Principal=${t['principalAmount']}, LoanID=${t['loan']?['id']}');
+      }
+      
+      return transactions;
     } else {
+      print('Error en respuesta: ${response.statusCode} - ${response.body}');
       throw Exception('Error al obtener transacciones: ${response.statusCode}');
     }
   }
@@ -361,11 +415,29 @@ class ApiService {
   static Future<List<dynamic>> getTransactionsByLoanId(String loanId) async {
     final url = Uri.parse('$baseUrl/transactions/loan/$loanId');
     
+    print('=== FLUTTER: Obteniendo transacciones para préstamo $loanId ===');
+    print('URL: $url');
+    
     final response = await http.get(url);
     
+    print('Status Code: ${response.statusCode}');
+    
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      final List<dynamic> transactions = jsonDecode(response.body);
+      print('Transacciones encontradas para préstamo $loanId: ${transactions.length}');
+      
+      double totalPrincipal = 0.0;
+      for (var t in transactions) {
+        print('  - ID: ${t['id']}, Amount: ${t['amount']}, Principal: ${t['principalAmount']}, Date: ${t['date']}');
+        if (t['principalAmount'] != null) {
+          totalPrincipal += (t['principalAmount'] as num).toDouble();
+        }
+      }
+      print('Total capital pagado: $totalPrincipal');
+      
+      return transactions;
     } else {
+      print('Error: ${response.statusCode} - ${response.body}');
       throw Exception('Error al obtener transacciones del préstamo: ${response.statusCode}');
     }
   }
@@ -506,6 +578,9 @@ class ApiService {
   }) async {
     final url = Uri.parse('$baseUrl/expenses');
     
+    // Si la descripción está vacía o es null, usar "Sin descripción"
+    final finalDescription = description.trim().isEmpty ? 'Sin descripción' : description.trim();
+    
     final response = await http.post(
       url,
       headers: {
@@ -514,7 +589,7 @@ class ApiService {
       body: jsonEncode({
         'category': {'id': categoryId},
         'amount': amount,
-        'description': description,
+        'description': finalDescription,
         'expenseDate': expenseDate.toIso8601String(),
       }),
     );
@@ -557,6 +632,9 @@ class ApiService {
   }) async {
     final url = Uri.parse('$baseUrl/expenses/$expenseId');
     
+    // Si la descripción está vacía o es null, usar "Sin descripción"
+    final finalDescription = description.trim().isEmpty ? 'Sin descripción' : description.trim();
+    
     final response = await http.put(
       url,
       headers: {
@@ -565,7 +643,7 @@ class ApiService {
       body: jsonEncode({
         'category': {'id': categoryId},
         'amount': amount,
-        'description': description,
+        'description': finalDescription,
         'expenseDate': expenseDate.toIso8601String(),
       }),
     );

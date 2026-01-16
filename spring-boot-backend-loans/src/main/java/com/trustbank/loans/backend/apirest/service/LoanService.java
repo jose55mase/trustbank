@@ -64,16 +64,29 @@ public class LoanService {
         int updatedLoans = 0;
         
         for (Loan loan : allLoans) {
-            // Forzar recálculo del saldo restante
-            BigDecimal oldRemaining = loan.getRemainingAmount();
+            // Recalcular cuotas pagadas basándose en transacciones
+            List<com.trustbank.loans.backend.apirest.entity.Transaction> payments = 
+                loan.getTransactions() != null ? loan.getTransactions() : java.util.Collections.emptyList();
             
-            // El método getRemainingAmount() ya calcula basándose en las transacciones
-            // Solo necesitamos guardar el préstamo para que se actualice
-            BigDecimal newRemaining = loan.getRemainingAmount();
+            int paymentCount = (int) payments.stream()
+                .filter(t -> t.getPrincipalAmount() != null && t.getPrincipalAmount().compareTo(BigDecimal.ZERO) > 0)
+                .count();
             
-            // Actualizar estado si el préstamo está completamente pagado
-            if (newRemaining.compareTo(BigDecimal.ZERO) <= 0 && loan.getStatus() == LoanStatus.ACTIVE) {
-                loan.setStatus(LoanStatus.COMPLETED);
+            int oldPaidInstallments = loan.getPaidInstallments();
+            loan.setPaidInstallments(paymentCount);
+            
+            // Verificar si el préstamo está completamente pagado
+            BigDecimal remainingAmount = loan.getRemainingAmount();
+            LoanStatus oldStatus = loan.getStatus();
+            
+            if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0 || paymentCount >= loan.getInstallments()) {
+                if (loan.getStatus() == LoanStatus.ACTIVE) {
+                    loan.setStatus(LoanStatus.COMPLETED);
+                }
+            }
+            
+            // Contar como actualizado si cambió algo
+            if (oldPaidInstallments != paymentCount || !oldStatus.equals(loan.getStatus())) {
                 updatedLoans++;
             }
             

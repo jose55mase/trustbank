@@ -158,4 +158,37 @@ public class LoanController {
             return ResponseEntity.notFound().build();
         }
     }
+    
+    @GetMapping("/{id}/progress")
+    public ResponseEntity<Map<String, Object>> getLoanProgress(@PathVariable Long id) {
+        return loanService.findById(id)
+                .map(loan -> {
+                    Map<String, Object> progress = new java.util.HashMap<>();
+                    progress.put("loanId", loan.getId());
+                    progress.put("totalInstallments", loan.getInstallments());
+                    progress.put("paidInstallments", loan.getPaidInstallments());
+                    progress.put("remainingInstallments", loan.getInstallments() - loan.getPaidInstallments());
+                    progress.put("originalAmount", loan.getAmount());
+                    progress.put("remainingAmount", loan.getRemainingAmount());
+                    progress.put("status", loan.getStatus());
+                    
+                    // Calcular progreso como porcentaje
+                    double progressPercentage = loan.getInstallments() > 0 ? 
+                        (double) loan.getPaidInstallments() / loan.getInstallments() * 100 : 0;
+                    progress.put("progressPercentage", Math.round(progressPercentage * 100.0) / 100.0);
+                    
+                    // Contar transacciones reales
+                    int actualPaymentCount = 0;
+                    if (loan.getTransactions() != null) {
+                        actualPaymentCount = (int) loan.getTransactions().stream()
+                            .filter(t -> t.getPrincipalAmount() != null && 
+                                   t.getPrincipalAmount().compareTo(java.math.BigDecimal.ZERO) > 0)
+                            .count();
+                    }
+                    progress.put("actualPaymentCount", actualPaymentCount);
+                    
+                    return ResponseEntity.ok(progress);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

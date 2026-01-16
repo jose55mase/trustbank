@@ -203,20 +203,12 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
                             maxLines: 3,
                             maxLength: 200,
                             decoration: const InputDecoration(
-                              labelText: 'Descripción *',
+                              labelText: 'Descripción',
                               border: OutlineInputBorder(),
                               prefixIcon: Icon(Icons.description),
-                              helperText: 'Describe el gasto realizado',
+                              helperText: 'Describe el gasto realizado (opcional)',
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'La descripción es requerida';
-                              }
-                              if (value.trim().length < 3) {
-                                return 'La descripción debe tener al menos 3 caracteres';
-                              }
-                              return null;
-                            },
+                            // Sin validación - opcional
                           ),
                           
                           const SizedBox(height: 16),
@@ -332,10 +324,11 @@ class _NewExpenseScreenState extends State<NewExpenseScreen> {
     
     try {
       final cleanAmount = amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+      
       await ApiService.createExpense(
         categoryId: selectedCategory!.id!,
         amount: double.parse(cleanAmount),
-        description: descriptionController.text.trim(),
+        description: descriptionController.text, // Enviar tal como está, el API manejará el "Sin descripción"
         expenseDate: selectedDate,
       );
       
