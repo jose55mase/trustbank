@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/loans")
@@ -51,6 +52,18 @@ public class LoanController {
     public ResponseEntity<Double> getTotalActiveLoanAmount() {
         Double total = loanService.getTotalActiveLoanAmount();
         return ResponseEntity.ok(total != null ? total : 0.0);
+    }
+    
+    @GetMapping("/total-remaining")
+    public ResponseEntity<Double> getTotalRemainingAmount() {
+        Double total = loanService.getTotalRemainingAmount();
+        return ResponseEntity.ok(total != null ? total : 0.0);
+    }
+    
+    @PostMapping("/recalculate-balances")
+    public ResponseEntity<Map<String, Object>> recalculateAllBalances() {
+        Map<String, Object> result = loanService.recalculateAllBalances();
+        return ResponseEntity.ok(result);
     }
     
 

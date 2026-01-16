@@ -80,6 +80,8 @@ curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
 - `GET /api/loans/{id}` - Por ID
 - `GET /api/loans/user/{userId}` - Por usuario
 - `GET /api/loans/total-active` - Total activos
+- `GET /api/loans/total-remaining` - Total saldos pendientes (monto original - pagos de capital)
+- `POST /api/loans/recalculate-balances` - Recalcular todos los saldos basándose en transacciones
 - `POST /api/loans` - Crear
 - `PUT /api/loans/{id}` - Actualizar
 - `DELETE /api/loans/{id}` - Eliminar
@@ -115,6 +117,38 @@ curl -k -X POST https://guardianstrustbank.com:8084/api/auth/register \
 3. Acceder a `http://localhost:8082`
 4. **IMPORTANTE**: Crear usuarios del sistema usando los comandos curl mostrados arriba
 5. Probar endpoints con Postman o desde Flutter
+
+## 🧪 **Ejemplos de Prueba**
+
+### Recalcular Todos los Saldos:
+```bash
+curl -X POST http://localhost:8082/api/loans/recalculate-balances
+```
+
+### Obtener Total de Saldos Pendientes:
+```bash
+curl -X GET http://localhost:8082/api/loans/total-remaining
+```
+
+### Obtener Total de Préstamos Activos:
+```bash
+curl -X GET http://localhost:8082/api/loans/total-active
+```
+
+### Crear un Pago (Transacción):
+```bash
+curl -X POST http://localhost:8082/api/transactions \
+-H "Content-Type: application/json" \
+-d '{
+  "type": "PAYMENT",
+  "loan": {"id": 1},
+  "amount": 500000,
+  "paymentMethod": "CASH",
+  "principalAmount": 500000,
+  "interestAmount": 0,
+  "notes": "Pago de capital"
+}'
+```
 
 ## 📱 **Integración con Flutter**
 - CORS habilitado para `*`

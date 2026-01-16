@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Loan> activeLoans = [];
   double totalLent = 0.0;
   double totalProfit = 0.0;
+  double totalRemaining = 0.0;
   bool isLoading = true;
   bool showNotificationsPanel = false;
   
@@ -37,96 +38,28 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadData() async {
     try {
       final response = await ApiService.getAllLoansAsModels();
+      final remainingAmount = await ApiService.getTotalRemainingAmount();
+      
       setState(() {
         activeLoans = response;
         totalLent = activeLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
         totalProfit = activeLoans.fold<double>(0, (sum, loan) => sum + loan.profit);
+        totalRemaining = remainingAmount;
         isLoading = false;
       });
     } catch (e) {
-      // Si falla la API, usar datos dummy
       setState(() {
-        activeLoans = _getDummyLoans();
-        totalLent = activeLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
-        totalProfit = activeLoans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
       });
       if (mounted) {
-        debugPrint('Error cargando préstamos, usando datos dummy: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error cargando datos: $e')),
+        );
       }
     }
   }
   
-  List<Loan> _getDummyLoans() {
-    return [
-      Loan(
-        id: '1',
-        userId: '1',
-        amount: 5000000.0,
-        interestRate: 15.0,
-        installments: 12,
-        paidInstallments: 5,
-        startDate: DateTime(2024, 1, 15),
-        status: LoanStatus.active,
-        remainingAmount: 2500000.0,
-      ),
-      Loan(
-        id: '2',
-        userId: '2',
-        amount: 10000000.0,
-        interestRate: 12.0,
-        installments: 24,
-        paidInstallments: 10,
-        startDate: DateTime(2024, 1, 20),
-        status: LoanStatus.active,
-        remainingAmount: 6000000.0,
-      ),
-      Loan(
-        id: '3',
-        userId: '1',
-        amount: 7500000.0,
-        interestRate: 14.0,
-        installments: 18,
-        paidInstallments: 8,
-        startDate: DateTime(2024, 2, 1),
-        status: LoanStatus.active,
-        remainingAmount: 4000000.0,
-      ),
-      Loan(
-        id: '4',
-        userId: '3',
-        amount: 3000000.0,
-        interestRate: 18.0,
-        installments: 12,
-        paidInstallments: 2,
-        startDate: DateTime(2023, 10, 15),
-        status: LoanStatus.overdue,
-        remainingAmount: 2500000.0,
-      ),
-      Loan(
-        id: '5',
-        userId: '4',
-        amount: 9000000.0,
-        interestRate: 16.0,
-        installments: 24,
-        paidInstallments: 4,
-        startDate: DateTime(2023, 11, 20),
-        status: LoanStatus.overdue,
-        remainingAmount: 6500000.0,
-      ),
-      Loan(
-        id: '6',
-        userId: '4',
-        amount: 8000000.0,
-        interestRate: 16.0,
-        installments: 24,
-        paidInstallments: 4,
-        startDate: DateTime(2023, 11, 20),
-        status: LoanStatus.overdue,
-        remainingAmount: 6500000.0,
-      ),
-    ];
-  }
+
 
   String _getStatusText(LoanStatus status) {
     switch (status) {
@@ -353,6 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
               StatsOverview(
                 totalLent: totalLent,
                 totalProfit: totalProfit,
+                totalRemaining: totalRemaining,
                 activeLoans: activeLoans.length,
               ),
               const SizedBox(height: 24),

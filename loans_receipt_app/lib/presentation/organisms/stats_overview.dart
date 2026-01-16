@@ -5,12 +5,14 @@ import '../../core/theme/app_colors.dart';
 class StatsOverview extends StatelessWidget {
   final double totalLent;
   final double totalProfit;
+  final double totalRemaining;
   final int activeLoans;
 
   const StatsOverview({
     super.key,
     required this.totalLent,
     required this.totalProfit,
+    required this.totalRemaining,
     required this.activeLoans,
   });
 
@@ -43,6 +45,13 @@ class StatsOverview extends StatelessWidget {
               label: 'Total Prestado',
               value: currencyFormat.format(totalLent),
               color: Colors.white,
+            ),
+            const SizedBox(height: 20),
+            _StatItem(
+              icon: Icons.pending_actions_rounded,
+              label: 'Saldo Pendiente',
+              value: currencyFormat.format(totalRemaining),
+              color: AppColors.warning,
             ),
             const SizedBox(height: 20),
             _StatItem(
