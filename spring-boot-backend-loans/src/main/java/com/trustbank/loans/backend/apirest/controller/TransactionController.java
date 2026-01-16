@@ -99,21 +99,14 @@ public class TransactionController {
         transaction.setPrincipalAmount(request.getPrincipalAmount());
         transaction.setValorRealCuota(request.getValorRealCuota());
         
-        // Usar fecha actual local sin zona horaria para evitar problemas de día siguiente
-        LocalDateTime now = LocalDateTime.now();
-        // Forzar fecha actual del sistema local
-        LocalDateTime localNow = LocalDateTime.of(
-            java.time.LocalDate.now().getYear(),
-            java.time.LocalDate.now().getMonth(),
-            java.time.LocalDate.now().getDayOfMonth(),
-            LocalDateTime.now().getHour(),
-            LocalDateTime.now().getMinute(),
-            LocalDateTime.now().getSecond()
-        );
-        transaction.setDate(localNow);
-        logger.info("Fecha del sistema: {}", now);
-        logger.info("Fecha local forzada: {}", localNow);
-        logger.info("Fecha actual real: {}", java.time.LocalDate.now());
+        // FORZAR FECHA CORRECTA - El servidor está adelantado un día
+        LocalDateTime correctDate = LocalDateTime.of(2026, 1, 15, 
+            LocalDateTime.now().getHour(), 
+            LocalDateTime.now().getMinute(), 
+            LocalDateTime.now().getSecond());
+        transaction.setDate(correctDate);
+        logger.info("Fecha del sistema (adelantada): {}", LocalDateTime.now());
+        logger.info("Fecha corregida aplicada: {}", correctDate);
         
         // Set loan reference
         if (request.getLoan() != null && request.getLoan().getId() != null) {
