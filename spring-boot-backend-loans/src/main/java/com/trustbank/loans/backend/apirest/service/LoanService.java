@@ -34,6 +34,24 @@ public class LoanService {
         return loanRepository.findByUserId(userId);
     }
     
+    public List<Loan> findActiveAndOverdueLoansByUserId(Long userId) {
+        List<Loan> allLoans = loanRepository.findByUserId(userId);
+        return allLoans.stream()
+            .filter(loan -> loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.OVERDUE)
+            .collect(java.util.stream.Collectors.toList());
+    }
+    
+    public List<Loan> findByStatus(LoanStatus status) {
+        return loanRepository.findByStatus(status);
+    }
+    
+    public List<Loan> findActiveAndOverdueLoans() {
+        List<Loan> activeLoans = loanRepository.findByStatus(LoanStatus.ACTIVE);
+        List<Loan> overdueLoans = loanRepository.findByStatus(LoanStatus.OVERDUE);
+        activeLoans.addAll(overdueLoans);
+        return activeLoans;
+    }
+    
     public Loan save(Loan loan) {
         // Asegurar que el usuario existe y está correctamente asociado
         if (loan.getUser() != null && loan.getUser().getId() != null) {

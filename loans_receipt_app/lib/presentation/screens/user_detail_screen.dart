@@ -23,6 +23,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   double totalLent = 0.0;
   double totalProfit = 0.0;
   bool isLoading = true;
+  bool showCompleted = false;
 
   @override
   void initState() {
@@ -32,11 +33,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _loadUserLoans() async {
     try {
-      final allLoans = await ApiService.getAllLoansAsModels();
-      final loans = allLoans.where((loan) => loan.userId == widget.user.id).toList();
+      final loans = showCompleted 
+        ? await ApiService.getLoansByUserIdAsModels(widget.user.id)
+        : await ApiService.getActiveAndOverdueLoansByUserId(widget.user.id);
       setState(() {
         userLoans = loans;
-        totalLent = loans.fold<double>(0, (sum, loan) => sum + loan.amount);
+        totalLent = loans.fold<double>(0, (sum, loan) => sum + loan.remainingAmount);
         totalProfit = loans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
       });
@@ -85,7 +87,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   _buildInfoRow('Teléfono', widget.user.phone),
                   _buildInfoRow('Dirección', widget.user.direccion),
                   _buildInfoRow('Registro', DateFormat('dd/MM/yyyy').format(widget.user.registrationDate)),
-                  _buildInfoRow('Total Prestado', NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(totalLent)),
+                  _buildInfoRow('Saldo Pendiente', NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(totalLent)),
                   _buildInfoRow('Ganancia Total', NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(totalProfit)),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -106,7 +108,23 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('Préstamos (${userLoans.length})', style: AppTextStyles.h2),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Préstamos (${userLoans.length})', style: AppTextStyles.h2),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    showCompleted = !showCompleted;
+                    isLoading = true;
+                  });
+                  _loadUserLoans();
+                },
+                icon: Icon(showCompleted ? Icons.visibility_off : Icons.visibility),
+                label: Text(showCompleted ? 'Ocultar Completados' : 'Ver Completados'),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           if (userLoans.isEmpty)
             const Card(

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,17 @@ public class LoanController {
         return loanService.findByUserId(userId);
     }
     
+    @GetMapping("/user/{userId}/active-and-overdue")
+    public List<Loan> getActiveAndOverdueLoansByUserId(@PathVariable Long userId) {
+        List<Loan> loans = loanService.findActiveAndOverdueLoansByUserId(userId);
+        loans.forEach(loan -> {
+            if (loan.getUser() != null) {
+                loan.getUser().getName();
+            }
+        });
+        return loans;
+    }
+    
     @GetMapping("/total-active")
     public ResponseEntity<Double> getTotalActiveLoanAmount() {
         Double total = loanService.getTotalActiveLoanAmount();
@@ -58,6 +70,47 @@ public class LoanController {
     public ResponseEntity<Double> getTotalRemainingAmount() {
         Double total = loanService.getTotalRemainingAmount();
         return ResponseEntity.ok(total != null ? total : 0.0);
+    }
+    
+    @GetMapping("/active")
+    public List<Loan> getActiveLoans() {
+        List<Loan> loans = loanService.findByStatus(LoanStatus.ACTIVE);
+        loans.forEach(loan -> {
+            if (loan.getUser() != null) {
+                loan.getUser().getName();
+            }
+        });
+        return loans;
+    }
+    
+    @GetMapping("/active-and-overdue")
+    public List<Loan> getActiveAndOverdueLoans() {
+        List<Loan> loans = loanService.findActiveAndOverdueLoans();
+        loans.forEach(loan -> {
+            if (loan.getUser() != null) {
+                loan.getUser().getName();
+            }
+        });
+        return loans;
+    }
+    
+    @GetMapping("/home-stats")
+    public ResponseEntity<Map<String, Object>> getHomeStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        List<Loan> activeLoans = loanService.findByStatus(LoanStatus.ACTIVE);
+        List<Loan> overdueLoans = loanService.findByStatus(LoanStatus.OVERDUE);
+        
+        stats.put("activeLoansCount", activeLoans.size());
+        stats.put("overdueLoansCount", overdueLoans.size());
+        stats.put("activeLoans", activeLoans);
+        
+        // Solo incluir préstamos vencidos si existen
+        if (!overdueLoans.isEmpty()) {
+            stats.put("overdueLoans", overdueLoans);
+        }
+        
+        return ResponseEntity.ok(stats);
     }
     
     @PostMapping("/recalculate-balances")

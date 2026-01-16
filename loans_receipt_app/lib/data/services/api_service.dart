@@ -120,6 +120,19 @@ class ApiService {
     }
   }
   
+  static Future<List<Loan>> getLoansByUserIdAsModels(String userId) async {
+    final url = Uri.parse('$baseUrl/loans/user/$userId');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Loan.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al obtener préstamos del usuario: ${response.statusCode}');
+    }
+  }
+  
   static Future<dynamic> createLoan({
     required String userId,
     required double amount,
@@ -288,6 +301,32 @@ class ApiService {
       return data.map((json) => Loan.fromJson(json)).toList();
     } else {
       throw Exception('Error al obtener préstamos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<List<Loan>> getActiveAndOverdueLoans() async {
+    final url = Uri.parse('$baseUrl/loans/active-and-overdue');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Loan.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al obtener préstamos activos y vencidos: ${response.statusCode}');
+    }
+  }
+  
+  static Future<List<Loan>> getActiveAndOverdueLoansByUserId(String userId) async {
+    final url = Uri.parse('$baseUrl/loans/user/$userId/active-and-overdue');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.map((json) => Loan.fromJson(json)).toList();
+    } else {
+      throw Exception('Error al obtener préstamos del usuario: ${response.statusCode}');
     }
   }
   

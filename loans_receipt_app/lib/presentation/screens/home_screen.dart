@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
   
   Future<void> _loadData() async {
     try {
-      final response = await ApiService.getAllLoansAsModels();
+      final response = await ApiService.getActiveAndOverdueLoans();
       final remainingAmount = await ApiService.getTotalRemainingAmount();
       
       setState(() {
@@ -140,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Text(
-                        'Todos los Préstamos Activos',
+                        'Préstamos Activos y Vencidos',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -351,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Préstamos Activos', style: AppTextStyles.h2),
+                  const Text('Préstamos Activos y Vencidos', style: AppTextStyles.h2),
                   if (activeLoans.length > 5)
                     TextButton(
                       onPressed: _showAllLoansModal,
@@ -369,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Icon(Icons.account_balance_wallet_outlined, size: 48, color: Colors.grey),
                           SizedBox(height: 16),
-                          Text('No hay préstamos activos', style: TextStyle(color: Colors.grey)),
+                          Text('No hay préstamos activos o vencidos', style: TextStyle(color: Colors.grey)),
                           SizedBox(height: 8),
                           Text('Crea un nuevo préstamo para comenzar', style: TextStyle(color: Colors.grey, fontSize: 12)),
                         ],
