@@ -7,7 +7,10 @@ import com.trustbank.loans.backend.apirest.repository.LoanRepository;
 import com.trustbank.loans.backend.apirest.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -46,6 +49,44 @@ public class LoanService {
     
     public Double getTotalActiveLoanAmount() {
         return loanRepository.getTotalActiveLoanAmount();
+    }
+    
+    public Double getTotalRemainingAmount() {
+        List<Loan> activeLoans = loanRepository.findByStatus(LoanStatus.ACTIVE);
+        return activeLoans.stream()
+                .mapToDouble(loan -> loan.getRemainingAmount().doubleValue())
+                .sum();
+    }
+    
+    public Map<String, Object> recalculateAllBalances() {
+        List<Loan> allLoans = loanRepository.findAll();
+        int processedLoans = 0;
+        int updatedLoans = 0;
+        
+        for (Loan loan : allLoans) {
+            // Forzar recálculo del saldo restante
+            BigDecimal oldRemaining = loan.getRemainingAmount();
+            
+            // El método getRemainingAmount() ya calcula basándose en las transacciones
+            // Solo necesitamos guardar el préstamo para que se actualice
+            BigDecimal newRemaining = loan.getRemainingAmount();
+            
+            // Actualizar estado si el préstamo está completamente pagado
+            if (newRemaining.compareTo(BigDecimal.ZERO) <= 0 && loan.getStatus() == LoanStatus.ACTIVE) {
+                loan.setStatus(LoanStatus.COMPLETED);
+                updatedLoans++;
+            }
+            
+            loanRepository.save(loan);
+            processedLoans++;
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("processedLoans", processedLoans);
+        result.put("updatedLoans", updatedLoans);
+        result.put("message", "Recálculo completado exitosamente");
+        
+        return result;
     }
     
     public void deleteById(Long id) {

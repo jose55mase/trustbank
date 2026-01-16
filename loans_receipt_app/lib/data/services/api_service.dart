@@ -202,6 +202,30 @@ class ApiService {
     }
   }
   
+  static Future<double> getTotalRemainingAmount() async {
+    final url = Uri.parse('$baseUrl/loans/total-remaining');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      return double.parse(response.body);
+    } else {
+      throw Exception('Error al obtener total de saldos pendientes: ${response.statusCode}');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> recalculateAllBalances() async {
+    final url = Uri.parse('$baseUrl/loans/recalculate-balances');
+    
+    final response = await http.post(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al recalcular saldos: ${response.statusCode}');
+    }
+  }
+  
   static Future<Map<String, dynamic>> getLoanById(String loanId) async {
     final url = Uri.parse('$baseUrl/loans/$loanId');
     
