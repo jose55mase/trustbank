@@ -50,6 +50,7 @@ public class Transaction {
     private BigDecimal valorRealCuota;
     
     public Transaction() {
+        // Usar fecha actual del sistema sin ajustes de zona horaria
         this.date = LocalDateTime.now();
     }
     
