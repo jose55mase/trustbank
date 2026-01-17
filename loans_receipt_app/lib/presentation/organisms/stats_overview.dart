@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
+import '../../domain/models/loan.dart';
 
 class StatsOverview extends StatelessWidget {
   final double totalLent;
   final double totalProfit;
   final double totalRemaining;
+  final double totalRemainingFijo;
+  final double totalRemainingRotativo;
+  final double totalRemainingAhorros;
   final int activeLoans;
+  final Function(String)? onLoanTypeClick;
 
   const StatsOverview({
     super.key,
     required this.totalLent,
     required this.totalProfit,
     required this.totalRemaining,
+    required this.totalRemainingFijo,
+    required this.totalRemainingRotativo,
+    required this.totalRemainingAhorros,
     required this.activeLoans,
+    this.onLoanTypeClick,
   });
 
   @override
@@ -49,9 +58,43 @@ class StatsOverview extends StatelessWidget {
             const SizedBox(height: 20),
             _StatItem(
               icon: Icons.pending_actions_rounded,
-              label: 'Saldo Pendiente',
+              label: 'Saldo Pendiente Total',
               value: currencyFormat.format(totalRemaining),
               color: AppColors.warning,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _LoanTypeCard(
+                    label: 'Fijo',
+                    value: currencyFormat.format(totalRemainingFijo),
+                    icon: Icons.lock_outline,
+                    color: const Color(0xFF4CAF50),
+                    onTap: () => onLoanTypeClick?.call('Fijo'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _LoanTypeCard(
+                    label: 'Rotativo',
+                    value: currencyFormat.format(totalRemainingRotativo),
+                    icon: Icons.autorenew,
+                    color: const Color(0xFFFF9800),
+                    onTap: () => onLoanTypeClick?.call('Rotativo'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _LoanTypeCard(
+                    label: 'Ahorros',
+                    value: currencyFormat.format(totalRemainingAhorros),
+                    icon: Icons.savings_outlined,
+                    color: const Color(0xFF2196F3),
+                    onTap: () => onLoanTypeClick?.call('Ahorros'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             _StatItem(
@@ -126,6 +169,68 @@ class _StatItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LoanTypeCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _LoanTypeCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -71,9 +71,17 @@ public class LoanService {
     
     public Double getTotalRemainingAmount() {
         List<Loan> activeLoans = loanRepository.findByStatus(LoanStatus.ACTIVE);
-        return activeLoans.stream()
+        List<Loan> overdueLoans = loanRepository.findByStatus(LoanStatus.OVERDUE);
+        
+        double activeTotal = activeLoans.stream()
                 .mapToDouble(loan -> loan.getRemainingAmount().doubleValue())
                 .sum();
+        
+        double overdueTotal = overdueLoans.stream()
+                .mapToDouble(loan -> loan.getRemainingAmount().doubleValue())
+                .sum();
+        
+        return activeTotal + overdueTotal;
     }
     
     public Map<String, Object> recalculateAllBalances() {
