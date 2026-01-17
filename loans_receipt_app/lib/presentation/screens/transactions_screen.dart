@@ -8,6 +8,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/transaction.dart';
 import '../../data/services/api_service.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/navigation_actions.dart';
 import '../widgets/loan_id_row.dart';
 
 // Import condicional para web
@@ -1153,18 +1154,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       appBar: AppBar(
         title: const Text('Transacciones'),
         actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.filter_list),
-              onPressed: () {
-                Scaffold.of(context).openEndDrawer();
-              },
-              tooltip: 'Filtros',
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadTransactions,
+          NavigationActions(
+            additionalActions: [
+              Builder(
+                builder: (context) => IconButton(
+                  icon: const Icon(Icons.filter_list),
+                  onPressed: () {
+                    Scaffold.of(context).openEndDrawer();
+                  },
+                  tooltip: 'Filtros',
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: _loadTransactions,
+              ),
+            ],
           ),
         ],
       ),

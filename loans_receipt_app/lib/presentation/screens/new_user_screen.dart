@@ -68,18 +68,31 @@ class _NewUserScreenState extends State<NewUserScreen> {
           'El usuario ha sido registrado exitosamente. ¿Deseas registrar un préstamo ahora?',
           onClose: () {
             Navigator.pop(context); // Close dialog
-            Navigator.pushReplacement(
+            Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const NewLoanScreen(),
               ),
-            );
+            ).then((result) {
+              // Cuando regrese de crear el préstamo, cerrar la pantalla de usuario
+              if (result == true && mounted) {
+                Navigator.pop(context, true);
+              }
+            });
           }
         );
       }
     } catch (e) {
       if (mounted) {
-        DialogUtils.showErrorDialog(context, 'Error al Registrar', 'Ocurrió un problema al registrar el usuario. Verifica los datos e intenta nuevamente.');
+        String errorMessage = 'Ocurrió un problema al registrar el usuario. Verifica los datos e intenta nuevamente.';
+        
+        // Extraer mensaje del error
+        final errorString = e.toString();
+        if (errorString.startsWith('Exception: ')) {
+          errorMessage = errorString.substring('Exception: '.length);
+        }
+        
+        DialogUtils.showErrorDialog(context, 'Error al Registrar', errorMessage);
       }
     } finally {
       if (mounted) {

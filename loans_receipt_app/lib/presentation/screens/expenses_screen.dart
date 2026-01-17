@@ -9,6 +9,7 @@ import '../../data/services/api_service.dart';
 import '../../domain/models/expense_category.dart';
 import '../../domain/models/expense_model.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/navigation_actions.dart';
 import 'new_expense_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
@@ -95,6 +96,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Gastos Diarios'),
+        actions: const [
+          NavigationActions(),
+        ],
       ),
       drawer: const AppDrawer(),
       body: ListView(

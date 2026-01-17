@@ -5,6 +5,7 @@ import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/user.dart';
 import '../molecules/user_card.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/navigation_actions.dart';
 import '../widgets/new_user_modal.dart';
 import 'user_detail_screen.dart';
 import '../../data/services/api_service.dart';
@@ -107,6 +108,9 @@ class _UsersScreenState extends State<UsersScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Usuarios Registrados'),
+        actions: const [
+          NavigationActions(),
+        ],
       ),
       drawer: const AppDrawer(),
       body: Column(

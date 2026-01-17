@@ -7,6 +7,7 @@ import '../../data/services/api_service.dart';
 import '../../domain/models/user.dart';
 import '../../domain/models/loan.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/navigation_actions.dart';
 import 'loan_detail_screen.dart';
 
 class UserDetailScreen extends StatefulWidget {
@@ -66,10 +67,22 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.user.name),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
+        actions: [
+          NavigationActions(
+            additionalActions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                onPressed: () {
+                  setState(() {
+                    isLoading = true;
+                  });
+                  _loadUserLoans();
+                },
+                tooltip: 'Refrescar préstamos',
+              ),
+            ],
+          ),
+        ],
       ),
       drawer: const AppDrawer(),
       body: ListView(

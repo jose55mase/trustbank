@@ -81,7 +81,18 @@ class ApiService {
       final data = jsonDecode(response.body);
       return User.fromJson(data);
     } else {
-      throw Exception('Error al crear usuario: ${response.statusCode}');
+      // Extraer el mensaje de error del JSON
+      try {
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['message'] ?? 'Error al crear usuario';
+        throw Exception(errorMessage);
+      } catch (e) {
+        // Si falla el parseo del JSON, lanzar error genérico
+        if (e.toString().startsWith('Exception: ')) {
+          rethrow;
+        }
+        throw Exception('Error al crear usuario: ${response.statusCode}');
+      }
     }
   }
   
