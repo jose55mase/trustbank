@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/dialog_utils.dart';
 import '../../data/services/api_service.dart';
 import '../../domain/models/user.dart';
 import '../atoms/app_button.dart';
 import '../widgets/app_drawer.dart';
+import 'home_screen.dart';
 
 class NewLoanScreen extends StatefulWidget {
   const NewLoanScreen({super.key});
@@ -442,6 +444,44 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     );
   }
   
+  void _showSuccessConfirmation() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success, size: 28),
+            const SizedBox(width: 12),
+            const Text('¡Préstamo Creado!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'El préstamo ha sido creado exitosamente y está listo para ser utilizado.',
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Cerrar diálogo
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
+                (route) => false,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Ir al Inicio'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _createLoan() async {
     if (isLoading || users.isEmpty) {
       DialogUtils.showWarningDialog(context, 'Cargando Datos', 'Esperando a cargar usuarios. Intenta nuevamente en un momento.');
@@ -501,7 +541,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       );
       
       if (mounted) {
-        DialogUtils.showSuccessDialog(context, '¡Éxito!', 'El préstamo ha sido creado exitosamente y está listo para ser utilizado.', onClose: () => Navigator.pop(context, true));
+        _showSuccessConfirmation();
       }
     } catch (e) {
       if (mounted) {
