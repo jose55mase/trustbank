@@ -188,12 +188,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   
   DateTime? startDate = DateTime.now();
   DateTime? endDate = DateTime.now();
+  bool showAhorrosDetails = false;
   
   void _showFinancialSummaryModal() {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setModalState) => AlertDialog(
           title: const Text('Resumen Financiero'),
           content: SingleChildScrollView(
             child: Column(
@@ -211,7 +212,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             lastDate: DateTime.now(),
                           );
                           if (date != null) {
-                            setState(() {
+                            setModalState(() {
                               startDate = date;
                             });
                           }
@@ -232,7 +233,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             lastDate: DateTime.now(),
                           );
                           if (date != null) {
-                            setState(() {
+                            setModalState(() {
                               endDate = date;
                             });
                           }
@@ -243,6 +244,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 16),
+                _buildModalSummaryItem(
+                  'Total Ingresos (Capital + Intereses)',
+                  '\$${NumberFormat('#,##0', 'es_CO').format(_calculateTotalIngresosByDate())}',
+                  Icons.account_balance_wallet,
+                  Colors.blue,
                 ),
                 const SizedBox(height: 16),
                 _buildModalSummaryItem(
@@ -265,6 +273,43 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   Icons.receipt,
                   Colors.orange,
                 ),
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () {
+                    setModalState(() {
+                      showAhorrosDetails = !showAhorrosDetails;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.savings, color: Colors.purple, size: 32),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Cartera Ahorros', style: AppTextStyles.h3.copyWith(color: Colors.purple)),
+                              Text('\$${NumberFormat('#,##0', 'es_CO').format(_calculateAhorrosByDate())}', 
+                                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          showAhorrosDetails ? Icons.expand_less : Icons.expand_more,
+                          color: Colors.purple,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (showAhorrosDetails) ..._buildAhorrosDetails(setModalState),
               ],
             ),
           ),
@@ -275,6 +320,74 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  List<Widget> _buildAhorrosDetails(StateSetter setModalState) {
+    final ahorrosLoans = loans.where((loan) => loan.loanType == 'Ahorro').toList();
+    if (startDate != null && endDate != null) {
+      ahorrosLoans.retainWhere((loan) => 
+        loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+        loan.startDate.isBefore(endDate!.add(const Duration(days: 1))));
+    }
+    
+    final totalAhorros = ahorrosLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
+    final ahorrosTransactions = transactions.where((t) {
+      final loanId = t['loan']?['id']?.toString();
+      return ahorrosLoans.any((loan) => loan.id == loanId);
+    }).toList();
+    
+    final totalInteresAhorros = ahorrosTransactions.fold<double>(0, (sum, t) {
+      final interestAmount = t['interestAmount'] ?? 0.0;
+      return sum + (interestAmount as num).toDouble();
+    });
+    
+    final totalCapitalAhorros = ahorrosTransactions.fold<double>(0, (sum, t) {
+      final principalAmount = t['principalAmount'] ?? 0.0;
+      return sum + (principalAmount as num).toDouble();
+    });
+    
+    return [
+      const SizedBox(height: 8),
+      Padding(
+        padding: const EdgeInsets.only(left: 16),
+        child: Column(
+          children: [
+            _buildAhorrosDetailItem('Préstamos Otorgados', totalAhorros, Icons.arrow_upward, Colors.red),
+            const SizedBox(height: 8),
+            _buildAhorrosDetailItem('Capital Recuperado', totalCapitalAhorros, Icons.account_balance, Colors.blue),
+            const SizedBox(height: 8),
+            _buildAhorrosDetailItem('Intereses Cobrados', totalInteresAhorros, Icons.trending_up, Colors.green),
+          ],
+        ),
+      ),
+    ];
+  }
+  
+  Widget _buildAhorrosDetailItem(String label, double value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: AppTextStyles.caption.copyWith(color: color)),
+                Text('\$${NumberFormat('#,##0', 'es_CO').format(value)}', 
+                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600, fontSize: 14)),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -305,12 +418,51 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     );
   }
   
-  double _calculateEntradasByDate() {
+  double _calculateTotalIngresosByDate() {
+    // Excluir transacciones de préstamos tipo 'Ahorro'
+    final ahorrosLoanIds = loans.where((loan) => loan.loanType == 'Ahorro').map((loan) => loan.id).toSet();
+    
     if (startDate == null || endDate == null) {
-      return _getTotalInterestFromTransactions();
+      return transactions.where((transaction) {
+        final loanId = transaction['loan']?['id']?.toString();
+        return !ahorrosLoanIds.contains(loanId);
+      }).fold<double>(0, (sum, transaction) {
+        final amount = transaction['amount'] ?? 0.0;
+        return sum + (amount as num).toDouble();
+      });
     }
     
     return transactions.where((transaction) {
+      final loanId = transaction['loan']?['id']?.toString();
+      if (ahorrosLoanIds.contains(loanId)) return false;
+      
+      final transactionDate = DateTime.parse(transaction['date']);
+      return transactionDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+             transactionDate.isBefore(endDate!.add(const Duration(days: 1)));
+    }).fold<double>(0, (sum, transaction) {
+      final amount = transaction['amount'] ?? 0.0;
+      return sum + (amount as num).toDouble();
+    });
+  }
+  
+  double _calculateEntradasByDate() {
+    // Excluir transacciones de préstamos tipo 'Ahorro'
+    final ahorrosLoanIds = loans.where((loan) => loan.loanType == 'Ahorro').map((loan) => loan.id).toSet();
+    
+    if (startDate == null || endDate == null) {
+      return transactions.where((transaction) {
+        final loanId = transaction['loan']?['id']?.toString();
+        return !ahorrosLoanIds.contains(loanId);
+      }).fold<double>(0, (sum, transaction) {
+        final interestAmount = transaction['interestAmount'] ?? 0.0;
+        return sum + (interestAmount as num).toDouble();
+      });
+    }
+    
+    return transactions.where((transaction) {
+      final loanId = transaction['loan']?['id']?.toString();
+      if (ahorrosLoanIds.contains(loanId)) return false;
+      
       final transactionDate = DateTime.parse(transaction['date']);
       return transactionDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
              transactionDate.isBefore(endDate!.add(const Duration(days: 1)));
@@ -318,6 +470,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       final interestAmount = transaction['interestAmount'] ?? 0.0;
       return sum + (interestAmount as num).toDouble();
     });
+  }
+  
+  double _calculateAhorrosByDate() {
+    final ahorrosLoans = loans.where((loan) => loan.loanType == 'Ahorro');
+    
+    if (startDate == null || endDate == null) {
+      return ahorrosLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
+    }
+    
+    return ahorrosLoans.where((loan) {
+      return loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
+             loan.startDate.isBefore(endDate!.add(const Duration(days: 1)));
+    }).fold<double>(0, (sum, loan) => sum + loan.amount);
   }
   
   double _calculateSalidasByDate() {
@@ -340,10 +505,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       return _calculateGastos();
     }
     
+    // Ajustar las fechas para incluir todo el día
+    final startOfDay = DateTime(startDate!.year, startDate!.month, startDate!.day, 0, 0, 0);
+    final endOfDay = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59, 999);
+    
     return expenses.where((expense) {
       final expenseDate = DateTime.parse(expense['expenseDate']);
-      return expenseDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
-             expenseDate.isBefore(endDate!.add(const Duration(days: 1)));
+      return expenseDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
+             expenseDate.isBefore(endOfDay.add(const Duration(milliseconds: 1)));
     }).fold<double>(0, (sum, expense) {
       final amount = expense['amount'] ?? 0.0;
       return sum + (amount as num).toDouble();
