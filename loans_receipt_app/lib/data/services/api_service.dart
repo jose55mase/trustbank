@@ -97,7 +97,7 @@ class ApiService {
   }
   
   static Future<List<User>> getUsers() async {
-    final url = Uri.parse('$baseUrl/users?sort=id,asc');
+    final url = Uri.parse('$baseUrl/users');
     
     final response = await http.get(url);
     

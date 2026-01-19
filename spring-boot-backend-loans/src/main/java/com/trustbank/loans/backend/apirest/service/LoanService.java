@@ -53,7 +53,6 @@ public class LoanService {
     }
     
     public Loan save(Loan loan) {
-        // Asegurar que el usuario existe y está correctamente asociado
         if (loan.getUser() != null && loan.getUser().getId() != null) {
             Optional<User> user = userRepository.findById(loan.getUser().getId());
             if (user.isPresent()) {
@@ -62,7 +61,32 @@ public class LoanService {
                 throw new RuntimeException("Usuario no encontrado con ID: " + loan.getUser().getId());
             }
         }
+        
+        // Calcular nextPaymentDate si es un préstamo nuevo
+        if (loan.getId() == null && loan.getNextPaymentDate() == null && loan.getPaymentFrequency() != null) {
+            loan.setNextPaymentDate(calculateFirstPaymentDate(loan.getStartDate(), loan.getPaymentFrequency()));
+        }
+        
         return loanRepository.save(loan);
+    }
+    
+    private java.time.LocalDateTime calculateFirstPaymentDate(java.time.LocalDateTime startDate, String frequency) {
+        switch (frequency) {
+            case "Mensual 15":
+                return java.time.LocalDateTime.of(startDate.getYear(), startDate.getMonthValue() + 1, 15, 0, 0);
+            case "Mensual 30":
+                return startDate.plusMonths(1).withDayOfMonth(1).minusDays(1);
+            case "Quincenal":
+                return startDate.plusMonths(1).withDayOfMonth(15);
+            case "Quincenal 5":
+                return startDate.plusMonths(1).withDayOfMonth(5);
+            case "Quincenal 20":
+                return startDate.plusMonths(1).withDayOfMonth(20);
+            case "Semanal":
+                return startDate.plusDays(7);
+            default:
+                return startDate.plusMonths(1);
+        }
     }
     
     public Double getTotalActiveLoanAmount() {
