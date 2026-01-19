@@ -86,8 +86,15 @@ public class TransactionService {
         
         currentLoan.setPaidInstallments(paymentCount);
         
+        System.out.println("=== ACTUALIZACIÓN DESPUÉS DE PAGO ===");
+        System.out.println("Préstamo ID: " + currentLoan.getId());
+        System.out.println("Frecuencia: " + currentLoan.getPaymentFrequency());
+        System.out.println("Fecha actual nextPaymentDate: " + currentLoan.getNextPaymentDate());
+        
         if (currentLoan.getNextPaymentDate() != null && currentLoan.getPaymentFrequency() != null) {
-            currentLoan.setNextPaymentDate(calculateNextPaymentDate(currentLoan.getNextPaymentDate(), currentLoan.getPaymentFrequency()));
+            java.time.LocalDateTime newNextPaymentDate = calculateNextPaymentDate(currentLoan.getNextPaymentDate(), currentLoan.getPaymentFrequency());
+            System.out.println("Nueva nextPaymentDate calculada: " + newNextPaymentDate);
+            currentLoan.setNextPaymentDate(newNextPaymentDate);
         }
         
         java.math.BigDecimal remainingAmount = currentLoan.getRemainingAmount();
@@ -96,31 +103,58 @@ public class TransactionService {
         }
         
         loanRepository.save(currentLoan);
+        System.out.println("=== FIN ACTUALIZACIÓN ===");
     }
     
     private LocalDateTime calculateNextPaymentDate(LocalDateTime currentDate, String frequency) {
+        LocalDate current = currentDate.toLocalDate();
+        LocalDate next;
+        
+        System.out.println("  -> Calculando desde fecha: " + current + " (día " + current.getDayOfMonth() + ")");
+        
         switch (frequency) {
             case "Mensual 15":
-                return LocalDateTime.of(currentDate.getYear(), currentDate.getMonthValue() + 1, 15, 0, 0);
+                next = current.plusMonths(1).withDayOfMonth(15);
+                break;
             case "Mensual 30":
-                return currentDate.plusMonths(1).withDayOfMonth(1).minusDays(1);
+                next = current.plusMonths(1);
+                next = next.withDayOfMonth(next.lengthOfMonth());
+                break;
             case "Quincenal":
-                return currentDate.getDayOfMonth() == 15 
-                    ? currentDate.plusMonths(1).withDayOfMonth(1).minusDays(1)
-                    : currentDate.plusMonths(1).withDayOfMonth(15);
+                if (current.getDayOfMonth() == 15) {
+                    // Si estamos en día 15, la siguiente es el último día del mes
+                    next = current.withDayOfMonth(current.lengthOfMonth());
+                } else {
+                    // Si estamos en último día del mes, la siguiente es día 15 del siguiente mes
+                    next = current.plusMonths(1).withDayOfMonth(15);
+                }
+                break;
             case "Quincenal 5":
-                return currentDate.getDayOfMonth() == 5
-                    ? currentDate.withDayOfMonth(20)
-                    : currentDate.plusMonths(1).withDayOfMonth(5);
+                if (current.getDayOfMonth() == 5) {
+                    next = current.withDayOfMonth(20);
+                } else {
+                    next = current.plusMonths(1).withDayOfMonth(5);
+                }
+                break;
             case "Quincenal 20":
-                return currentDate.getDayOfMonth() == 20
-                    ? currentDate.plusMonths(1).withDayOfMonth(5)
-                    : currentDate.withDayOfMonth(20);
+                if (current.getDayOfMonth() == 20) {
+                    next = current.plusMonths(1).withDayOfMonth(5);
+                } else {
+                    next = current.withDayOfMonth(20);
+                    if (!next.isAfter(current)) {
+                        next = next.plusMonths(1);
+                    }
+                }
+                break;
             case "Semanal":
-                return currentDate.plusDays(7);
+                next = current.plusWeeks(1);
+                break;
             default:
-                return currentDate.plusMonths(1);
+                next = current.plusMonths(1);
         }
+        
+        System.out.println("  -> Próxima fecha calculada: " + next);
+        return next.atStartOfDay();
     }
     
     public List<Transaction> findByDateRange(LocalDate startDate, LocalDate endDate) {

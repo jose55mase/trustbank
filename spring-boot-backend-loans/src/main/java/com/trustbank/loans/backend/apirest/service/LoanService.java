@@ -71,22 +71,66 @@ public class LoanService {
     }
     
     private java.time.LocalDateTime calculateFirstPaymentDate(java.time.LocalDateTime startDate, String frequency) {
+        java.time.LocalDate start = startDate.toLocalDate();
+        java.time.LocalDate firstPayment;
+        
         switch (frequency) {
             case "Mensual 15":
-                return java.time.LocalDateTime.of(startDate.getYear(), startDate.getMonthValue() + 1, 15, 0, 0);
+                // Si el préstamo inicia antes del día 15, primera fecha es día 15 del mismo mes
+                // Si inicia después del día 15, primera fecha es día 15 del siguiente mes
+                if (start.getDayOfMonth() <= 15) {
+                    firstPayment = start.withDayOfMonth(15);
+                } else {
+                    firstPayment = start.plusMonths(1).withDayOfMonth(15);
+                }
+                break;
             case "Mensual 30":
-                return startDate.plusMonths(1).withDayOfMonth(1).minusDays(1);
+                // Primera fecha es el último día del mes actual o siguiente
+                if (start.getDayOfMonth() < start.lengthOfMonth()) {
+                    firstPayment = start.withDayOfMonth(start.lengthOfMonth());
+                } else {
+                    firstPayment = start.plusMonths(1).withDayOfMonth(start.plusMonths(1).lengthOfMonth());
+                }
+                break;
             case "Quincenal":
-                return startDate.plusMonths(1).withDayOfMonth(15);
+                // Primera fecha: día 15 si estamos antes del 15, o último día del mes si estamos después
+                if (start.getDayOfMonth() <= 15) {
+                    firstPayment = start.withDayOfMonth(15);
+                } else {
+                    firstPayment = start.withDayOfMonth(start.lengthOfMonth());
+                }
+                break;
             case "Quincenal 5":
-                return startDate.plusMonths(1).withDayOfMonth(5);
+                // Primera fecha: día 5 si estamos antes del 5, o día 20 si estamos después
+                if (start.getDayOfMonth() <= 5) {
+                    firstPayment = start.withDayOfMonth(5);
+                } else if (start.getDayOfMonth() <= 20) {
+                    firstPayment = start.withDayOfMonth(20);
+                } else {
+                    firstPayment = start.plusMonths(1).withDayOfMonth(5);
+                }
+                break;
             case "Quincenal 20":
-                return startDate.plusMonths(1).withDayOfMonth(20);
+                // Primera fecha: día 20 si estamos antes del 20, o día 5 del siguiente mes
+                if (start.getDayOfMonth() <= 20) {
+                    firstPayment = start.withDayOfMonth(20);
+                } else {
+                    firstPayment = start.plusMonths(1).withDayOfMonth(5);
+                }
+                break;
             case "Semanal":
-                return startDate.plusDays(7);
+                firstPayment = start.plusWeeks(1);
+                break;
             default:
-                return startDate.plusMonths(1);
+                firstPayment = start.plusMonths(1);
         }
+        
+        System.out.println("=== CÁLCULO PRIMERA FECHA DE PAGO ===");
+        System.out.println("Fecha inicio: " + start);
+        System.out.println("Frecuencia: " + frequency);
+        System.out.println("Primera fecha de pago: " + firstPayment);
+        
+        return firstPayment.atStartOfDay();
     }
     
     public Double getTotalActiveLoanAmount() {

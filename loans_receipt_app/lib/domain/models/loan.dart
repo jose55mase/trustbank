@@ -10,6 +10,7 @@ class Loan {
   final int installments;
   final int paidInstallments;
   final DateTime startDate;
+  final DateTime? nextPaymentDate;
   final LoanStatus status;
   final bool pagoAnterior;
   final bool pagoActual;
@@ -31,6 +32,7 @@ class Loan {
     required this.installments,
     required this.paidInstallments,
     required this.startDate,
+    this.nextPaymentDate,
     required this.status,
     required this.remainingAmount,
     this.pagoAnterior = false,
@@ -54,6 +56,7 @@ class Loan {
       installments: json['installments'] as int,
       paidInstallments: json['paidInstallments'] as int,
       startDate: DateTime.parse(json['startDate']),
+      nextPaymentDate: json['nextPaymentDate'] != null ? DateTime.parse(json['nextPaymentDate']) : null,
       status: _parseStatus(json['status']),
       remainingAmount: (json['remainingAmount'] as num).toDouble(),
       pagoAnterior: json['pagoAnterior'] ?? false,
