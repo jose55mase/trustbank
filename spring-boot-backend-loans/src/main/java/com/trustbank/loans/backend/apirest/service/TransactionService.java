@@ -75,23 +75,52 @@ public class TransactionService {
     }
     
     private void updateLoanProgress(Loan loan) {
-        // Contar transacciones de pago para este préstamo
-        List<Transaction> payments = transactionRepository.findByLoanIdOrderByDateDesc(loan.getId());
+        Optional<Loan> loanOpt = loanRepository.findById(loan.getId());
+        if (!loanOpt.isPresent()) return;
+        
+        Loan currentLoan = loanOpt.get();
+        List<Transaction> payments = transactionRepository.findByLoanIdOrderByDateDesc(currentLoan.getId());
         int paymentCount = (int) payments.stream()
             .filter(t -> t.getPrincipalAmount() != null && t.getPrincipalAmount().compareTo(java.math.BigDecimal.ZERO) > 0)
             .count();
         
-        // Actualizar cuotas pagadas
-        loan.setPaidInstallments(paymentCount);
+        currentLoan.setPaidInstallments(paymentCount);
         
-        // Verificar si el préstamo está completamente pagado
-        java.math.BigDecimal remainingAmount = loan.getRemainingAmount();
-        if (remainingAmount.compareTo(java.math.BigDecimal.ZERO) <= 0 || paymentCount >= loan.getInstallments()) {
-            loan.setStatus(com.trustbank.loans.backend.apirest.entity.LoanStatus.COMPLETED);
+        if (currentLoan.getNextPaymentDate() != null && currentLoan.getPaymentFrequency() != null) {
+            currentLoan.setNextPaymentDate(calculateNextPaymentDate(currentLoan.getNextPaymentDate(), currentLoan.getPaymentFrequency()));
         }
         
-        // Guardar los cambios
-        loanRepository.save(loan);
+        java.math.BigDecimal remainingAmount = currentLoan.getRemainingAmount();
+        if (remainingAmount.compareTo(java.math.BigDecimal.ZERO) <= 0 || paymentCount >= currentLoan.getInstallments()) {
+            currentLoan.setStatus(com.trustbank.loans.backend.apirest.entity.LoanStatus.COMPLETED);
+        }
+        
+        loanRepository.save(currentLoan);
+    }
+    
+    private LocalDateTime calculateNextPaymentDate(LocalDateTime currentDate, String frequency) {
+        switch (frequency) {
+            case "Mensual 15":
+                return LocalDateTime.of(currentDate.getYear(), currentDate.getMonthValue() + 1, 15, 0, 0);
+            case "Mensual 30":
+                return currentDate.plusMonths(1).withDayOfMonth(1).minusDays(1);
+            case "Quincenal":
+                return currentDate.getDayOfMonth() == 15 
+                    ? currentDate.plusMonths(1).withDayOfMonth(1).minusDays(1)
+                    : currentDate.plusMonths(1).withDayOfMonth(15);
+            case "Quincenal 5":
+                return currentDate.getDayOfMonth() == 5
+                    ? currentDate.withDayOfMonth(20)
+                    : currentDate.plusMonths(1).withDayOfMonth(5);
+            case "Quincenal 20":
+                return currentDate.getDayOfMonth() == 20
+                    ? currentDate.plusMonths(1).withDayOfMonth(5)
+                    : currentDate.withDayOfMonth(20);
+            case "Semanal":
+                return currentDate.plusDays(7);
+            default:
+                return currentDate.plusMonths(1);
+        }
     }
     
     public List<Transaction> findByDateRange(LocalDate startDate, LocalDate endDate) {

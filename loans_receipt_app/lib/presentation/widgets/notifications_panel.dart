@@ -177,6 +177,23 @@ class _NotificationsPanelState extends State<NotificationsPanel> {
                                     ],
                                   ),
                                   const SizedBox(height: 8),
+                                  if (loan.userName != null || loan.userCode != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.person, size: 14, color: Colors.grey),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${loan.userCode ?? ''} - ${loan.userName ?? ''}',
+                                            style: AppTextStyles.body.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   Text(
                                     'Monto: ${NumberFormat.currency(symbol: '\$ ', decimalDigits: 0, locale: 'es_CO').format(loan.amount)}',
                                     style: AppTextStyles.body.copyWith(

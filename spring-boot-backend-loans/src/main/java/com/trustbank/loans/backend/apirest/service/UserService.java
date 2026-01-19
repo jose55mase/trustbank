@@ -23,7 +23,17 @@ public class UserService {
     private PaymentRepository paymentRepository;
     
     public List<User> findAll() {
-        return userRepository.findAllByOrderByUserCodeAsc();
+        List<User> users = userRepository.findAllByOrderByUserCodeAsc();
+        users.sort((a, b) -> {
+            try {
+                Integer numA = Integer.parseInt(a.getUserCode());
+                Integer numB = Integer.parseInt(b.getUserCode());
+                return numA.compareTo(numB);
+            } catch (NumberFormatException e) {
+                return a.getUserCode().compareTo(b.getUserCode());
+            }
+        });
+        return users;
     }
     
     public List<User> findByUserCodeOrderedAlphabetically(String userCode) {

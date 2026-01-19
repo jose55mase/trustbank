@@ -3,6 +3,8 @@ import 'loan_status.dart';
 class Loan {
   final String id;
   final String userId;
+  final String? userName;
+  final String? userCode;
   final double amount;
   final double interestRate;
   final int installments;
@@ -22,6 +24,8 @@ class Loan {
   Loan({
     required this.id,
     required this.userId,
+    this.userName,
+    this.userCode,
     required this.amount,
     required this.interestRate,
     required this.installments,
@@ -43,6 +47,8 @@ class Loan {
     return Loan(
       id: json['id'].toString(),
       userId: json['user']['id'].toString(),
+      userName: json['user']['name'],
+      userCode: json['user']['userCode'],
       amount: (json['amount'] as num).toDouble(),
       interestRate: (json['interestRate'] as num).toDouble(),
       installments: json['installments'] as int,

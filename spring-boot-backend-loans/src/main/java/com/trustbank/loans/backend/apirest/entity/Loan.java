@@ -63,6 +63,9 @@ public class Loan {
     @Column(name = "sin_cuotas")
     private Boolean sinCuotas = false;
     
+    @Column(name = "next_payment_date")
+    private LocalDateTime nextPaymentDate;
+    
     @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Transaction> transactions;
@@ -172,4 +175,7 @@ public class Loan {
     
     public Boolean getSinCuotas() { return sinCuotas; }
     public void setSinCuotas(Boolean sinCuotas) { this.sinCuotas = sinCuotas; }
+    
+    public LocalDateTime getNextPaymentDate() { return nextPaymentDate; }
+    public void setNextPaymentDate(LocalDateTime nextPaymentDate) { this.nextPaymentDate = nextPaymentDate; }
 }
