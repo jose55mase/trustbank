@@ -1038,47 +1038,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   }
 
   DateTime? _calculateNextPaymentDate(Loan loan) {
-    if (loan.paidInstallments >= loan.installments) {
-      return null; // Préstamo completamente pagado
+    // Usar nextPaymentDate del backend si está disponible
+    if (loan.nextPaymentDate != null) {
+      return loan.nextPaymentDate;
     }
-
-    final startDate = loan.startDate;
-    final paymentFrequency = loan.paymentFrequency;
-    final nextInstallmentNumber = loan.paidInstallments + 1;
-
-    switch (paymentFrequency) {
-      case 'Mensual 15':
-        return DateTime(startDate.year, startDate.month + nextInstallmentNumber, 15);
-      case 'Mensual 30':
-        return DateTime(startDate.year, startDate.month + nextInstallmentNumber + 1, 1);
-      case 'Quincenal':
-        if (nextInstallmentNumber % 2 == 1) {
-          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd, 15);
-        } else {
-          final monthsToAdd = nextInstallmentNumber ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd + 1, 1);
-        }
-      case 'Quincenal 5':
-        if (nextInstallmentNumber % 2 == 1) {
-          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
-        } else {
-          final monthsToAdd = (nextInstallmentNumber - 2) ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
-        }
-      case 'Quincenal 20':
-        if (nextInstallmentNumber % 2 == 1) {
-          final monthsToAdd = (nextInstallmentNumber - 1) ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd, 20);
-        } else {
-          final monthsToAdd = nextInstallmentNumber ~/ 2;
-          return DateTime(startDate.year, startDate.month + monthsToAdd, 5);
-        }
-      case 'Semanal':
-        return startDate.add(Duration(days: 7 * nextInstallmentNumber));
-      default:
-        return null;
-    }
+    
+    // Fallback: si no hay nextPaymentDate, no mostrar fecha
+    return null;
   }
 }
