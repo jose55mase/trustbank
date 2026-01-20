@@ -76,43 +76,33 @@ public class LoanService {
         
         switch (frequency) {
             case "Mensual 15":
-                // Si el préstamo inicia antes del día 15, primera fecha es día 15 del mismo mes
-                // Si inicia después del día 15, primera fecha es día 15 del siguiente mes
-                if (start.getDayOfMonth() <= 15) {
+                if (start.getDayOfMonth() < 15) {
                     firstPayment = start.withDayOfMonth(15);
                 } else {
                     firstPayment = start.plusMonths(1).withDayOfMonth(15);
                 }
                 break;
             case "Mensual 30":
-                // Primera fecha es el último día del mes actual o siguiente
-                if (start.getDayOfMonth() < start.lengthOfMonth()) {
-                    firstPayment = start.withDayOfMonth(start.lengthOfMonth());
-                } else {
-                    firstPayment = start.plusMonths(1).withDayOfMonth(start.plusMonths(1).lengthOfMonth());
-                }
+                firstPayment = start.plusMonths(1).withDayOfMonth(start.plusMonths(1).lengthOfMonth());
                 break;
             case "Quincenal":
-                // Primera fecha: día 15 si estamos antes del 15, o último día del mes si estamos después
-                if (start.getDayOfMonth() <= 15) {
+                if (start.getDayOfMonth() < 15) {
                     firstPayment = start.withDayOfMonth(15);
                 } else {
-                    firstPayment = start.withDayOfMonth(start.lengthOfMonth());
+                    firstPayment = start.plusMonths(1).withDayOfMonth(15);
                 }
                 break;
             case "Quincenal 5":
-                // Primera fecha: día 5 si estamos antes del 5, o día 20 si estamos después
-                if (start.getDayOfMonth() <= 5) {
+                if (start.getDayOfMonth() < 5) {
                     firstPayment = start.withDayOfMonth(5);
-                } else if (start.getDayOfMonth() <= 20) {
+                } else if (start.getDayOfMonth() < 20) {
                     firstPayment = start.withDayOfMonth(20);
                 } else {
                     firstPayment = start.plusMonths(1).withDayOfMonth(5);
                 }
                 break;
             case "Quincenal 20":
-                // Primera fecha: día 20 si estamos antes del 20, o día 5 del siguiente mes
-                if (start.getDayOfMonth() <= 20) {
+                if (start.getDayOfMonth() < 20) {
                     firstPayment = start.withDayOfMonth(20);
                 } else {
                     firstPayment = start.plusMonths(1).withDayOfMonth(5);

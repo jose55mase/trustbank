@@ -718,15 +718,19 @@ class ApiService {
   
   static Future<Map<String, dynamic>> updateLoan({
     required String loanId,
+    required double amount,
     required double interestRate,
     required int installments,
     required String loanType,
     required String paymentFrequency,
     double? valorRealCuota,
+    bool? sinCuotas,
+    DateTime? startDate,
   }) async {
     final url = Uri.parse('$baseUrl/loans/$loanId');
     
     final currentLoan = await getLoanById(loanId);
+    currentLoan['amount'] = amount;
     currentLoan['interestRate'] = interestRate;
     currentLoan['installments'] = installments;
     currentLoan['loanType'] = loanType;
@@ -734,6 +738,14 @@ class ApiService {
     
     if (valorRealCuota != null) {
       currentLoan['valorRealCuota'] = valorRealCuota;
+    }
+    
+    if (sinCuotas != null) {
+      currentLoan['sinCuotas'] = sinCuotas;
+    }
+    
+    if (startDate != null) {
+      currentLoan['startDate'] = startDate.toIso8601String();
     }
     
     final response = await http.put(
