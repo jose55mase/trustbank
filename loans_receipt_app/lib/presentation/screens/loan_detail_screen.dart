@@ -900,13 +900,31 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   }
 
   void _showEditDialog(BuildContext context) {
+    final numberFormat = NumberFormat('#,###', 'es_CO');
+    final amountController = TextEditingController(
+      text: numberFormat.format(currentLoan.amount.toInt()),
+    );
     final interestController = TextEditingController(text: currentLoan.interestRate.toString());
     final installmentsController = TextEditingController(text: currentLoan.installments.toString());
     final valorRealCuotaController = TextEditingController(
-      text: currentLoan.valorRealCuota != null ? currentLoan.valorRealCuota!.toStringAsFixed(0) : '',
+      text: currentLoan.valorRealCuota != null ? numberFormat.format(currentLoan.valorRealCuota!.toInt()) : '',
     );
-    String selectedLoanType = currentLoan.loanType ?? 'Fijo';
-    String selectedPaymentFrequency = currentLoan.paymentFrequency ?? 'Mensual 30';
+    
+    DateTime selectedDate = currentLoan.startDate;
+    
+    // Determinar si es capital fijo basado en sinCuotas
+    bool capitalFijo = currentLoan.sinCuotas ?? false;
+    
+    // Validar que el loanType esté en la lista de opciones (sin Capital Fijo)
+    final validLoanTypes = ['Fijo', 'Rotativo', 'Ahorro'];
+    String selectedLoanType = validLoanTypes.contains(currentLoan.loanType) 
+        ? currentLoan.loanType! 
+        : 'Fijo';
+    
+    final validPaymentFrequencies = ['Mensual 15', 'Mensual 30', 'Quincenal', 'Quincenal 5', 'Quincenal 20', 'Semanal'];
+    String selectedPaymentFrequency = validPaymentFrequencies.contains(currentLoan.paymentFrequency)
+        ? currentLoan.paymentFrequency!
+        : 'Mensual 30';
 
     showDialog(
       context: context,
@@ -917,6 +935,26 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final formatted = numberFormat.format(int.parse(text));
+                      amountController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Monto Prestado',
+                    prefixText: '\$ ',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: interestController,
                   keyboardType: TextInputType.number,
@@ -935,15 +973,70 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        selectedDate = picked;
+                      });
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today, color: Colors.grey),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Fecha: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 TextField(
                   controller: valorRealCuotaController,
                   keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    String text = value.replaceAll(RegExp(r'[^0-9]'), '');
+                    if (text.isNotEmpty) {
+                      final formatted = numberFormat.format(int.parse(text));
+                      valorRealCuotaController.value = TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }
+                  },
                   decoration: const InputDecoration(
                     labelText: 'Valor Real Cuota',
                     prefixText: '\$ ',
                     border: OutlineInputBorder(),
                     helperText: 'Valor real de cada cuota',
                   ),
+                ),
+                const SizedBox(height: 16),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Capital Fijo'),
+                  subtitle: const Text('Marcar si el préstamo no aplica tasa de interés'),
+                  value: capitalFijo,
+                  onChanged: (value) {
+                    setState(() {
+                      capitalFijo = value ?? false;
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
@@ -986,13 +1079,14 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                final amount = double.tryParse(amountController.text.replaceAll(RegExp(r'[^0-9]'), ''));
                 final interestRate = double.tryParse(interestController.text);
                 final installments = int.tryParse(installmentsController.text);
                 final valorRealCuota = valorRealCuotaController.text.isNotEmpty 
-                    ? double.tryParse(valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9.]'), '')) 
+                    ? double.tryParse(valorRealCuotaController.text.replaceAll(RegExp(r'[^0-9]'), '')) 
                     : null;
                 
-                if (interestRate == null || installments == null) {
+                if (amount == null || interestRate == null || installments == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Por favor ingresa valores válidos'),
@@ -1003,7 +1097,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                 }
                 
                 Navigator.pop(context);
-                await _updateLoan(interestRate, installments, selectedLoanType, selectedPaymentFrequency, valorRealCuota);
+                await _updateLoan(amount, interestRate, installments, selectedLoanType, selectedPaymentFrequency, valorRealCuota, capitalFijo, selectedDate);
               },
               child: const Text('Guardar'),
             ),
@@ -1013,15 +1107,18 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     );
   }
 
-  Future<void> _updateLoan(double interestRate, int installments, String loanType, String paymentFrequency, double? valorRealCuota) async {
+  Future<void> _updateLoan(double amount, double interestRate, int installments, String loanType, String paymentFrequency, double? valorRealCuota, bool sinCuotas, DateTime startDate) async {
     try {
       await ApiService.updateLoan(
         loanId: currentLoan.id,
+        amount: amount,
         interestRate: interestRate,
         installments: installments,
         loanType: loanType,
         paymentFrequency: paymentFrequency,
         valorRealCuota: valorRealCuota,
+        sinCuotas: sinCuotas,
+        startDate: startDate,
       );
       
       ScaffoldMessenger.of(context).showSnackBar(
