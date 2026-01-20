@@ -86,6 +86,13 @@ class _UsersScreenState extends State<UsersScreen> {
       }).toList();
     }
 
+    // Ordenar por código de usuario numéricamente
+    filteredList.sort((a, b) {
+      final aNum = int.tryParse(a.userCode) ?? 0;
+      final bNum = int.tryParse(b.userCode) ?? 0;
+      return aNum.compareTo(bNum);
+    });
+
     return filteredList;
   }
 

@@ -37,8 +37,13 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalle del Préstamo'),
+        title: const Text('Detalle del Préstamooo'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+            tooltip: 'Regresar',
+          ),
           NavigationActions(
             additionalActions: [
               IconButton(
