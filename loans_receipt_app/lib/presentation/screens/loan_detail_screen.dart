@@ -1050,24 +1050,37 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     DropdownMenuItem(value: 'Rotativo', child: Text('Rotativo')),
                     DropdownMenuItem(value: 'Ahorro', child: Text('Ahorro')),
                   ],
-                  onChanged: (value) => setState(() => selectedLoanType = value!),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLoanType = value!;
+                      // Aplicar reglas específicas para cada tipo de préstamo
+                      if (value == 'Fijo') {
+                        selectedPaymentFrequency = 'Mensual 30';
+                      } else if (value == 'Ahorro') {
+                        selectedPaymentFrequency = 'Mensual 15';
+                      }
+                      // Rotativo mantiene la selección libre
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   value: selectedPaymentFrequency,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Forma de Pago',
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
+                    enabled: selectedLoanType == 'Rotativo',
                   ),
                   items: const [
                     DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
                     DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
-                    DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal')),
+                    DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal (15-30)')),
+                    DropdownMenuItem(value: 'Quincenal 30-15', child: Text('Quincenal (30-15)')),
                     DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
                     DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
                     DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
                   ],
-                  onChanged: (value) => setState(() => selectedPaymentFrequency = value!),
+                  onChanged: selectedLoanType == 'Rotativo' ? (value) => setState(() => selectedPaymentFrequency = value!) : null,
                 ),
               ],
             ),

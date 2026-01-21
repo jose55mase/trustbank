@@ -241,6 +241,30 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         }
         break;
         
+      case 'Quincenal 30-15':
+        // Alternar entre último día del mes y día 15
+        DateTime currentDate = loanDate;
+        for (int i = 0; i < installments; i++) {
+          DateTime nextPayment;
+          if (i % 2 == 0) {
+            // Pago en último día del mes
+            final lastDayOfMonth = DateTime(currentDate.year, currentDate.month + 1, 0).day;
+            if (currentDate.day < lastDayOfMonth) {
+              nextPayment = DateTime(currentDate.year, currentDate.month, lastDayOfMonth);
+            } else {
+              final nextMonth = DateTime(currentDate.year, currentDate.month + 1, 1);
+              final lastDayOfNextMonth = DateTime(nextMonth.year, nextMonth.month + 1, 0).day;
+              nextPayment = DateTime(nextMonth.year, nextMonth.month, lastDayOfNextMonth);
+            }
+          } else {
+            // Pago en día 15 del siguiente mes
+            nextPayment = DateTime(currentDate.year, currentDate.month + 1, 15);
+          }
+          dates.add(nextPayment);
+          currentDate = nextPayment;
+        }
+        break;
+        
       case 'Quincenal 5':
         // Alternar entre día 5 y 20 de cada mes
         DateTime currentDate = loanDate;
@@ -325,6 +349,11 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
           alertMessage = 'Alerta: La primera fecha de pago es menor a 15 días. Fecha: ${DateFormat('dd/MM/yyyy').format(firstPayment)}';
         }
         break;
+      case 'Quincenal 30-15':
+        if (daysDifference < 15) {
+          alertMessage = 'Alerta: La primera fecha de pago es menor a 15 días. Fecha: ${DateFormat('dd/MM/yyyy').format(firstPayment)}';
+        }
+        break;
       case 'Quincenal 5':
       case 'Quincenal 20':
         if (daysDifference < 15) {
@@ -397,7 +426,11 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         break;
       case 'Quincenal':
         color = Colors.purple;
-        title = 'Fechas de Pago (Quincenal - Alterna 15 y 1):';
+        title = 'Fechas de Pago (Quincenal - Alterna 15 y 30):';
+        break;
+      case 'Quincenal 30-15':
+        color = Colors.deepPurple;
+        title = 'Fechas de Pago (Quincenal - Alterna 30 y 15):';
         break;
       case 'Quincenal 5':
         color = Colors.teal;
@@ -747,7 +780,8 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             items: const [
               DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
               DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
-              DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal')),
+              DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal (15-30)')),
+              DropdownMenuItem(value: 'Quincenal 30-15', child: Text('Quincenal (30-15)')),
               DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
               DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
               DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
