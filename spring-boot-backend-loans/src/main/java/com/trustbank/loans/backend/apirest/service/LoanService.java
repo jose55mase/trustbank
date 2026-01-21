@@ -92,6 +92,14 @@ public class LoanService {
                     firstPayment = start.plusMonths(1).withDayOfMonth(15);
                 }
                 break;
+            case "Quincenal 30-15":
+                // Primera fecha: último día del mes si estamos antes del último día, o día 15 del siguiente mes
+                if (start.getDayOfMonth() < start.lengthOfMonth()) {
+                    firstPayment = start.withDayOfMonth(start.lengthOfMonth());
+                } else {
+                    firstPayment = start.plusMonths(1).withDayOfMonth(15);
+                }
+                break;
             case "Quincenal 5":
                 if (start.getDayOfMonth() < 5) {
                     firstPayment = start.withDayOfMonth(5);

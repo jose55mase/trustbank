@@ -129,6 +129,15 @@ public class TransactionService {
                     next = current.plusMonths(1).withDayOfMonth(15);
                 }
                 break;
+            case "Quincenal 30-15":
+                if (current.getDayOfMonth() >= current.lengthOfMonth() - 2) {
+                    // Si estamos en el último día del mes (o cerca), la siguiente es día 15 del siguiente mes
+                    next = current.plusMonths(1).withDayOfMonth(15);
+                } else {
+                    // Si estamos en día 15, la siguiente es el último día del mismo mes
+                    next = current.withDayOfMonth(current.lengthOfMonth());
+                }
+                break;
             case "Quincenal 5":
                 if (current.getDayOfMonth() == 5) {
                     next = current.withDayOfMonth(20);
