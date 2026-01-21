@@ -432,13 +432,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       });
     }
     
+    final startOfDay = DateTime(startDate!.year, startDate!.month, startDate!.day, 0, 0, 0);
+    final endOfDay = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59, 999);
+    
     return transactions.where((transaction) {
       final loanId = transaction['loan']?['id']?.toString();
       if (ahorrosLoanIds.contains(loanId)) return false;
       
       final transactionDate = DateTime.parse(transaction['date']);
-      return transactionDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
-             transactionDate.isBefore(endDate!.add(const Duration(days: 1)));
+      return transactionDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
+             transactionDate.isBefore(endOfDay.add(const Duration(milliseconds: 1)));
     }).fold<double>(0, (sum, transaction) {
       final amount = transaction['amount'] ?? 0.0;
       return sum + (amount as num).toDouble();
@@ -459,13 +462,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       });
     }
     
+    final startOfDay = DateTime(startDate!.year, startDate!.month, startDate!.day, 0, 0, 0);
+    final endOfDay = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59, 999);
+    
     return transactions.where((transaction) {
       final loanId = transaction['loan']?['id']?.toString();
       if (ahorrosLoanIds.contains(loanId)) return false;
       
       final transactionDate = DateTime.parse(transaction['date']);
-      return transactionDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
-             transactionDate.isBefore(endDate!.add(const Duration(days: 1)));
+      return transactionDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
+             transactionDate.isBefore(endOfDay.add(const Duration(milliseconds: 1)));
     }).fold<double>(0, (sum, transaction) {
       final interestAmount = transaction['interestAmount'] ?? 0.0;
       return sum + (interestAmount as num).toDouble();
