@@ -326,18 +326,45 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   
   List<Widget> _buildAhorrosDetails(StateSetter setModalState) {
     final ahorrosLoans = loans.where((loan) => loan.loanType == 'Ahorro').toList();
-    if (startDate != null && endDate != null) {
-      ahorrosLoans.retainWhere((loan) => 
-        loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
-        loan.startDate.isBefore(endDate!.add(const Duration(days: 1))));
-    }
     
-    final totalAhorros = ahorrosLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
+    // Filtrar transacciones de Ahorro por fecha si existe el filtro
     final ahorrosTransactions = transactions.where((t) {
       final loanId = t['loan']?['id']?.toString();
-      return ahorrosLoans.any((loan) => loan.id == loanId);
+      if (!ahorrosLoans.any((loan) => loan.id == loanId)) return false;
+      
+      // Si hay filtro de fechas, aplicarlo a las transacciones
+      if (startDate != null && endDate != null) {
+        final startOfDay = DateTime(startDate!.year, startDate!.month, startDate!.day, 0, 0, 0);
+        final endOfDay = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59, 999);
+        final transactionDate = DateTime.parse(t['date']);
+        return transactionDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
+               transactionDate.isBefore(endOfDay.add(const Duration(milliseconds: 1)));
+      }
+      return true;
     }).toList();
     
+    // Obtener solo los préstamos que tienen transacciones en el rango
+    final loanIdsWithTransactions = ahorrosTransactions
+        .map((t) => t['loan']?['id']?.toString())
+        .whereType<String>()
+        .toSet();
+    
+    final filteredAhorrosLoans = ahorrosLoans
+        .where((loan) => loanIdsWithTransactions.contains(loan.id))
+        .toList();
+    
+    // Calcular "Préstamos Otorgados" = préstamos de ahorro creados en el rango de fechas
+    final prestamosOtorgados = ahorrosLoans.where((loan) {
+      if (startDate != null && endDate != null) {
+        final startOfDay = DateTime(startDate!.year, startDate!.month, startDate!.day, 0, 0, 0);
+        final endOfDay = DateTime(endDate!.year, endDate!.month, endDate!.day, 23, 59, 59, 999);
+        return loan.startDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
+               loan.startDate.isBefore(endOfDay.add(const Duration(milliseconds: 1)));
+      }
+      return true;
+    }).fold<double>(0, (sum, loan) => sum + loan.amount);
+    
+    // Calcular totales solo de las transacciones en el rango
     final totalInteresAhorros = ahorrosTransactions.fold<double>(0, (sum, t) {
       final interestAmount = t['interestAmount'] ?? 0.0;
       return sum + (interestAmount as num).toDouble();
@@ -354,7 +381,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         padding: const EdgeInsets.only(left: 16),
         child: Column(
           children: [
-            _buildAhorrosDetailItem('Préstamos Otorgados', totalAhorros, Icons.arrow_upward, Colors.red),
+            _buildAhorrosDetailItem('Préstamos Otorgados', prestamosOtorgados, Icons.arrow_upward, Colors.red),
             const SizedBox(height: 8),
             _buildAhorrosDetailItem('Capital Recuperado', totalCapitalAhorros, Icons.account_balance, Colors.blue),
             const SizedBox(height: 8),
@@ -419,13 +446,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
   
   double _calculateTotalIngresosByDate() {
-    // Excluir transacciones de préstamos tipo 'Ahorro'
-    final ahorrosLoanIds = loans.where((loan) => loan.loanType == 'Ahorro').map((loan) => loan.id).toSet();
+    // Solo incluir transacciones de préstamos tipo 'Fijo' y 'Rotativo'
+    final fijoRotativoLoanIds = loans.where((loan) => loan.loanType == 'Fijo' || loan.loanType == 'Rotativo').map((loan) => loan.id).toSet();
     
     if (startDate == null || endDate == null) {
       return transactions.where((transaction) {
         final loanId = transaction['loan']?['id']?.toString();
-        return !ahorrosLoanIds.contains(loanId);
+        return fijoRotativoLoanIds.contains(loanId);
       }).fold<double>(0, (sum, transaction) {
         final amount = transaction['amount'] ?? 0.0;
         return sum + (amount as num).toDouble();
@@ -437,7 +464,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     
     return transactions.where((transaction) {
       final loanId = transaction['loan']?['id']?.toString();
-      if (ahorrosLoanIds.contains(loanId)) return false;
+      if (!fijoRotativoLoanIds.contains(loanId)) return false;
       
       final transactionDate = DateTime.parse(transaction['date']);
       return transactionDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
@@ -449,13 +476,13 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
   
   double _calculateEntradasByDate() {
-    // Excluir transacciones de préstamos tipo 'Ahorro'
-    final ahorrosLoanIds = loans.where((loan) => loan.loanType == 'Ahorro').map((loan) => loan.id).toSet();
+    // Solo incluir transacciones de préstamos tipo 'Fijo' y 'Rotativo'
+    final fijoRotativoLoanIds = loans.where((loan) => loan.loanType == 'Fijo' || loan.loanType == 'Rotativo').map((loan) => loan.id).toSet();
     
     if (startDate == null || endDate == null) {
       return transactions.where((transaction) {
         final loanId = transaction['loan']?['id']?.toString();
-        return !ahorrosLoanIds.contains(loanId);
+        return fijoRotativoLoanIds.contains(loanId);
       }).fold<double>(0, (sum, transaction) {
         final interestAmount = transaction['interestAmount'] ?? 0.0;
         return sum + (interestAmount as num).toDouble();
@@ -467,7 +494,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     
     return transactions.where((transaction) {
       final loanId = transaction['loan']?['id']?.toString();
-      if (ahorrosLoanIds.contains(loanId)) return false;
+      if (!fijoRotativoLoanIds.contains(loanId)) return false;
       
       final transactionDate = DateTime.parse(transaction['date']);
       return transactionDate.isAfter(startOfDay.subtract(const Duration(milliseconds: 1))) &&
@@ -481,10 +508,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   double _calculateAhorrosByDate() {
     final ahorrosLoans = loans.where((loan) => loan.loanType == 'Ahorro');
     
+    // Si no hay filtro de fechas, mostrar todos los préstamos de Ahorro
     if (startDate == null || endDate == null) {
       return ahorrosLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
     }
     
+    // Si hay filtro de fechas, aplicarlo
     return ahorrosLoans.where((loan) {
       return loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
              loan.startDate.isBefore(endDate!.add(const Duration(days: 1)));
@@ -492,18 +521,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
   
   double _calculateSalidasByDate() {
+    // Solo incluir préstamos tipo 'Fijo' y 'Rotativo' (excluir 'Ahorro')
+    final fijoRotativoLoans = loans.where((loan) => loan.loanType == 'Fijo' || loan.loanType == 'Rotativo');
+    
     if (startDate == null || endDate == null) {
-      return _calculateSalidas();
+      return fijoRotativoLoans.fold<double>(0, (sum, loan) => sum + loan.amount);
     }
     
-    return loans.where((loan) {
+    return fijoRotativoLoans.where((loan) {
       return loan.startDate.isAfter(startDate!.subtract(const Duration(days: 1))) &&
              loan.startDate.isBefore(endDate!.add(const Duration(days: 1)));
     }).fold<double>(0, (sum, loan) => sum + loan.amount);
-  }
-  
-  double _calculateSalidas() {
-    return loans.fold<double>(0, (sum, loan) => sum + loan.amount);
   }
   
   double _calculateGastosByDate() {
@@ -531,6 +559,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       return sum + (amount as num).toDouble();
     });
   }
+
 
   Widget _buildChart() {
     final data = _getChartData();

@@ -91,7 +91,7 @@ class StatsOverview extends StatelessWidget {
                     value: currencyFormat.format(totalRemainingAhorros),
                     icon: Icons.savings_outlined,
                     color: const Color(0xFF2196F3),
-                    onTap: () => onLoanTypeClick?.call('Ahorros'),
+                    onTap: () => onLoanTypeClick?.call('Ahorro'),
                   ),
                 ),
               ],

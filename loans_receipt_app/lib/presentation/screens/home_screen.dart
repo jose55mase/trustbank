@@ -58,8 +58,18 @@ class _HomeScreenState extends State<HomeScreen> {
             .where((loan) => loan.loanType == 'Rotativo')
             .fold<double>(0, (sum, loan) => sum + loan.remainingAmount);
         totalRemainingAhorros = activeLoans
-            .where((loan) => loan.loanType == 'Ahorros')
+            .where((loan) => loan.loanType == 'Ahorro')
             .fold<double>(0, (sum, loan) => sum + loan.remainingAmount);
+        
+        // Debug: Imprimir tipos de préstamos
+        debugPrint('=== DEBUG TIPOS DE PRÉSTAMOS ===');
+        for (var loan in activeLoans) {
+          debugPrint('Préstamo #${loan.id}: tipo="${loan.loanType}", saldo=${loan.remainingAmount}');
+        }
+        debugPrint('Total Fijo: $totalRemainingFijo');
+        debugPrint('Total Rotativo: $totalRemainingRotativo');
+        debugPrint('Total Ahorros: $totalRemainingAhorros');
+        debugPrint('================================');
         
         isLoading = false;
       });
@@ -322,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return const Color(0xFF4CAF50);
       case 'Rotativo':
         return const Color(0xFFFF9800);
-      case 'Ahorros':
+      case 'Ahorro':
         return const Color(0xFF2196F3);
       default:
         return AppColors.primary;
@@ -335,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return Icons.lock_outline;
       case 'Rotativo':
         return Icons.autorenew;
-      case 'Ahorros':
+      case 'Ahorro':
         return Icons.savings_outlined;
       default:
         return Icons.account_balance_wallet;
