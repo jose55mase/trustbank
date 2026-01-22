@@ -19,6 +19,7 @@ class NewLoanScreen extends StatefulWidget {
 
 class _NewLoanScreenState extends State<NewLoanScreen> {
   String? selectedUserId;
+  User? selectedUser;
   String? paymentFrequency = 'Mensual 30';
   String? loanType;
   DateTime? selectedDate;
@@ -28,6 +29,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   final phoneController = TextEditingController();
   final valorRealCuotaController = TextEditingController();
   final capitalController = TextEditingController();
+  final userSearchController = TextEditingController();
   bool capitalFijo = false;
   final numberFormat = NumberFormat('#,###', 'es_CO');
   List<User> users = [];
@@ -602,6 +604,7 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
     phoneController.dispose();
     valorRealCuotaController.dispose();
     capitalController.dispose();
+    userSearchController.dispose();
     super.dispose();
   }
 
@@ -621,19 +624,74 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
         children: [
           const Text('Crear Nuevo Préstamo', style: AppTextStyles.h2),
           const SizedBox(height: 24),
-          DropdownButtonFormField<String>(
-            value: selectedUserId,
-            decoration: const InputDecoration(
-              labelText: 'Seleccionar Usuario *',
-              border: OutlineInputBorder(),
-            ),
-            items: isLoading ? [] : users.map((user) {
-              return DropdownMenuItem(
-                value: user.id,
-                child: Text('${user.userCode} - ${user.name}'),
+          Autocomplete<User>(
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return users;
+              }
+              return users.where((User user) {
+                final searchLower = textEditingValue.text.toLowerCase();
+                return user.name.toLowerCase().contains(searchLower) ||
+                       user.userCode.toLowerCase().contains(searchLower);
+              });
+            },
+            displayStringForOption: (User user) => '${user.userCode} - ${user.name}',
+            onSelected: (User user) {
+              setState(() {
+                selectedUser = user;
+                selectedUserId = user.id;
+              });
+            },
+            fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+              userSearchController.text = controller.text;
+              return TextField(
+                controller: controller,
+                focusNode: focusNode,
+                decoration: InputDecoration(
+                  labelText: 'Buscar Usuario *',
+                  hintText: 'Buscar por código o nombre',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: controller.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            controller.clear();
+                            setState(() {
+                              selectedUser = null;
+                              selectedUserId = null;
+                            });
+                          },
+                        )
+                      : null,
+                ),
+                onEditingComplete: onEditingComplete,
               );
-            }).toList(),
-            onChanged: isLoading ? null : (value) => setState(() => selectedUserId = value),
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (context, index) {
+                        final user = options.elementAt(index);
+                        return ListTile(
+                          title: Text(user.name),
+                          subtitle: Text('Código: ${user.userCode}'),
+                          onTap: () => onSelected(user),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
           if (isLoading)
             const Padding(
