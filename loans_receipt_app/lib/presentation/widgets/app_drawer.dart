@@ -10,7 +10,6 @@ import '../screens/transactions_screen.dart';
 import '../screens/unregistered_payments_screen.dart';
 import '../screens/user_permissions_screen.dart';
 import '../screens/login_screen.dart';
-import '../screens/beneficiary_selection_screen.dart';
 import '../../services/auth_service.dart';
 
 class AppDrawer extends StatefulWidget {
@@ -200,19 +199,6 @@ class _AppDrawerState extends State<AppDrawer> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const NewLoanScreen()),
-              );
-            },
-          ),
-          _buildMenuItem(
-            icon: Icons.family_restroom,
-            title: 'Beneficiarios',
-            iconColor: AppColors.accent,
-            permission: 'loans',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BeneficiarySelectionScreen()),
               );
             },
           ),

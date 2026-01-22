@@ -381,9 +381,9 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
   String _getLoanTypeRule(String loanType) {
     switch (loanType) {
       case 'Fijo':
-        return 'Préstamo Fijo: Forma de pago fija en Mensual 30 (pago el día 1 de cada mes)';
+        return 'Préstamo Fijo: Puedes elegir Mensual 30 (pago el día 1) o Mensual 15 (pago el día 15)';
       case 'Ahorro':
-        return 'Préstamo Ahorro: Forma de pago fija en Mensual 15 (pago el día 15 de cada mes)';
+        return 'Préstamo Ahorro: Puedes elegir Mensual 30 (pago el día 1) o Mensual 15 (pago el día 15)';
       case 'Rotativo':
         return 'Préstamo Rotativo: Puedes elegir cualquier forma de pago disponible';
       default:
@@ -796,9 +796,15 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
                 loanType = value;
                 // Aplicar reglas específicas para cada tipo de préstamo
                 if (value == 'Fijo') {
-                  paymentFrequency = 'Mensual 30';
+                  // Para Fijo: permitir Mensual 30 o Mensual 15
+                  if (paymentFrequency != 'Mensual 30' && paymentFrequency != 'Mensual 15') {
+                    paymentFrequency = 'Mensual 30';
+                  }
                 } else if (value == 'Ahorro') {
-                  paymentFrequency = 'Mensual 15';
+                  // Para Ahorro: permitir Mensual 30 o Mensual 15
+                  if (paymentFrequency != 'Mensual 30' && paymentFrequency != 'Mensual 15') {
+                    paymentFrequency = 'Mensual 15';
+                  }
                 }
                 // Rotativo mantiene la selección libre
                 _calculateValorRealCuota();
@@ -833,22 +839,32 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
             decoration: InputDecoration(
               labelText: 'Forma de Pago *',
               border: const OutlineInputBorder(),
-              enabled: loanType == null || loanType == 'Rotativo',
+              enabled: loanType == null || loanType == 'Rotativo' || loanType == 'Fijo' || loanType == 'Ahorro',
             ),
-            items: const [
-              DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
-              DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
-              DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal (15-30)')),
-              DropdownMenuItem(value: 'Quincenal 30-15', child: Text('Quincenal (30-15)')),
-              DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
-              DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
-              DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
+            items: [
+              const DropdownMenuItem(value: 'Mensual 15', child: Text('Mensual 15')),
+              const DropdownMenuItem(value: 'Mensual 30', child: Text('Mensual 30')),
+              if (loanType != 'Fijo' && loanType != 'Ahorro') const DropdownMenuItem(value: 'Quincenal', child: Text('Quincenal (15-30)')),
+              if (loanType != 'Fijo' && loanType != 'Ahorro') const DropdownMenuItem(value: 'Quincenal 30-15', child: Text('Quincenal (30-15)')),
+              if (loanType != 'Fijo' && loanType != 'Ahorro') const DropdownMenuItem(value: 'Quincenal 5', child: Text('Quincenal 5')),
+              if (loanType != 'Fijo' && loanType != 'Ahorro') const DropdownMenuItem(value: 'Quincenal 20', child: Text('Quincenal 20')),
+              if (loanType != 'Fijo' && loanType != 'Ahorro') const DropdownMenuItem(value: 'Semanal', child: Text('Semanal')),
             ],
-            onChanged: (loanType == null || loanType == 'Rotativo') ? (value) {
-              setState(() {
-                paymentFrequency = value;
-              });
-            } : null,
+            onChanged: (loanType == null || loanType == 'Rotativo') 
+                ? (value) {
+                    setState(() {
+                      paymentFrequency = value;
+                    });
+                  }
+                : (loanType == 'Fijo' || loanType == 'Ahorro')
+                    ? (value) {
+                        if (value == 'Mensual 30' || value == 'Mensual 15') {
+                          setState(() {
+                            paymentFrequency = value;
+                          });
+                        }
+                      }
+                    : null,
           ),
           const SizedBox(height: 16),
           TextField(
