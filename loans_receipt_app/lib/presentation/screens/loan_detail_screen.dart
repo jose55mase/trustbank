@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
@@ -242,11 +243,17 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     final notesController = TextEditingController();
     bool useCustomAmount = false;
     String selectedPaymentMethod = 'Efectivo';
+    bool showSidePanel = false;
+    final sidePanelInterestController = TextEditingController();
+    final sidePanelCapitalController = TextEditingController();
+    String sidePanelPaymentMethod = 'CASH';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => Stack(
+          children: [
+            AlertDialog(
           title: const Text('Registrar Pago'),
           content: SingleChildScrollView(
             child: Column(
@@ -362,6 +369,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar'),
             ),
+            TextButton(
+              onPressed: () {
+                setState(() => showSidePanel = true);
+              },
+              child: const Text('Panel Detallado'),
+            ),
             ElevatedButton(
               onPressed: () {
                 // Si el checkbox está marcado, usar el valor del input; si no, usar el valor de la cuota
@@ -465,7 +478,260 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
             ),
           ],
         ),
+      if (showSidePanel)
+              Positioned.fill(
+                child: ClipRect(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => showSidePanel = false),
+                          child: Container(color: Colors.black26),
+                        ),
+                      ),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 1.0, end: 0.0),
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        builder: (context, value, child) {
+                          return Transform.translate(
+                            offset: Offset(250 * value, 0),
+                            child: child,
+                          );
+                        },
+                        child: Material(
+                          child: Container(
+                            width: 250,
+                            color: Colors.white,
+                            child: Column(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  color: AppColors.primary,
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.close, color: Colors.white),
+                                        onPressed: () => setState(() => showSidePanel = false),
+                                      ),
+                                      const Expanded(
+                                        child: Text(
+                                          'Pago Detallado',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Préstamo #${loan.id}',
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          widget.user.name,
+                                          style: const TextStyle(fontSize: 14, color: Colors.grey),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        TextField(
+                                          controller: sidePanelInterestController,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.digitsOnly,
+                                            TextInputFormatter.withFunction((oldValue, newValue) {
+                                              if (newValue.text.isEmpty) return newValue;
+                                              final number = double.tryParse(newValue.text) ?? 0;
+                                              final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
+                                              return TextEditingValue(
+                                                text: formatted,
+                                                selection: TextSelection.collapsed(offset: formatted.length),
+                                              );
+                                            }),
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Intereses',
+                                            prefixText: '\$ ',
+                                            hintText: '0',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        TextField(
+                                          controller: sidePanelCapitalController,
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: [
+                                            FilteringTextInputFormatter.digitsOnly,
+                                            TextInputFormatter.withFunction((oldValue, newValue) {
+                                              if (newValue.text.isEmpty) return newValue;
+                                              final number = double.tryParse(newValue.text) ?? 0;
+                                              final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
+                                              return TextEditingValue(
+                                                text: formatted,
+                                                selection: TextSelection.collapsed(offset: formatted.length),
+                                              );
+                                            }),
+                                          ],
+                                          decoration: InputDecoration(
+                                            labelText: 'Capital',
+                                            prefixText: '\$ ',
+                                            hintText: '0',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        DropdownButtonFormField<String>(
+                                          value: sidePanelPaymentMethod,
+                                          decoration: InputDecoration(
+                                            labelText: 'Método de Pago',
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                          ),
+                                          items: const [
+                                            DropdownMenuItem(value: 'CASH', child: Text('Efectivo')),
+                                            DropdownMenuItem(value: 'TRANSFER', child: Text('Transferencia')),
+                                            DropdownMenuItem(value: 'MIXED', child: Text('Mixto')),
+                                          ],
+                                          onChanged: (value) => setState(() => sidePanelPaymentMethod = value!),
+                                        ),
+                                        const SizedBox(height: 24),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: 48,
+                                          child: ElevatedButton.icon(
+                                            onPressed: () async {
+                                              final cleanInterest = sidePanelInterestController.text.replaceAll(',', '').replaceAll('.', '');
+                                              final cleanCapital = sidePanelCapitalController.text.replaceAll(',', '').replaceAll('.', '');
+                                              
+                                              final interestAmount = double.tryParse(cleanInterest) ?? 0;
+                                              final capitalAmount = double.tryParse(cleanCapital) ?? 0;
+                                              final totalAmount = interestAmount + capitalAmount;
+                                              
+                                              if (totalAmount <= 0) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Debe ingresar al menos un monto'),
+                                                    backgroundColor: AppColors.error,
+                                                  ),
+                                                );
+                                                return;
+                                              }
+                                              
+                                              // Mostrar diálogo de confirmación
+                                              showDialog(
+                                                context: context,
+                                                builder: (confirmContext) => AlertDialog(
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                                  title: Row(
+                                                    children: [
+                                                      Icon(Icons.check_circle_outline, color: AppColors.primary, size: 28),
+                                                      const SizedBox(width: 12),
+                                                      const Text('Confirmar Pago', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                                    ],
+                                                  ),
+                                                  content: Column(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text('Cuota #${loan.paidInstallments + 1}', style: AppTextStyles.h3),
+                                                      const Divider(height: 24),
+                                                      InfoRow(label: 'Capital', value: currencyFormat.format(capitalAmount)),
+                                                      InfoRow(label: 'Intereses', value: currencyFormat.format(interestAmount)),
+                                                      InfoRow(label: 'Total', value: currencyFormat.format(totalAmount)),
+                                                      InfoRow(label: 'Método', value: sidePanelPaymentMethod == 'CASH' ? 'Efectivo' : sidePanelPaymentMethod == 'TRANSFER' ? 'Transferencia' : 'Mixto'),
+                                                      const Divider(height: 24),
+                                                      const Text('¿Confirmar este pago?', style: TextStyle(fontWeight: FontWeight.bold)),
+                                                    ],
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(confirmContext),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () async {
+                                                        Navigator.pop(confirmContext);
+                                                        
+                                                        try {
+                                                          await ApiService.createTransaction(
+                                                            loanId: loan.id,
+                                                            amount: totalAmount,
+                                                            paymentMethod: sidePanelPaymentMethod,
+                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}',
+                                                            interestAmount: interestAmount,
+                                                            principalAmount: capitalAmount,
+                                                            loanType: loan.loanType,
+                                                            paymentFrequency: loan.paymentFrequency,
+                                                          );
+                                                          
+                                                          // No actualizar cuotas pagadas para pagos del panel detallado
+                                                          
+                                                          if (loan.status == LoanStatus.overdue) {
+                                                            await ApiService.updateLoanStatus(
+                                                              loanId: loan.id,
+                                                              status: 'ACTIVE',
+                                                            );
+                                                          }
+                                                          
+                                                          Navigator.pop(context);
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            const SnackBar(
+                                                              content: Text('Pago registrado exitosamente'),
+                                                              backgroundColor: AppColors.success,
+                                                            ),
+                                                          );
+                                                          await _refreshLoanData();
+                                                        } catch (e) {
+                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                            SnackBar(
+                                                              content: Text('Error: $e'),
+                                                              backgroundColor: AppColors.error,
+                                                            ),
+                                                          );
+                                                        }
+                                                      },
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: AppColors.primary,
+                                                        foregroundColor: Colors.white,
+                                                      ),
+                                                      child: const Text('Confirmar'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                            },
+                                            icon: const Icon(Icons.check_circle),
+                                            label: const Text('Realizar Pago', style: TextStyle(fontSize: 16)),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.success,
+                                              foregroundColor: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+          ],
+        ),
       ),
+              )
+    ]
+    )
+      )
     );
   }
 
@@ -1161,4 +1427,5 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     // Fallback: si no hay nextPaymentDate, no mostrar fecha
     return null;
   }
+
 }
