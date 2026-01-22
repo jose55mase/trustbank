@@ -44,7 +44,7 @@ public class TransactionService {
         transactionRepository.deleteById(id);
     }
     
-    public Transaction saveWithLoan(Transaction transaction) {
+    public Transaction saveWithLoan(Transaction transaction, boolean shouldUpdateInstallments) {
         // Asegurar que el préstamo existe y está correctamente asociado
         
         if (transaction.getLoan() != null && transaction.getLoan().getId() != null) {
@@ -62,8 +62,13 @@ public class TransactionService {
                 // Guardar la transacción
                 Transaction savedTransaction = transactionRepository.save(transaction);
                 
-                // Actualizar cuotas pagadas y estado del préstamo
-                updateLoanProgress(loan);
+                // Actualizar cuotas pagadas y estado del préstamo solo si se indica
+                if (shouldUpdateInstallments) {
+                    updateLoanProgress(loan);
+                } else {
+                    // Aunque no se actualicen cuotas, sí actualizar la próxima fecha de pago
+                    updateNextPaymentDate(loan);
+                }
                 
                 return savedTransaction;
             } else {
@@ -72,6 +77,31 @@ public class TransactionService {
         } else {
             throw new RuntimeException("ID del préstamo es requerido");
         }
+    }
+    
+    public Transaction saveWithLoan(Transaction transaction) {
+        return saveWithLoan(transaction, true);
+    }
+    
+    private void updateNextPaymentDate(Loan loan) {
+        Optional<Loan> loanOpt = loanRepository.findById(loan.getId());
+        if (!loanOpt.isPresent()) return;
+        
+        Loan currentLoan = loanOpt.get();
+        
+        System.out.println("=== ACTUALIZACIÓN SOLO FECHA DE PAGO ===");
+        System.out.println("Préstamo ID: " + currentLoan.getId());
+        System.out.println("Frecuencia: " + currentLoan.getPaymentFrequency());
+        System.out.println("Fecha actual nextPaymentDate: " + currentLoan.getNextPaymentDate());
+        
+        if (currentLoan.getNextPaymentDate() != null && currentLoan.getPaymentFrequency() != null) {
+            java.time.LocalDateTime newNextPaymentDate = calculateNextPaymentDate(currentLoan.getNextPaymentDate(), currentLoan.getPaymentFrequency());
+            System.out.println("Nueva nextPaymentDate calculada: " + newNextPaymentDate);
+            currentLoan.setNextPaymentDate(newNextPaymentDate);
+            loanRepository.save(currentLoan);
+        }
+        
+        System.out.println("=== FIN ACTUALIZACIÓN ===");
     }
     
     private void updateLoanProgress(Loan loan) {

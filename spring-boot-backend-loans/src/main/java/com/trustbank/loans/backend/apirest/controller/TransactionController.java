@@ -118,7 +118,11 @@ public class TransactionController {
             logger.info("Asignando préstamo ID: {} a la transacción", request.getLoan().getId());
         }
         
-        Transaction savedTransaction = transactionService.saveWithLoan(transaction);
+        // Verificar si debe actualizar cuotas (por defecto false si las notas contienen "Capital:")
+        boolean shouldUpdateInstallments = request.getNotes() == null || !request.getNotes().startsWith("Capital:");
+        logger.info("¿Actualizar cuotas pagadas?: {}", shouldUpdateInstallments);
+        
+        Transaction savedTransaction = transactionService.saveWithLoan(transaction, shouldUpdateInstallments);
         logger.info("Transacción guardada con ID: {}, Amount: {}, Principal: {}, Fecha: {}", 
             savedTransaction.getId(), savedTransaction.getAmount(), savedTransaction.getPrincipalAmount(), savedTransaction.getDate());
         
