@@ -123,11 +123,8 @@ class Loan {
     }
   }
   
-  // Método para calcular el interés de la próxima cuota (específico para rotativos)
+  // Método para calcular el interés de la próxima cuota (para todos los tipos de préstamo)
   double get nextInstallmentInterest {
-    if (loanType == 'Rotativo') {
-      return remainingAmount * interestRate / 100;
-    }
-    return 0.0;
+    return remainingAmount * interestRate / 100;
   }
 }
