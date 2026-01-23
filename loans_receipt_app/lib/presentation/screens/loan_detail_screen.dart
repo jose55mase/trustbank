@@ -124,13 +124,13 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     value: currencyFormat.format(currentLoan.remainingAmount),
                     valueColor: AppColors.warning,
                   ),
-                  if (currentLoan.loanType == 'Rotativo') ...[
+                  if (currentLoan.loanType == 'Rotativo' || currentLoan.loanType == 'Ahorro' || currentLoan.loanType == 'Fijo') ...[
                     const Divider(height: 24),
-                    const Text('Información Rotativo', style: AppTextStyles.h3),
+                    Text('Información ${currentLoan.loanType}', style: AppTextStyles.h3),
                     const SizedBox(height: 8),
                     InfoRow(
                       label: 'Interés sobre Restante',
-                      value: currencyFormat.format(currentLoan.nextInstallmentInterest),
+                      value: currencyFormat.format(currentLoan.remainingAmount * currentLoan.interestRate / 100),
                       valueColor: AppColors.secondary,
                     ),
                     InfoRow(
@@ -228,11 +228,13 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
       text: cuotaValue.toStringAsFixed(0),
     );
     // Calcular el interés según el tipo de préstamo
-    final defaultInterest = loan.loanType == 'Fijo' 
-        ? (loan.amount * loan.interestRate / 100)  // Para fijos: monto * tasa
+    final defaultInterest = currentLoan.loanType == 'Fijo' 
+        ? (loan.remainingAmount * loan.interestRate / 100)  // Para fijos: monto restante * tasa
         : loan.loanType == 'Rotativo'
             ? (loan.remainingAmount * loan.interestRate / 100)  // Para rotativos: monto restante * tasa
-            : (cuotaValue * loan.interestRate / 100);  // Para otros: cuota * tasa
+            : loan.loanType == 'Ahorro'
+                ? (loan.remainingAmount * loan.interestRate / 100)  // Para ahorro: monto restante * tasa
+                : (cuotaValue * loan.interestRate / 100);  // Para otros: cuota * tasa
     
     final interestController = TextEditingController(
       text: NumberFormat('#,###', 'es_CO').format(defaultInterest),
@@ -884,8 +886,10 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     try {
       // Calcular interés según el tipo de préstamo
       final interestPortion = loan.loanType == 'Fijo'
-          ? (loan.amount * loan.interestRate / 100).clamp(0.0, amount)  // Para fijos: monto * tasa
-          : (amount * loan.interestRate / 100).clamp(0.0, amount);      // Para otros: pago * tasa
+          ? (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, amount)  // Para fijos: monto restante * tasa
+          : loan.loanType == 'Ahorro'
+              ? (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, amount)  // Para ahorro: monto restante * tasa
+              : (amount * loan.interestRate / 100).clamp(0.0, amount);      // Para otros: pago * tasa
       
       // El principalAmount debe ser el monto completo del pago
       // Los intereses se registran por separado y no se restan del capital
@@ -1027,8 +1031,10 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
       if (loan.remainingAmount > 0) {
         // Calcular interés según el tipo de préstamo
         final interestPortion = loan.loanType == 'Fijo'
-            ? (loan.amount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount)  // Para fijos: monto * tasa
-            : (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount);  // Para otros: saldo * tasa
+            ? (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount)  // Para fijos: monto restante * tasa
+            : loan.loanType == 'Ahorro'
+                ? (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount)  // Para ahorro: monto restante * tasa
+                : (loan.remainingAmount * loan.interestRate / 100).clamp(0.0, loan.remainingAmount);  // Para otros: saldo * tasa
         
         // El principalAmount debe ser el monto completo del pago
         final principalPortion = loan.remainingAmount;
