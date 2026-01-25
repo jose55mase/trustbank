@@ -62,13 +62,18 @@ public class TransactionService {
                 // Guardar la transacción
                 Transaction savedTransaction = transactionRepository.save(transaction);
                 
+                // Verificar si es un pago parcial (no actualizar fecha si contiene "- Pago parcial")
+                boolean isPagoMenorACuota = transaction.getNotes() != null && 
+                    transaction.getNotes().contains("- Pago parcial");
+                
                 // Actualizar cuotas pagadas y estado del préstamo solo si se indica
-                if (shouldUpdateInstallments) {
+                if (shouldUpdateInstallments && !isPagoMenorACuota) {
                     updateLoanProgress(loan);
-                } else {
+                } else if (!isPagoMenorACuota) {
                     // Aunque no se actualicen cuotas, sí actualizar la próxima fecha de pago
                     updateNextPaymentDate(loan);
                 }
+                // Si es pago parcial, no actualizar ni cuotas ni fecha
                 
                 return savedTransaction;
             } else {

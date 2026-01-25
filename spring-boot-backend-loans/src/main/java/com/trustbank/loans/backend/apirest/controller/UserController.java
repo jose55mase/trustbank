@@ -55,11 +55,20 @@ public class UserController {
     }
     
     @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UserRequest userRequest) {
         return userService.findById(id)
                 .map(existingUser -> {
+                    User user = new User();
                     user.setId(id);
-                    return ResponseEntity.ok(userService.save(user));
+                    user.setName(userRequest.getName());
+                    user.setUserCode(userRequest.getUserCode());
+                    user.setPhone(userRequest.getPhone());
+                    user.setDireccion(userRequest.getDireccion());
+                    user.setReferenceName(userRequest.getReferenceName());
+                    user.setReferencePhone(userRequest.getReferencePhone());
+                    user.setRegistrationDate(existingUser.getRegistrationDate()); // Mantener fecha original
+                    
+                    return ResponseEntity.ok(userService.updateUser(user, userRequest.getOriginalUserCode()));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

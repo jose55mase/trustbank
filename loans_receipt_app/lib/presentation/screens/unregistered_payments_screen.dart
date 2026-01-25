@@ -358,6 +358,16 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                               color: AppColors.success,
                               tooltip: 'Marcar como registrado',
                             ),
+                            IconButton(
+                              onPressed: () => _showDeleteConfirmation(
+                                payment['id'].toString(),
+                                userName,
+                                amount,
+                              ),
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              color: AppColors.error,
+                              tooltip: 'Eliminar pago',
+                            ),
                             const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                           ],
                         ),
@@ -467,6 +477,16 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                           children: [
                             const Icon(Icons.check_circle, color: AppColors.success, size: 20),
                             const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () => _showDeleteConfirmation(
+                                payment['id'].toString(),
+                                userName,
+                                amount,
+                              ),
+                              icon: const Icon(Icons.delete_outline, size: 20),
+                              color: AppColors.error,
+                              tooltip: 'Eliminar pago',
+                            ),
                             const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
                           ],
                         ),
@@ -552,6 +572,108 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
               _markAsRegistered(paymentId);
             },
             child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deletePayment(String paymentId) async {
+    try {
+      await ApiService.deletePayment(paymentId);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pago eliminado correctamente'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      
+      await _loadAllPayments();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al eliminar: $e'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  void _showDeleteConfirmation(String paymentId, String userName, double amount) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error, size: 28),
+            const SizedBox(width: 12),
+            const Text('Confirmar Eliminación'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '¿Estás seguro de que deseas eliminar este pago?',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ID: $paymentId', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Usuario: $userName'),
+                  Text('Monto: \$${NumberFormat('#,##0', 'es_CO').format(amount)}'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info, color: AppColors.error, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Esta acción no se puede deshacer',
+                      style: TextStyle(fontSize: 12, color: AppColors.error),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deletePayment(paymentId);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Eliminar'),
           ),
         ],
       ),

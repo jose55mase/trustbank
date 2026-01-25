@@ -119,6 +119,67 @@ class ApiService {
     }
   }
   
+  static Future<User> updateUser({
+    required String userId,
+    required String userCode,
+    required String name,
+    required String phone,
+    required String direccion,
+    String? referenceName,
+    String? referencePhone,
+    String? originalUserCode,
+  }) async {
+    final url = Uri.parse('$baseUrl/users/$userId');
+    
+    final requestBody = {
+      'userCode': userCode,
+      'name': name,
+      'phone': phone,
+      'direccion': direccion,
+    };
+    
+    if (referenceName != null && referenceName.isNotEmpty) {
+      requestBody['referenceName'] = referenceName;
+    }
+    
+    if (referencePhone != null && referencePhone.isNotEmpty) {
+      requestBody['referencePhone'] = referencePhone;
+    }
+    
+    if (originalUserCode != null) {
+      requestBody['originalUserCode'] = originalUserCode;
+    }
+    
+    print('=== DEBUG API SERVICE ===');
+    print('URL: $url');
+    print('Request Body: ${jsonEncode(requestBody)}');
+    print('========================');
+    
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestBody),
+    );
+    
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return User.fromJson(data);
+    } else {
+      try {
+        final errorData = jsonDecode(response.body);
+        final errorMessage = errorData['message'] ?? 'Error al actualizar usuario';
+        throw Exception(errorMessage);
+      } catch (e) {
+        if (e.toString().startsWith('Exception: ')) {
+          rethrow;
+        }
+        throw Exception('Error al actualizar usuario: ${response.statusCode}');
+      }
+    }
+  }
+  
   static Future<List<dynamic>> getLoansByUserId(String userId) async {
     final url = Uri.parse('$baseUrl/loans/user/$userId');
     
@@ -462,6 +523,28 @@ class ApiService {
     }
   }
   
+  static Future<Map<String, dynamic>?> getLastCapitalPayment(String loanId) async {
+    final url = Uri.parse('$baseUrl/transactions/loan/$loanId');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final List<dynamic> transactions = jsonDecode(response.body);
+      
+      // Filtrar transacciones que tengan principalAmount > 0 y ordenar por fecha descendente
+      final capitalTransactions = transactions
+          .where((t) => t['principalAmount'] != null && (t['principalAmount'] as num) > 0)
+          .toList();
+      
+      if (capitalTransactions.isNotEmpty) {
+        // Ordenar por fecha descendente y tomar la más reciente
+        capitalTransactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+        return capitalTransactions.first;
+      }
+    }
+    
+    return null;
+  }
   static Future<List<dynamic>> getTransactionsByLoanId(String loanId) async {
     final url = Uri.parse('$baseUrl/transactions/loan/$loanId');
     
@@ -489,6 +572,16 @@ class ApiService {
     } else {
       print('Error: ${response.statusCode} - ${response.body}');
       throw Exception('Error al obtener transacciones del préstamo: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> deleteTransaction(String transactionId) async {
+    final url = Uri.parse('$baseUrl/transactions/$transactionId');
+    
+    final response = await http.delete(url);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar transacción: ${response.statusCode}');
     }
   }
   
@@ -846,6 +939,7 @@ class ApiService {
     required double interestPayment,
     double? valorRealCuota,
     bool salida = false,
+    bool pagoMenorACuota = false,
   }) async {
     final url = Uri.parse('$baseUrl/payments');
     
@@ -857,6 +951,7 @@ class ApiService {
       'debtPayment': debtPayment,
       'interestPayment': interestPayment,
       'salida': salida,
+      'pagoMenorACuota': pagoMenorACuota,
     };
     
     if (valorRealCuota != null) {
@@ -891,6 +986,16 @@ class ApiService {
       return jsonDecode(response.body);
     } else {
       throw Exception('Error al obtener pagos del usuario: ${response.statusCode}');
+    }
+  }
+  
+  static Future<void> deletePayment(String paymentId) async {
+    final url = Uri.parse('$baseUrl/payments/$paymentId');
+    
+    final response = await http.delete(url);
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al eliminar pago: ${response.statusCode}');
     }
   }
   

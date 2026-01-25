@@ -25,11 +25,44 @@ class LoanDetailScreen extends StatefulWidget {
 
 class _LoanDetailScreenState extends State<LoanDetailScreen> {
   late Loan currentLoan;
+  Map<String, dynamic>? lastCapitalPayment;
 
   @override
   void initState() {
     super.initState();
     currentLoan = widget.loan;
+    _loadLastCapitalPayment();
+  }
+  
+  Future<void> _loadLastCapitalPayment() async {
+    try {
+      final payment = await ApiService.getLastCapitalPayment(currentLoan.id);
+      setState(() {
+        lastCapitalPayment = payment;
+      });
+    } catch (e) {
+      print('Error loading last capital payment: $e');
+    }
+  }
+  
+  Future<Map<String, dynamic>?> _loadPreviousPayment(String loanId) async {
+    try {
+      final transactions = await ApiService.getTransactionsByLoanId(loanId);
+      if (transactions.isNotEmpty) {
+        // Filtrar transacciones con principalAmount > 0 y ordenar por fecha descendente
+        final capitalTransactions = transactions
+            .where((t) => t['principalAmount'] != null && (t['principalAmount'] as num) > 0)
+            .toList();
+        
+        if (capitalTransactions.isNotEmpty) {
+          capitalTransactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+          return capitalTransactions.first;
+        }
+      }
+    } catch (e) {
+      print('Error loading previous payment: $e');
+    }
+    return null;
   }
 
   @override
@@ -152,6 +185,29 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                   ),
 
                   const Divider(height: 24),
+                  if (lastCapitalPayment != null) ...[
+                    const Text('Último Pago a Capital', style: AppTextStyles.h3),
+                    const SizedBox(height: 8),
+                    InfoRow(
+                      label: 'Monto',
+                      value: currencyFormat.format((lastCapitalPayment!['principalAmount'] as num).toDouble()),
+                      valueColor: AppColors.success,
+                    ),
+                    InfoRow(
+                      label: 'Fecha',
+                      value: DateFormat('dd/MM/yyyy HH:mm').format(DateTime.parse(lastCapitalPayment!['date'])),
+                    ),
+                    InfoRow(
+                      label: 'Método',
+                      value: _getPaymentMethodText(lastCapitalPayment!['paymentMethod']),
+                    ),
+                    if (lastCapitalPayment!['notes'] != null && lastCapitalPayment!['notes'].toString().isNotEmpty)
+                      InfoRow(
+                        label: 'Notas',
+                        value: lastCapitalPayment!['notes'],
+                      ),
+                    const Divider(height: 24),
+                  ],
                   InfoRow(label: 'Fecha de Inicio', value: DateFormat('dd/MM/yyyy').format(currentLoan.startDate)),
                   if (_calculateNextPaymentDate(currentLoan) != null)
                     InfoRow(
@@ -249,6 +305,17 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     final sidePanelInterestController = TextEditingController();
     final sidePanelCapitalController = TextEditingController();
     String sidePanelPaymentMethod = 'CASH';
+    Map<String, dynamic>? previousPayment;
+    bool pagoMenorACuota = false;
+    
+    // Cargar información del pago anterior
+    _loadPreviousPayment(loan.id).then((payment) {
+      if (mounted) {
+        setState(() {
+          previousPayment = payment;
+        });
+      }
+    });
 
     showDialog(
       context: context,
@@ -375,6 +442,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
               onPressed: () {
                 setState(() => showSidePanel = true);
               },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.orange.withOpacity(0.1),
+                foregroundColor: Colors.orange,
+                side: BorderSide(color: Colors.orange.withOpacity(0.5)),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
               child: const Text('Panel Detallado'),
             ),
             ElevatedButton(
@@ -543,6 +616,82 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                           widget.user.name,
                                           style: const TextStyle(fontSize: 14, color: Colors.grey),
                                         ),
+                                        const SizedBox(height: 16),
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Información de Cuotas',
+                                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  const Text('Pago Anterior: ', style: TextStyle(fontSize: 12)),
+                                                  Text(
+                                                    loan.pagoAnterior ? 'Pagado' : 'Pendiente',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: loan.pagoAnterior ? Colors.green : Colors.red,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Text('Valor por Cuota: ', style: TextStyle(fontSize: 12)),
+                                                  Text(
+                                                    NumberFormat('\$ #,##0', 'es_CO').format(loan.installmentAmount),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.purple,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Text('Valor Real Cuota: ', style: TextStyle(fontSize: 12)),
+                                                  Text(
+                                                    NumberFormat('\$ #,##0', 'es_CO').format(loan.valorRealCuota ?? loan.installmentAmount),
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.blue,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              if (previousPayment != null) ...[
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Text('Monto Cuota Anterior: ', style: TextStyle(fontSize: 12)),
+                                                    Text(
+                                                      NumberFormat('\$ #,##0', 'es_CO').format((previousPayment!['principalAmount'] as num? ?? 0).toDouble()),
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.green,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ),
                                         const SizedBox(height: 24),
                                         TextField(
                                           controller: sidePanelInterestController,
@@ -603,6 +752,14 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                           ],
                                           onChanged: (value) => setState(() => sidePanelPaymentMethod = value!),
                                         ),
+                                        const SizedBox(height: 16),
+                                        CheckboxListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          title: const Text('Pago Menor a Cuota'),
+                                          subtitle: const Text('No avanzar fecha si el capital es menor al valor por cuota'),
+                                          value: pagoMenorACuota,
+                                          onChanged: (value) => setState(() => pagoMenorACuota = value ?? false),
+                                        ),
                                         const SizedBox(height: 24),
                                         SizedBox(
                                           width: double.infinity,
@@ -662,18 +819,27 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                         Navigator.pop(confirmContext);
                                                         
                                                         try {
+                                                          // Aplicar lógica de pago menor a cuota
+                                                          final shouldSkipInstallmentUpdate = pagoMenorACuota && capitalAmount < loan.installmentAmount;
+                                                          
                                                           await ApiService.createTransaction(
                                                             loanId: loan.id,
                                                             amount: totalAmount,
                                                             paymentMethod: sidePanelPaymentMethod,
-                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}',
+                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}${shouldSkipInstallmentUpdate ? ' - Pago parcial' : ''}',
                                                             interestAmount: interestAmount,
                                                             principalAmount: capitalAmount,
                                                             loanType: loan.loanType,
                                                             paymentFrequency: loan.paymentFrequency,
                                                           );
                                                           
-                                                          // No actualizar cuotas pagadas para pagos del panel detallado
+                                                          // Solo actualizar cuotas si no es pago menor a cuota o si el capital es >= valor por cuota
+                                                          if (!shouldSkipInstallmentUpdate) {
+                                                            await ApiService.updateLoanInstallments(
+                                                              loanId: loan.id,
+                                                              paidInstallments: loan.paidInstallments + 1,
+                                                            );
+                                                          }
                                                           
                                                           if (loan.status == LoanStatus.overdue) {
                                                             await ApiService.updateLoanStatus(
@@ -1075,6 +1241,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
       setState(() {
         currentLoan = updatedLoan;
       });
+      await _loadLastCapitalPayment();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1084,6 +1251,19 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
           ),
         );
       }
+    }
+  }
+  
+  String _getPaymentMethodText(String method) {
+    switch (method) {
+      case 'CASH':
+        return 'Efectivo';
+      case 'TRANSFER':
+        return 'Transferencia';
+      case 'MIXED':
+        return 'Mixto';
+      default:
+        return method;
     }
   }
 

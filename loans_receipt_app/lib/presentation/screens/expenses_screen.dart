@@ -676,14 +676,44 @@ class _ExpensesModalWidget extends StatefulWidget {
 class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
   String selectedFilter = 'Hoy';
   List<ExpenseModel> filteredModalExpenses = [];
+  List<ExpenseModel> allModalExpenses = [];
   bool isLoadingModal = true;
   int currentPage = 0;
   final int itemsPerPage = 10;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_onSearchChanged);
     loadFilteredExpenses();
+  }
+  
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+  
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+      _applySearchFilter();
+    });
+  }
+  
+  void _applySearchFilter() {
+    if (_searchQuery.isEmpty) {
+      filteredModalExpenses = List.from(allModalExpenses);
+    } else {
+      filteredModalExpenses = allModalExpenses.where((expense) {
+        return expense.description.toLowerCase().contains(_searchQuery) ||
+               expense.category.name.toLowerCase().contains(_searchQuery);
+      }).toList();
+    }
+    currentPage = 0;
   }
   
   Future<void> loadFilteredExpenses() async {
@@ -730,11 +760,18 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
       
       print('Found ${expenses.length} expenses');
       
+      // Ordenar gastos por nombre de categoría alfabéticamente
+      expenses.sort((a, b) => a.category.name.compareTo(b.category.name));
+      
       setState(() {
+        allModalExpenses = expenses;
         filteredModalExpenses = expenses;
         currentPage = 0;
         isLoadingModal = false;
       });
+      
+      // Aplicar filtro de búsqueda si existe
+      _applySearchFilter();
     } catch (e) {
       print('Error loading expenses: $e');
       setState(() => isLoadingModal = false);
@@ -809,11 +846,14 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
                                   startDate: picked.start,
                                   endDate: endOfDay,
                                 );
+                                expenses.sort((a, b) => a.category.name.compareTo(b.category.name));
                                 setState(() {
+                                  allModalExpenses = expenses;
                                   filteredModalExpenses = expenses;
                                   currentPage = 0;
                                   isLoadingModal = false;
                                 });
+                                _applySearchFilter();
                               } catch (e) {
                                 setState(() => isLoadingModal = false);
                               }
@@ -867,6 +907,30 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
                       ),
                     ),
                 ],
+              ),
+            ),
+            
+            // Campo de búsqueda
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Buscar por descripción o categoría...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                          icon: const Icon(Icons.clear),
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
               ),
             ),
             
