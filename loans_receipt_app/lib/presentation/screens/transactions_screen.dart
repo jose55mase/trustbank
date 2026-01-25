@@ -450,14 +450,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       final headers1 = [
         'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
         'FORMA', 'ID', 'CODIGO', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
-        'CUOTAS', 'CUOTAS', 'VALOR REAL', 'CAPITAL', 'CAPITAL', 'INTERES', 'NOTAS'
+        'CUOTAS', 'CUOTAS', 'VALOR REAL', 'MONTO', 'MONTO', 'CAPITAL', 'CAPITAL', 'INTERES', 'NOTAS'
       ];
       
       // Encabezados secundarios
       final headers2 = [
         '', '', '', '', 'DE PAGO', 'PRESTAMO', 
         'DE PAGO', 'PRESTAMO', 'USUARIO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
-        'PAGADAS', 'RESTANTES', 'DE CUOTA', '', 'FIJO', '', ''
+        'PAGADAS', 'RESTANTES', 'DE CUOTA', 'PRESTADO', 'RESTANTE', '', 'FIJO', '', ''
       ];
       
       // Ajustar altura de las filas de encabezados
@@ -614,6 +614,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ? (item['sinCuotas'] == true)
             : (item['loan']?['sinCuotas'] == true);
         
+        // Calcular monto restante del préstamo
+        String montoRestante = '';
+        String montoPrestado = '';
+        
+        if (isLoan) {
+          // Para préstamos, usar remainingAmount si existe, sino calcular
+          montoPrestado = currencyFormat.format(item['amount'] ?? 0);
+          if (item['remainingAmount'] != null) {
+            montoRestante = currencyFormat.format(item['remainingAmount']);
+          } else {
+            // Fallback: monto original - (cuotas pagadas * valor por cuota)
+            final amount = item['amount'] ?? 0;
+            final paidInstallments = item['paidInstallments'] ?? 0;
+            final installments = item['installments'] ?? 1;
+            final remaining = amount - (amount * paidInstallments / installments);
+            montoRestante = currencyFormat.format(remaining.clamp(0, amount));
+          }
+        } else if (item['loan'] != null) {
+          // Para transacciones, obtener del préstamo asociado
+          final loan = item['loan'];
+          montoPrestado = currencyFormat.format(loan['amount'] ?? 0);
+          if (loan['remainingAmount'] != null) {
+            montoRestante = currencyFormat.format(loan['remainingAmount']);
+          } else {
+            // Fallback: calcular desde el préstamo
+            final amount = loan['amount'] ?? 0;
+            final paidInstallments = loan['paidInstallments'] ?? 0;
+            final installments = loan['installments'] ?? 1;
+            final remaining = amount - (amount * paidInstallments / installments);
+            montoRestante = currencyFormat.format(remaining.clamp(0, amount));
+          }
+        }
+        
         final row = [
           item['id']?.toString() ?? '',
           isLoan ? 'Prestamo' : (isPayment ? 'Pago' : 'Transaccion'),
@@ -644,6 +677,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             ? ((item['installments'] ?? 0) - (item['paidInstallments'] ?? 0)).toString()
             : ((item['loan']?['installments'] ?? 0) - (item['loan']?['paidInstallments'] ?? 0)).toString(),
           valorRealCuota,
+          montoPrestado,
+          montoRestante,
           isPayment ? currencyFormat.format(item['principalAmount'] ?? 0) : '',
           sinCuotas ? 'Verdadero' : 'Falso',
           isPayment ? currencyFormat.format(item['interestAmount'] ?? 0) : '',
@@ -1283,22 +1318,49 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                               ),
                                             ),
                                             const SizedBox(height: 4),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: (isLoan ? AppColors.warning : AppColors.success).withOpacity(0.1),
-                                                borderRadius: BorderRadius.circular(8),
-                                              ),
-                                              child: Text(
-                                                isLoan 
-                                                    ? _getLoanStatusText(item['status']?.toString())
-                                                    : _getPaymentMethodText(item['paymentMethod']?.toString() ?? ''),
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: isLoan ? AppColors.warning : AppColors.success,
-                                                  fontWeight: FontWeight.w600,
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: (isLoan ? AppColors.warning : AppColors.success).withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    isLoan 
+                                                        ? _getLoanStatusText(item['status']?.toString())
+                                                        : _getPaymentMethodText(item['paymentMethod']?.toString() ?? ''),
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: isLoan ? AppColors.warning : AppColors.success,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
                                                 ),
-                                              ),
+                                                const SizedBox(width: 4),
+                                                GestureDetector(
+                                                  onTap: () => _showDeleteConfirmation(
+                                                    item['id'].toString(),
+                                                    isLoan,
+                                                    isLoan 
+                                                        ? (item['user']?['name'] ?? 'N/A')
+                                                        : 'Préstamo ${item['loan']?['id'] ?? 'N/A'}',
+                                                  ),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(4),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.error.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(6),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.delete_outline,
+                                                      size: 16,
+                                                      color: AppColors.error,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ],
                                         ),
@@ -1554,41 +1616,109 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
-  Future<void> _updateTransactionBreakdown(
-    BuildContext context,
-    String transactionId,
-    double principalAmount,
-    double interestAmount,
-    String paymentMethod,
-    String notes,
-    NumberFormat currencyFormat,
-  ) async {
+  Future<void> _deleteTransaction(String transactionId, bool isLoan) async {
     try {
-      await ApiService.updateTransaction(
-        transactionId: transactionId,
-        principalAmount: principalAmount,
-        interestAmount: interestAmount,
-        paymentMethod: paymentMethod,
-        notes: notes,
-      );
+      if (isLoan) {
+        await ApiService.deleteLoan(transactionId);
+      } else {
+        await ApiService.deleteTransaction(transactionId);
+      }
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Transacción actualizada correctamente'),
+        SnackBar(
+          content: Text(isLoan ? 'Préstamo eliminado correctamente' : 'Transacción eliminada correctamente'),
           backgroundColor: AppColors.success,
         ),
       );
       
-      // Recargar las transacciones
       await _loadTransactions();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al actualizar transacción: $e'),
+          content: Text('Error al eliminar: $e'),
           backgroundColor: AppColors.error,
         ),
       );
     }
+  }
+
+  void _showDeleteConfirmation(String id, bool isLoan, String itemName) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.warning, color: AppColors.error, size: 28),
+            const SizedBox(width: 12),
+            const Text('Confirmar Eliminación'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¿Estás seguro de que deseas eliminar ${isLoan ? 'el préstamo' : 'la transacción'}?',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ID: $id', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  Text('Cliente: $itemName'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.error.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info, color: AppColors.error, size: 16),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'Esta acción no se puede deshacer',
+                      style: TextStyle(fontSize: 12, color: AppColors.error),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _deleteTransaction(id, isLoan);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
   }
 }
 

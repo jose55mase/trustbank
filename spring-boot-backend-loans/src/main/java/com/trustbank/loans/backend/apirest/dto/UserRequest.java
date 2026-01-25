@@ -10,6 +10,7 @@ public class UserRequest {
     private String referenceName;
     private String referencePhone;
     private LocalDateTime registrationDate;
+    private String originalUserCode;
     
     // Getters and Setters
     public String getName() { return name; }
@@ -32,4 +33,7 @@ public class UserRequest {
     
     public LocalDateTime getRegistrationDate() { return registrationDate; }
     public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }
+    
+    public String getOriginalUserCode() { return originalUserCode; }
+    public void setOriginalUserCode(String originalUserCode) { this.originalUserCode = originalUserCode; }
 }

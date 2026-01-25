@@ -43,10 +43,14 @@ public class Payment {
     @Column(name = "valor_real_cuota", precision = 15, scale = 2)
     private BigDecimal valorRealCuota;
     
+    @Column(name = "pago_menor_a_cuota", nullable = false)
+    private Boolean pagoMenorACuota;
+    
     public Payment() {
         this.paymentDate = LocalDateTime.now();
         this.registered = false; // Por defecto sin registrar
         this.salida = false; // Por defecto no es salida
+        this.pagoMenorACuota = false; // Por defecto no es pago menor a cuota
     }
     
     // Getters and Setters
@@ -82,4 +86,7 @@ public class Payment {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public Boolean getPagoMenorACuota() { return pagoMenorACuota; }
+    public void setPagoMenorACuota(Boolean pagoMenorACuota) { this.pagoMenorACuota = pagoMenorACuota; }
 }

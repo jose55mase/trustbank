@@ -56,6 +56,20 @@ public class UserService {
         return userRepository.save(user);
     }
     
+    public User updateUser(User user, String originalUserCode) {
+        // Si el código no cambió, permitir la actualización
+        if (originalUserCode != null && originalUserCode.equals(user.getUserCode())) {
+            return userRepository.save(user);
+        }
+        
+        // Si el código cambió, validar que el nuevo código no exista
+        if (userRepository.existsByUserCode(user.getUserCode())) {
+            throw new RuntimeException("El código de usuario ya existe: " + user.getUserCode());
+        }
+        
+        return userRepository.save(user);
+    }
+    
     private String generateUserCode() {
         String code;
         do {

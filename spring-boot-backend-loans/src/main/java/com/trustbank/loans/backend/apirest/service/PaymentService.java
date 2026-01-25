@@ -42,6 +42,15 @@ public class PaymentService {
                 throw new RuntimeException("Usuario no encontrado con ID: " + payment.getUser().getId());
             }
         }
+        
+        // Si es un pago menor a cuota, agregar nota en la descripción
+        if (payment.getPagoMenorACuota() != null && payment.getPagoMenorACuota()) {
+            String currentDescription = payment.getDescription() != null ? payment.getDescription() : "";
+            if (!currentDescription.contains("- Pago parcial")) {
+                payment.setDescription(currentDescription + " - Pago parcial");
+            }
+        }
+        
         return paymentRepository.save(payment);
     }
     

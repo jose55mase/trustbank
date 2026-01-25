@@ -1,11 +1,11 @@
 class User {
   final String id;
-  final String name;
-  final String userCode;
-  final String phone;
-  final String direccion;
-  final String? referenceName;
-  final String? referencePhone;
+  String name;
+  String userCode;
+  String phone;
+  String direccion;
+  String? referenceName;
+  String? referencePhone;
   final DateTime registrationDate;
 
   User({
