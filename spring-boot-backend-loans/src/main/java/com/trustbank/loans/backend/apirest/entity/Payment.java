@@ -47,7 +47,7 @@ public class Payment {
     private Boolean pagoMenorACuota;
     
     public Payment() {
-        this.paymentDate = LocalDateTime.now();
+        // No establecer paymentDate automáticamente - debe venir del frontend
         this.registered = false; // Por defecto sin registrar
         this.salida = false; // Por defecto no es salida
         this.pagoMenorACuota = false; // Por defecto no es pago menor a cuota

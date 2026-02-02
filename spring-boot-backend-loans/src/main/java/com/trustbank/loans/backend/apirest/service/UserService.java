@@ -5,6 +5,8 @@ import com.trustbank.loans.backend.apirest.repository.UserRepository;
 import com.trustbank.loans.backend.apirest.repository.LoanRepository;
 import com.trustbank.loans.backend.apirest.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +36,10 @@ public class UserService {
             }
         });
         return users;
+    }
+    
+    public Page<User> findAllPaginated(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
     
     public List<User> findByUserCodeOrderedAlphabetically(String userCode) {
