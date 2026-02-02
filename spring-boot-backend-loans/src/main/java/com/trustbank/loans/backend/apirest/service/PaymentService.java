@@ -43,6 +43,11 @@ public class PaymentService {
             }
         }
         
+        // Si no se proporciona fecha, usar la fecha actual del servidor como fallback
+        if (payment.getPaymentDate() == null) {
+            payment.setPaymentDate(LocalDateTime.now());
+        }
+        
         // Si es un pago menor a cuota, agregar nota en la descripción
         if (payment.getPagoMenorACuota() != null && payment.getPagoMenorACuota()) {
             String currentDescription = payment.getDescription() != null ? payment.getDescription() : "";

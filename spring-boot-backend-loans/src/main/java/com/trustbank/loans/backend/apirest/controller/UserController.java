@@ -4,10 +4,16 @@ import com.trustbank.loans.backend.apirest.dto.UserRequest;
 import com.trustbank.loans.backend.apirest.entity.User;
 import com.trustbank.loans.backend.apirest.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/users")
@@ -20,6 +26,30 @@ public class UserController {
     @GetMapping
     public List<User> getAllUsers() {
         return userService.findAll();
+    }
+    
+    @GetMapping("/paginated")
+    public Map<String, Object> getUsersPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "registrationDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+            Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<User> userPage = userService.findAllPaginated(pageable);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("users", userPage.getContent());
+        response.put("currentPage", userPage.getNumber());
+        response.put("totalItems", userPage.getTotalElements());
+        response.put("totalPages", userPage.getTotalPages());
+        response.put("hasNext", userPage.hasNext());
+        response.put("hasPrevious", userPage.hasPrevious());
+        
+        return response;
     }
     
     @GetMapping("/search-by-code")
