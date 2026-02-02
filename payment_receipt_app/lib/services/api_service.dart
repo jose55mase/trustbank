@@ -474,6 +474,24 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> getUsersPaginated({
+    int page = 0,
+    int size = 20,
+    String sortBy = 'registrationDate',
+    String sortDir = 'desc',
+  }) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/users/paginated?page=$page&size=$size&sortBy=$sortBy&sortDir=$sortDir'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get paginated users');
+    }
+  }
+
   static Future<Map<String, dynamic>> getUserById(int userId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/user/$userId'),
@@ -730,6 +748,52 @@ class ApiService {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to approve document');
+    }
+  }
+
+  // Payment endpoints
+  static Future<Map<String, dynamic>> createPayment(Map<String, dynamic> paymentData) async {
+    // Agregar fecha actual del frontend si no se proporciona
+    if (!paymentData.containsKey('paymentDate')) {
+      paymentData['paymentDate'] = DateTime.now().toIso8601String();
+    }
+    
+    final response = await http.post(
+      Uri.parse('$baseUrl/payments'),
+      headers: await headers,
+      body: json.encode(paymentData),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to create payment');
+    }
+  }
+
+  static Future<List<dynamic>> getAllPayments() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/payments'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get payments');
+    }
+  }
+
+  static Future<List<dynamic>> getUserPayments(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/payments/user/$userId'),
+      headers: await headers,
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to get user payments');
     }
   }
 

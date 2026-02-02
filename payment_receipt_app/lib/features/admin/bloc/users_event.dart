@@ -4,6 +4,10 @@ abstract class UsersEvent {}
 
 class LoadUsers extends UsersEvent {}
 
+class LoadMoreUsers extends UsersEvent {}
+
+class RefreshUsers extends UsersEvent {}
+
 class UpdateUserStatus extends UsersEvent {
   final int userId;
   final UserStatus status;

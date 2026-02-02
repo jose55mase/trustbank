@@ -26,12 +26,36 @@ class LoanDetailScreen extends StatefulWidget {
 class _LoanDetailScreenState extends State<LoanDetailScreen> {
   late Loan currentLoan;
   Map<String, dynamic>? lastCapitalPayment;
+  final _remainingAmountController = TextEditingController();
+  double? _savedMontoRestante;
 
   @override
   void initState() {
     super.initState();
     currentLoan = widget.loan;
     _loadLastCapitalPayment();
+    _loadSavedMontoRestante();
+  }
+  
+  Future<void> _loadSavedMontoRestante() async {
+    // Cargar el último pago que tenga valorRealCuota guardado
+    try {
+      final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
+      if (transactions.isNotEmpty) {
+        final paymentsWithMontoRestante = transactions
+            .where((t) => t['valorRealCuota'] != null && (t['valorRealCuota'] as num) > 0)
+            .toList();
+        
+        if (paymentsWithMontoRestante.isNotEmpty) {
+          paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+          setState(() {
+            _savedMontoRestante = (paymentsWithMontoRestante.first['valorRealCuota'] as num).toDouble();
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading saved monto restante: $e');
+    }
   }
   
   Future<void> _loadLastCapitalPayment() async {
@@ -157,6 +181,23 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     value: currencyFormat.format(currentLoan.remainingAmount),
                     valueColor: AppColors.warning,
                   ),
+                  // Solo mostrar el contenedor morado si hay un valor guardado en el sistema
+                  if (_savedMontoRestante != null && _savedMontoRestante! > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
+                      ),
+                      child: InfoRow(
+                        label: 'Monto Restante para Completar Cuota',
+                        value: currencyFormat.format(_savedMontoRestante!),
+                        valueColor: Colors.purple,
+                      ),
+                    ),
+                  ],
                   if (currentLoan.loanType == 'Rotativo' || currentLoan.loanType == 'Ahorro' || currentLoan.loanType == 'Fijo') ...[
                     const Divider(height: 24),
                     Text('Información ${currentLoan.loanType}', style: AppTextStyles.h3),
@@ -673,6 +714,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                   ),
                                                 ],
                                               ),
+
                                               if (previousPayment != null) ...[
                                                 const SizedBox(height: 4),
                                                 Row(
@@ -760,6 +802,52 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                           value: pagoMenorACuota,
                                           onChanged: (value) => setState(() => pagoMenorACuota = value ?? false),
                                         ),
+                                        
+                                        // Campo condicional para monto restante
+                                        if (pagoMenorACuota) ...[
+                                          const SizedBox(height: 16),
+                                          Container(
+                                            padding: const EdgeInsets.all(12),
+                                            decoration: BoxDecoration(
+                                              color: Colors.purple.withOpacity(0.1),
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
+                                            ),
+                                            child: TextField(
+                                              controller: _remainingAmountController,
+                                              keyboardType: TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter.digitsOnly,
+                                                TextInputFormatter.withFunction((oldValue, newValue) {
+                                                  if (newValue.text.isEmpty) return newValue;
+                                                  final number = double.tryParse(newValue.text) ?? 0;
+                                                  final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
+                                                  return TextEditingValue(
+                                                    text: formatted,
+                                                    selection: TextSelection.collapsed(offset: formatted.length),
+                                                  );
+                                                }),
+                                              ],
+                                              decoration: InputDecoration(
+                                                labelText: 'Monto restante para completar cuota',
+                                                labelStyle: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
+                                                prefixText: '\$ ',
+                                                prefixStyle: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
+                                                hintText: '0',
+                                                border: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderSide: const BorderSide(color: Colors.purple),
+                                                ),
+                                                focusedBorder: OutlineInputBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  borderSide: const BorderSide(color: Colors.purple, width: 2),
+                                                ),
+                                                helperText: 'Cuánto le falta al cliente para completar su cuota',
+                                                helperStyle: const TextStyle(fontSize: 12, color: Colors.purple),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                         const SizedBox(height: 24),
                                         SizedBox(
                                           width: double.infinity,
@@ -768,15 +856,27 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                             onPressed: () async {
                                               final cleanInterest = sidePanelInterestController.text.replaceAll(',', '').replaceAll('.', '');
                                               final cleanCapital = sidePanelCapitalController.text.replaceAll(',', '').replaceAll('.', '');
+                                              final cleanRemainingAmount = _remainingAmountController.text.replaceAll(',', '').replaceAll('.', '');
                                               
                                               final interestAmount = double.tryParse(cleanInterest) ?? 0;
                                               final capitalAmount = double.tryParse(cleanCapital) ?? 0;
+                                              final remainingAmountForQuota = pagoMenorACuota ? (double.tryParse(cleanRemainingAmount) ?? 0) : null;
                                               final totalAmount = interestAmount + capitalAmount;
                                               
                                               if (totalAmount <= 0) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   const SnackBar(
                                                     content: Text('Debe ingresar al menos un monto'),
+                                                    backgroundColor: AppColors.error,
+                                                  ),
+                                                );
+                                                return;
+                                              }
+                                              
+                                              if (pagoMenorACuota && (remainingAmountForQuota == null || remainingAmountForQuota <= 0)) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text('Debe ingresar el monto restante para completar cuota'),
                                                     backgroundColor: AppColors.error,
                                                   ),
                                                 );
@@ -820,17 +920,18 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                         
                                                         try {
                                                           // Aplicar lógica de pago menor a cuota
-                                                          final shouldSkipInstallmentUpdate = pagoMenorACuota && capitalAmount < loan.installmentAmount;
+                                                          final shouldSkipInstallmentUpdate = pagoMenorACuota;
                                                           
                                                           await ApiService.createTransaction(
                                                             loanId: loan.id,
                                                             amount: totalAmount,
                                                             paymentMethod: sidePanelPaymentMethod,
-                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}${shouldSkipInstallmentUpdate ? ' - Pago parcial' : ''}',
+                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}${shouldSkipInstallmentUpdate ? ' - Pago parcial' : ''}${remainingAmountForQuota != null ? ', Monto restante: \$${NumberFormat('#,##0').format(remainingAmountForQuota)}' : ''}',
                                                             interestAmount: interestAmount,
                                                             principalAmount: capitalAmount,
                                                             loanType: loan.loanType,
                                                             paymentFrequency: loan.paymentFrequency,
+                                                            valorRealCuota: remainingAmountForQuota, // Guardar el monto restante
                                                           );
                                                           
                                                           // Solo actualizar cuotas si no es pago menor a cuota o si el capital es >= valor por cuota
@@ -1242,6 +1343,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         currentLoan = updatedLoan;
       });
       await _loadLastCapitalPayment();
+      await _loadSavedMontoRestante(); // Recargar el monto restante guardado
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

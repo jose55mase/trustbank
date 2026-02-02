@@ -10,6 +10,7 @@ import '../../recharge/screens/recharge_screen.dart';
 import '../../qr_pay/screens/qr_pay_screen.dart';
 import '../../auth/screens/login_screen.dart';
 import '../../credits/screens/credits_screen.dart';
+import '../../payments/screens/register_payment_screen.dart';
 import '../../../design_system/components/molecules/custom_header_painter.dart';
 import '../../notifications/screens/notifications_screen.dart';
 import '../../notifications/bloc/notifications_bloc.dart';
@@ -132,6 +133,10 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  void _navigateToPayments() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterPaymentScreen()));
   }
 
   void _navigateToSend() {
@@ -501,16 +506,31 @@ class _HomeScreenState extends State<HomeScreen> {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 5,
+              crossAxisCount: 4,
               crossAxisSpacing: TBSpacing.xs,
               mainAxisSpacing: TBSpacing.sm,
-              childAspectRatio: 0.7,
+              childAspectRatio: 0.8,
               children: [
                 _buildActionItem(Icons.send, 'Enviar', _navigateToSend),
                 _buildActionItem(Icons.add, 'Recargar', _navigateToRecharge),
+                _buildActionItem(Icons.payment, 'Registrar\nPago', _navigateToPayments),
                 _buildActionItem(Icons.credit_card, 'Créditos', _navigateToCredits),
+              ],
+            ),
+            const SizedBox(height: TBSpacing.sm),
+            // Segunda fila de acciones
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 4,
+              crossAxisSpacing: TBSpacing.xs,
+              mainAxisSpacing: TBSpacing.sm,
+              childAspectRatio: 0.8,
+              children: [
                 _buildActionItem(Icons.qr_code, 'QR', _navigateToQR),
                 _buildActionItem(Icons.receipt_long, 'Recibos', _navigateToReceipts),
+                Container(), // Espacio vacío
+                Container(), // Espacio vacío
               ],
             ),
             const SizedBox(height: TBSpacing.lg),

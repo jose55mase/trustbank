@@ -10,12 +10,14 @@ class LoanCard extends StatelessWidget {
   final Loan loan;
   final User user;
   final VoidCallback onTap;
+  final double? montoRestanteParaCompletarCuota;
 
   const LoanCard({
     super.key,
     required this.loan,
     required this.user,
     required this.onTap,
+    this.montoRestanteParaCompletarCuota,
   });
 
   @override
@@ -65,6 +67,31 @@ class LoanCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 16),
+              // Mostrar monto restante para completar cuota si existe
+              if (montoRestanteParaCompletarCuota != null && montoRestanteParaCompletarCuota! > 0) ...[
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.purple.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Colors.purple, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Monto Restante: ${currencyFormat.format(montoRestanteParaCompletarCuota!)}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: Colors.purple,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
