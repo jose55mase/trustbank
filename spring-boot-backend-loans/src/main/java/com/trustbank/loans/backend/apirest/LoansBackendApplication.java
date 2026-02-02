@@ -9,6 +9,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.annotation.PostConstruct;
+import java.util.TimeZone;
+
 @SpringBootApplication
 @EnableScheduling
 public class LoansBackendApplication implements CommandLineRunner {
@@ -18,6 +21,12 @@ public class LoansBackendApplication implements CommandLineRunner {
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@PostConstruct
+	public void init() {
+		TimeZone.setDefault(TimeZone.getTimeZone("America/Bogota"));
+		System.out.println("Zona horaria configurada: " + TimeZone.getDefault().getID());
+	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(LoansBackendApplication.class, args);
