@@ -21,6 +21,7 @@ class UserDetailScreen extends StatefulWidget {
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
   List<Loan> userLoans = [];
+  Map<String, double> loanMontoRestante = {};
   double totalLent = 0.0;
   double totalProfit = 0.0;
   bool isLoading = true;
@@ -37,8 +38,28 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       final loans = showCompleted 
         ? await ApiService.getLoansByUserIdAsModels(widget.user.id)
         : await ApiService.getActiveAndOverdueLoansByUserId(widget.user.id);
+      
+      // Cargar monto restante para cada préstamo
+      Map<String, double> montoRestanteMap = {};
+      for (final loan in loans) {
+        try {
+          final transactions = await ApiService.getTransactionsByLoanId(loan.id);
+          final paymentsWithMontoRestante = transactions
+              .where((t) => t['valorRealCuota'] != null && (t['valorRealCuota'] as num) > 0)
+              .toList();
+          
+          if (paymentsWithMontoRestante.isNotEmpty) {
+            paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+            montoRestanteMap[loan.id] = (paymentsWithMontoRestante.first['valorRealCuota'] as num).toDouble();
+          }
+        } catch (e) {
+          print('Error loading monto restante for loan ${loan.id}: $e');
+        }
+      }
+      
       setState(() {
         userLoans = loans;
+        loanMontoRestante = montoRestanteMap;
         totalLent = loans.fold<double>(0, (sum, loan) => sum + loan.remainingAmount);
         totalProfit = loans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
@@ -304,6 +325,32 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text('Toca para ver detalles completos', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        // Mostrar monto restante si existe
+                        if (loanMontoRestante[loan.id] != null && loanMontoRestante[loan.id]! > 0) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.purple.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline, color: Colors.purple, size: 16),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Monto Restante: \$${NumberFormat('#,###').format(loanMontoRestante[loan.id]!)}',
+                                  style: const TextStyle(
+                                    color: Colors.purple,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

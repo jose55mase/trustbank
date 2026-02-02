@@ -12,6 +12,37 @@ class UserManagementService {
     }
   }
 
+  static Future<Map<String, dynamic>> getUsersPaginated({
+    int page = 0,
+    int size = 20,
+    String sortBy = 'registrationDate',
+    String sortDir = 'desc',
+  }) async {
+    try {
+      final response = await ApiService.getUsersPaginated(
+        page: page,
+        size: size,
+        sortBy: sortBy,
+        sortDir: sortDir,
+      );
+      
+      final users = (response['users'] as List)
+          .map<AdminUser>((json) => AdminUser.fromJson(json))
+          .toList();
+      
+      return {
+        'users': users,
+        'currentPage': response['currentPage'],
+        'totalItems': response['totalItems'],
+        'totalPages': response['totalPages'],
+        'hasNext': response['hasNext'],
+        'hasPrevious': response['hasPrevious'],
+      };
+    } catch (e) {
+      throw Exception('Error obteniendo usuarios paginados: $e');
+    }
+  }
+
   static Future<List<AdminUser>> getUsersByRole(UserRole role) async {
     try {
       // Get all users and filter by role locally since backend doesn't have role-specific endpoint

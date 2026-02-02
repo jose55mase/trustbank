@@ -18,7 +18,26 @@ class UsersManagementScreen extends StatefulWidget {
 
 class _UsersManagementScreenState extends State<UsersManagementScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
   UserStatus? _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8) {
+      context.read<UsersBloc>().add(LoadMoreUsers());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +113,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                           const SizedBox(height: TBSpacing.md),
                           ElevatedButton(
                             onPressed: () {
-                              context.read<UsersBloc>().add(LoadUsers());
+                              context.read<UsersBloc>().add(RefreshUsers());
                             },
                             child: const Text('Reintentar'),
                           ),
@@ -126,16 +145,32 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                       );
                     }
                     
-                    return ListView.builder(
-                      padding: const EdgeInsets.all(TBSpacing.md),
-                      itemCount: state.users.length,
-                      itemBuilder: (context, index) {
-                        final user = state.users[index];
-                        return UserCard(
-                          user: user,
-                          onTap: () => _showUserDetail(context, user),
-                        );
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<UsersBloc>().add(RefreshUsers());
+                        await Future.delayed(const Duration(milliseconds: 500));
                       },
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(TBSpacing.md),
+                        itemCount: state.users.length + (state.hasMoreData ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index == state.users.length) {
+                            return state.isLoadingMore
+                                ? const Padding(
+                                    padding: EdgeInsets.all(TBSpacing.md),
+                                    child: Center(child: CircularProgressIndicator()),
+                                  )
+                                : const SizedBox();
+                          }
+                          
+                          final user = state.users[index];
+                          return UserCard(
+                            user: user,
+                            onTap: () => _showUserDetail(context, user),
+                          );
+                        },
+                      ),
                     );
                   }
                   
