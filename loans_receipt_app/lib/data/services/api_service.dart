@@ -408,7 +408,7 @@ class ApiService {
     double? principalAmount,
     String? loanType,
     String? paymentFrequency,
-    double? montoRestanteCompletarCuota,
+    String? montoRestanteCompletarCuota,
   }) async {
     final url = Uri.parse('$baseUrl/transactions');
     final requestBody = {
