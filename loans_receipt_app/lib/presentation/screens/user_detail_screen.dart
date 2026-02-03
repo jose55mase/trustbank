@@ -21,7 +21,7 @@ class UserDetailScreen extends StatefulWidget {
 
 class _UserDetailScreenState extends State<UserDetailScreen> {
   List<Loan> userLoans = [];
-  Map<String, double> loanMontoRestante = {};
+  Map<String, String> loanMontoRestante = {};
   double totalLent = 0.0;
   double totalProfit = 0.0;
   bool isLoading = true;
@@ -49,12 +49,12 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         try {
           final transactions = await ApiService.getTransactionsByLoanId(loan.id);
           final paymentsWithMontoRestante = transactions
-              .where((t) => t['montoRestanteCompletarCuota'] != null && (t['montoRestanteCompletarCuota'] as num) > 0)
+              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
               .toList();
           
           if (paymentsWithMontoRestante.isNotEmpty) {
             paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-            return MapEntry(loan.id, (paymentsWithMontoRestante.first['montoRestanteCompletarCuota'] as num).toDouble());
+            return MapEntry(loan.id, paymentsWithMontoRestante.first['montoRestanteCompletarCuota'].toString());
           }
         } catch (e) {
         }
@@ -64,7 +64,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       final results = await Future.wait(futures);
       final transactionsEndTime = DateTime.now();
       
-      final montoRestanteMap = Map.fromEntries(results.whereType<MapEntry<String, double>>());
+      final montoRestanteMap = Map.fromEntries(results.whereType<MapEntry<String, String>>());
       
       setState(() {
         userLoans = loans;
@@ -338,8 +338,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text('Toca para ver detalles completos', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                        // Mostrar monto restante si existe
-                        if (loanMontoRestante[loan.id] != null && loanMontoRestante[loan.id]! > 0) ...[
+                        // Mostrar nota si existe
+                        if (loanMontoRestante[loan.id] != null && loanMontoRestante[loan.id]!.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.all(8),
@@ -350,14 +350,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.info_outline, color: Colors.purple, size: 16),
+                                const Icon(Icons.note, color: Colors.purple, size: 16),
                                 const SizedBox(width: 8),
-                                Text(
-                                  'Monto Restante: \$${NumberFormat('#,###').format(loanMontoRestante[loan.id]!)}',
-                                  style: const TextStyle(
-                                    color: Colors.purple,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
+                                Expanded(
+                                  child: Text(
+                                    'Nota: ${loanMontoRestante[loan.id]!}',
+                                    style: const TextStyle(
+                                      color: Colors.purple,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                               ],

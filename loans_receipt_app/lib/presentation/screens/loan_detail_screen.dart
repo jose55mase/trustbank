@@ -27,7 +27,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   late Loan currentLoan;
   Map<String, dynamic>? lastCapitalPayment;
   final _remainingAmountController = TextEditingController();
-  double? _savedMontoRestante;
+  String? _savedMontoRestante;
 
   @override
   void initState() {
@@ -42,15 +42,15 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
       final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
       if (transactions.isNotEmpty) {
         final paymentsWithMontoRestante = transactions
-            .where((t) => t['montoRestanteCompletarCuota'] != null && (t['montoRestanteCompletarCuota'] as num) > 0)
+            .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
             .toList();
         
         if (paymentsWithMontoRestante.isNotEmpty) {
           paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-          final montoRestante = (paymentsWithMontoRestante.first['montoRestanteCompletarCuota'] as num).toDouble();
+          final montoRestante = paymentsWithMontoRestante.first['montoRestanteCompletarCuota'].toString();
           if (mounted) {
             setState(() {
-              _savedMontoRestante = montoRestante > 0 ? montoRestante : null;
+              _savedMontoRestante = montoRestante.isNotEmpty ? montoRestante : null;
             });
           }
         }
@@ -181,21 +181,66 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     value: currencyFormat.format(currentLoan.remainingAmount),
                     valueColor: AppColors.warning,
                   ),
-                  if (_savedMontoRestante != null && _savedMontoRestante! > 0)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.purple.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
-                      ),
-                      child: InfoRow(
-                        label: 'Monto Restante para Completar Cuota',
-                        value: currencyFormat.format(_savedMontoRestante!),
-                        valueColor: Colors.purple,
-                      ),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.purple.withOpacity(0.3), width: 2),
                     ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Nota',
+                              style: TextStyle(
+                                color: Colors.purple,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.purple, size: 18),
+                              onPressed: () => _showEditNoteDialog(context),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        if (_savedMontoRestante != null && _savedMontoRestante!.isNotEmpty) ...[
+                          if (_savedMontoRestante!.length > 100) ...[
+                            Text(
+                              '${_savedMontoRestante!.substring(0, 100)}...',
+                              style: const TextStyle(color: Colors.purple),
+                            ),
+                            const SizedBox(height: 8),
+                            TextButton.icon(
+                              onPressed: () => _showFullNoteDialog(context),
+                              icon: const Icon(Icons.visibility, size: 16),
+                              label: const Text('Ver nota completa'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.purple,
+                                padding: EdgeInsets.zero,
+                              ),
+                            ),
+                          ] else
+                            Text(
+                              _savedMontoRestante!,
+                              style: const TextStyle(color: Colors.purple),
+                            ),
+                        ] else
+                          const Text(
+                            'Sin nota',
+                            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                          ),
+                      ],
+                    ),
+                  ),
 
                   if (currentLoan.loanType == 'Rotativo' || currentLoan.loanType == 'Ahorro' || currentLoan.loanType == 'Fijo') ...[
                     const Divider(height: 24),
@@ -802,7 +847,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                           onChanged: (value) => setState(() => pagoMenorACuota = value ?? false),
                                         ),
                                         
-                                        // Campo condicional para monto restante
+                                        // Campo condicional para nota
                                         if (pagoMenorACuota) ...[
                                           const SizedBox(height: 16),
                                           Container(
@@ -814,25 +859,11 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                             ),
                                             child: TextField(
                                               controller: _remainingAmountController,
-                                              keyboardType: TextInputType.number,
-                                              inputFormatters: [
-                                                FilteringTextInputFormatter.digitsOnly,
-                                                TextInputFormatter.withFunction((oldValue, newValue) {
-                                                  if (newValue.text.isEmpty) return newValue;
-                                                  final number = double.tryParse(newValue.text) ?? 0;
-                                                  final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
-                                                  return TextEditingValue(
-                                                    text: formatted,
-                                                    selection: TextSelection.collapsed(offset: formatted.length),
-                                                  );
-                                                }),
-                                              ],
+                                              maxLines: 3,
                                               decoration: InputDecoration(
-                                                labelText: 'Monto restante para completar cuota',
+                                                labelText: 'Nota',
                                                 labelStyle: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
-                                                prefixText: '\$ ',
-                                                prefixStyle: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
-                                                hintText: '0',
+                                                hintText: 'Escribe una nota...',
                                                 border: OutlineInputBorder(
                                                   borderRadius: BorderRadius.circular(8),
                                                   borderSide: const BorderSide(color: Colors.purple),
@@ -841,7 +872,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                   borderRadius: BorderRadius.circular(8),
                                                   borderSide: const BorderSide(color: Colors.purple, width: 2),
                                                 ),
-                                                helperText: 'Cuánto le falta al cliente para completar su cuota',
+                                                helperText: 'Agrega cualquier información adicional',
                                                 helperStyle: const TextStyle(fontSize: 12, color: Colors.purple),
                                               ),
                                             ),
@@ -855,27 +886,17 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                             onPressed: () async {
                                               final cleanInterest = sidePanelInterestController.text.replaceAll(',', '').replaceAll('.', '');
                                               final cleanCapital = sidePanelCapitalController.text.replaceAll(',', '').replaceAll('.', '');
-                                              final cleanRemainingAmount = _remainingAmountController.text.replaceAll(',', '').replaceAll('.', '');
+                                              final cleanRemainingAmount = _remainingAmountController.text.trim();
                                               
                                               final interestAmount = double.tryParse(cleanInterest) ?? 0;
                                               final capitalAmount = double.tryParse(cleanCapital) ?? 0;
-                                              final remainingAmountForQuota = pagoMenorACuota ? (double.tryParse(cleanRemainingAmount) ?? 0) : null;
+                                              final remainingNote = pagoMenorACuota && cleanRemainingAmount.isNotEmpty ? cleanRemainingAmount : null;
                                               final totalAmount = interestAmount + capitalAmount;
                                               
                                               if (totalAmount <= 0) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   const SnackBar(
                                                     content: Text('Debe ingresar al menos un monto'),
-                                                    backgroundColor: AppColors.error,
-                                                  ),
-                                                );
-                                                return;
-                                              }
-                                              
-                                              if (pagoMenorACuota && (remainingAmountForQuota == null || remainingAmountForQuota <= 0)) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text('Debe ingresar el monto restante para completar cuota'),
                                                     backgroundColor: AppColors.error,
                                                   ),
                                                 );
@@ -925,12 +946,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                             loanId: loan.id,
                                                             amount: totalAmount,
                                                             paymentMethod: sidePanelPaymentMethod,
-                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}${shouldSkipInstallmentUpdate ? ' - Pago parcial' : ''}${remainingAmountForQuota != null ? ', Monto restante: \$${NumberFormat('#,##0').format(remainingAmountForQuota)}' : ''}',
+                                                            notes: 'Capital: \$${NumberFormat('#,##0').format(capitalAmount)}, Intereses: \$${NumberFormat('#,##0').format(interestAmount)}${shouldSkipInstallmentUpdate ? ' - Pago parcial' : ''}${remainingNote != null ? ', Nota: $remainingNote' : ''}',
                                                             interestAmount: interestAmount,
                                                             principalAmount: capitalAmount,
                                                             loanType: loan.loanType,
                                                             paymentFrequency: loan.paymentFrequency,
-                                                            montoRestanteCompletarCuota: remainingAmountForQuota, // Guardar el monto restante
+                                                            montoRestanteCompletarCuota: remainingNote, // Guardar la nota
                                                           );
                                                           
                                                           // Solo actualizar cuotas si no es pago menor a cuota o si el capital es >= valor por cuota
@@ -1103,7 +1124,6 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         principalAmount: principalPortion.toDouble(),
         loanType: loan.loanType,
         paymentFrequency: loan.paymentFrequency,
-        montoRestanteCompletarCuota: valorRealCuota,
       );
       
       // Actualizar cuotas pagadas siempre al hacer un pago
@@ -1713,6 +1733,176 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
     
     // Fallback: si no hay nextPaymentDate, no mostrar fecha
     return null;
+  }
+
+  void _showFullNoteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.purple.withOpacity(0.5), width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Nota Completa',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.purple,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.purple),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: SingleChildScrollView(
+                  child: Text(
+                    _savedMontoRestante ?? '',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.purple,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditNoteDialog(BuildContext context) async {
+    final noteController = TextEditingController(text: _savedMontoRestante ?? '');
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.purple.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.purple.withOpacity(0.5), width: 2),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Editar Nota',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: noteController,
+                maxLines: 5,
+                decoration: InputDecoration(
+                  hintText: 'Escribe una nota...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.purple.withOpacity(0.5)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.purple, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        final newNote = noteController.text.trim();
+                        
+                        // Obtener transacciones del préstamo
+                        final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
+                        
+                        if (transactions.isEmpty) {
+                          // No hay transacciones, mostrar mensaje
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('No hay transacciones para agregar nota'),
+                              backgroundColor: AppColors.warning,
+                            ),
+                          );
+                          return;
+                        }
+                        
+                        // Buscar la transacción más reciente
+                        transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                        final transactionId = transactions.first['id'].toString();
+                        
+                        // Actualizar la nota
+                        await ApiService.updateTransactionField(
+                          transactionId: transactionId,
+                          field: 'montoRestanteCompletarCuota',
+                          value: newNote,
+                        );
+                        
+                        setState(() {
+                          _savedMontoRestante = newNote.isEmpty ? null : newNote;
+                        });
+                        
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Nota guardada exitosamente'),
+                            backgroundColor: AppColors.success,
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error al guardar nota: $e'),
+                            backgroundColor: AppColors.error,
+                          ),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Guardar'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 }
