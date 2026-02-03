@@ -67,7 +67,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                   tabController.addListener(() {
                     if (tabController.index == 1) {
                       // Tab "Registrados" seleccionado
-                      print('Tab Registrados seleccionado - Recargando datos...');
                       _loadAllPayments();
                     }
                   });
@@ -247,14 +246,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                     : DateTime.now();
                 
                 // Debug logs
-                print('=== PAYMENT DEBUG ===');
-                print('Payment ID: ${payment['id']}');
-                print('Payment salida: ${payment['salida']}');
-                print('Payment salida type: ${payment['salida'].runtimeType}');
-                print('Payment description: ${payment['description']}');
-                print('User name: $userName');
-                print('Full payment data: $payment');
-                print('==================');
                 
                 return Stack(
                   children: [
@@ -283,7 +274,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                             Builder(
                               builder: (context) {
                                 final hasUsuarioNuevo = payment['description']?.toString().contains('Usuario Nuevo') == true;
-                                print('Checking Usuario Nuevo condition: $hasUsuarioNuevo for payment ${payment['id']}');
                                 return hasUsuarioNuevo
                                     ? const Text(
                                         'Usuario Nuevo',

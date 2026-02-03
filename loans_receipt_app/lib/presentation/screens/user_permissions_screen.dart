@@ -28,7 +28,6 @@ class _UserPermissionsScreenState extends State<UserPermissionsScreen> {
       try {
         await ApiService.initializePermissions();
       } catch (e) {
-        print('Error inicializando permisos: $e');
       }
       
       // Luego cargar datos

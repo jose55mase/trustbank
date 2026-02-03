@@ -34,28 +34,37 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _loadUserLoans() async {
+    final startTime = DateTime.now();
+    
     try {
+      final loansStartTime = DateTime.now();
       final loans = showCompleted 
         ? await ApiService.getLoansByUserIdAsModels(widget.user.id)
         : await ApiService.getActiveAndOverdueLoansByUserId(widget.user.id);
+      final loansEndTime = DateTime.now();
       
-      // Cargar monto restante para cada préstamo
-      Map<String, double> montoRestanteMap = {};
-      for (final loan in loans) {
+      // Cargar monto restante para todos los préstamos en paralelo
+      final transactionsStartTime = DateTime.now();
+      final futures = loans.map((loan) async {
         try {
           final transactions = await ApiService.getTransactionsByLoanId(loan.id);
           final paymentsWithMontoRestante = transactions
-              .where((t) => t['valorRealCuota'] != null && (t['valorRealCuota'] as num) > 0)
+              .where((t) => t['montoRestanteCompletarCuota'] != null && (t['montoRestanteCompletarCuota'] as num) > 0)
               .toList();
           
           if (paymentsWithMontoRestante.isNotEmpty) {
             paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-            montoRestanteMap[loan.id] = (paymentsWithMontoRestante.first['valorRealCuota'] as num).toDouble();
+            return MapEntry(loan.id, (paymentsWithMontoRestante.first['montoRestanteCompletarCuota'] as num).toDouble());
           }
         } catch (e) {
-          print('Error loading monto restante for loan ${loan.id}: $e');
         }
-      }
+        return null;
+      }).toList();
+      
+      final results = await Future.wait(futures);
+      final transactionsEndTime = DateTime.now();
+      
+      final montoRestanteMap = Map.fromEntries(results.whereType<MapEntry<String, double>>());
       
       setState(() {
         userLoans = loans;
@@ -64,7 +73,11 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         totalProfit = loans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
       });
+      
+      final endTime = DateTime.now();
+      final totalTime = endTime.difference(startTime).inMilliseconds;
     } catch (e) {
+      final endTime = DateTime.now();
       setState(() {
         isLoading = false;
       });
@@ -525,12 +538,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   setModalState(() => isLoading = true);
                   
                   try {
-                    print('=== DEBUG ACTUALIZACIÓN USUARIO ===');
-                    print('Usuario ID: ${widget.user.id}');
-                    print('Código original: ${widget.user.userCode}');
-                    print('Código nuevo: ${userCodeController.text.trim()}');
-                    print('¿Son iguales?: ${widget.user.userCode == userCodeController.text.trim()}');
-                    print('=====================================');
                     
                     await ApiService.updateUser(
                       userId: widget.user.id,
@@ -717,9 +724,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             ElevatedButton(
               onPressed: () async {
                 final cleanAmount = amountController.text.replaceAll(',', '').replaceAll('.', '');
-                print('Texto limpio: "$cleanAmount"');
                 final amount = double.tryParse(cleanAmount) ?? 0;
-                print('Monto parseado: $amount');
                 
                 if (amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -732,7 +737,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 }
                 
                 try {
-                  print('Enviando pago: amount=$amount, debtPayment=${pagoALaDeuda ? amount : 0}, interestPayment=${pagoIntereses ? amount : 0}');
                   
                   await ApiService.createPayment(
                     userId: widget.user.id,
@@ -752,7 +756,6 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     ),
                   );
                 } catch (e) {
-                  print('Error al crear pago: $e');
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Error al registrar pago: $e'),

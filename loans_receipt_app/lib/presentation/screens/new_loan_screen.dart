@@ -551,16 +551,6 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       final capitalText = capitalController.text.replaceAll(RegExp(r'[^0-9]'), '');
       final capital = capitalText.isNotEmpty ? double.parse(capitalText) : null;
       
-      print('========== CREANDO PRÉSTAMO ==========');
-      print('capitalFijo (checkbox): $capitalFijo');
-      print('amount: $amount');
-      print('interestRate: $interestRate');
-      print('installments: $installments');
-      print('loanType: $loanType');
-      print('paymentFrequency: $paymentFrequency');
-      print('valorRealCuota: $valorRealCuota');
-      print('sinCuotas (enviando al backend): $capitalFijo');
-      print('======================================');
       
       await ApiService.createLoan(
         userId: selectedUserId!,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../domain/models/user.dart';
+import '../../data/services/api_service.dart';
 import '../screens/user_detail_screen.dart';
 
 class LoanDetailModal extends StatelessWidget {
@@ -174,7 +175,6 @@ class LoanDetailModal extends StatelessWidget {
                         _InfoRow('Monto Restante', currencyFormat.format(remainingAmount)),
                       ],
                     ),
-                    
                     const SizedBox(height: 20),
                     
                     // Información de cuotas

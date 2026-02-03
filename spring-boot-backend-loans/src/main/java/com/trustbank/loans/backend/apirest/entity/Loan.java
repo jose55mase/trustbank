@@ -66,7 +66,7 @@ public class Loan {
     @Column(name = "next_payment_date")
     private LocalDateTime nextPaymentDate;
     
-    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "loan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Transaction> transactions;
     

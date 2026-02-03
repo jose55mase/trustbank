@@ -49,6 +49,9 @@ public class Transaction {
     @Column(name = "valor_real_cuota", precision = 15, scale = 2)
     private BigDecimal valorRealCuota;
     
+    @Column(name = "monto_restante_completar_cuota", precision = 15, scale = 2)
+    private BigDecimal montoRestanteCompletarCuota;
+    
     public Transaction() {
         // Usar fecha actual del sistema sin ajustes de zona horaria
         this.date = LocalDateTime.now();
@@ -90,6 +93,9 @@ public class Transaction {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public BigDecimal getMontoRestanteCompletarCuota() { return montoRestanteCompletarCuota; }
+    public void setMontoRestanteCompletarCuota(BigDecimal montoRestanteCompletarCuota) { this.montoRestanteCompletarCuota = montoRestanteCompletarCuota; }
     
     @Override
     public String toString() {
