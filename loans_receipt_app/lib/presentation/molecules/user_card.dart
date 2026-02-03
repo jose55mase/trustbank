@@ -8,6 +8,7 @@ class UserCard extends StatelessWidget {
   final User user;
   final int activeLoans;
   final double totalLent;
+  final double totalRemaining;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
 
@@ -16,6 +17,7 @@ class UserCard extends StatelessWidget {
     required this.user,
     required this.activeLoans,
     required this.totalLent,
+    required this.totalRemaining,
     required this.onTap,
     this.onDelete,
   });
@@ -55,17 +57,46 @@ class UserCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    currencyFormat.format(totalLent),
-                    style: AppTextStyles.body.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.secondary,
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.arrow_upward, size: 16, color: AppColors.secondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        currencyFormat.format(totalLent),
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    '$activeLoans préstamo${activeLoans != 1 ? 's' : ''}',
-                    style: AppTextStyles.caption,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.account_balance_wallet, size: 16, color: Colors.red),
+                      const SizedBox(width: 4),
+                      Text(
+                        currencyFormat.format(totalRemaining),
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.description, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$activeLoans préstamo${activeLoans != 1 ? 's' : ''}',
+                        style: AppTextStyles.caption,
+                      ),
+                    ],
                   ),
                 ],
               ),

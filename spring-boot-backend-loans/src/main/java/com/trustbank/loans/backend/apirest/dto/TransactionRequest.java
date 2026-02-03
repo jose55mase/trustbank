@@ -14,6 +14,7 @@ public class TransactionRequest {
     private BigDecimal interestAmount;
     private BigDecimal principalAmount;
     private BigDecimal valorRealCuota;
+    private BigDecimal montoRestanteCompletarCuota;
     private LocalDateTime date;
     
     public static class LoanRef {
@@ -47,6 +48,9 @@ public class TransactionRequest {
     
     public BigDecimal getValorRealCuota() { return valorRealCuota; }
     public void setValorRealCuota(BigDecimal valorRealCuota) { this.valorRealCuota = valorRealCuota; }
+    
+    public BigDecimal getMontoRestanteCompletarCuota() { return montoRestanteCompletarCuota; }
+    public void setMontoRestanteCompletarCuota(BigDecimal montoRestanteCompletarCuota) { this.montoRestanteCompletarCuota = montoRestanteCompletarCuota; }
     
     public LocalDateTime getDate() { return date; }
     public void setDate(LocalDateTime date) { this.date = date; }

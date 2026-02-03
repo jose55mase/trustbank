@@ -38,23 +38,25 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   }
   
   Future<void> _loadSavedMontoRestante() async {
-    // Cargar el último pago que tenga valorRealCuota guardado
     try {
       final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
       if (transactions.isNotEmpty) {
         final paymentsWithMontoRestante = transactions
-            .where((t) => t['valorRealCuota'] != null && (t['valorRealCuota'] as num) > 0)
+            .where((t) => t['montoRestanteCompletarCuota'] != null && (t['montoRestanteCompletarCuota'] as num) > 0)
             .toList();
         
         if (paymentsWithMontoRestante.isNotEmpty) {
           paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-          setState(() {
-            _savedMontoRestante = (paymentsWithMontoRestante.first['valorRealCuota'] as num).toDouble();
-          });
+          final montoRestante = (paymentsWithMontoRestante.first['montoRestanteCompletarCuota'] as num).toDouble();
+          if (mounted) {
+            setState(() {
+              _savedMontoRestante = montoRestante > 0 ? montoRestante : null;
+            });
+          }
         }
       }
     } catch (e) {
-      print('Error loading saved monto restante: $e');
+      // Silently fail
     }
   }
   
@@ -65,7 +67,6 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         lastCapitalPayment = payment;
       });
     } catch (e) {
-      print('Error loading last capital payment: $e');
     }
   }
   
@@ -84,7 +85,6 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         }
       }
     } catch (e) {
-      print('Error loading previous payment: $e');
     }
     return null;
   }
@@ -181,8 +181,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     value: currencyFormat.format(currentLoan.remainingAmount),
                     valueColor: AppColors.warning,
                   ),
-                  // Solo mostrar el contenedor morado si hay un valor guardado en el sistema
-                  if (_savedMontoRestante != null && _savedMontoRestante! > 0) ...[
+                  if (_savedMontoRestante != null && _savedMontoRestante! > 0)
                     Container(
                       padding: const EdgeInsets.all(12),
                       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -197,7 +196,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                         valueColor: Colors.purple,
                       ),
                     ),
-                  ],
+
                   if (currentLoan.loanType == 'Rotativo' || currentLoan.loanType == 'Ahorro' || currentLoan.loanType == 'Fijo') ...[
                     const Divider(height: 24),
                     Text('Información ${currentLoan.loanType}', style: AppTextStyles.h3),
@@ -931,7 +930,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                                                             principalAmount: capitalAmount,
                                                             loanType: loan.loanType,
                                                             paymentFrequency: loan.paymentFrequency,
-                                                            valorRealCuota: remainingAmountForQuota, // Guardar el monto restante
+                                                            montoRestanteCompletarCuota: remainingAmountForQuota, // Guardar el monto restante
                                                           );
                                                           
                                                           // Solo actualizar cuotas si no es pago menor a cuota o si el capital es >= valor por cuota
@@ -1104,7 +1103,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         principalAmount: principalPortion.toDouble(),
         loanType: loan.loanType,
         paymentFrequency: loan.paymentFrequency,
-        valorRealCuota: valorRealCuota,
+        montoRestanteCompletarCuota: valorRealCuota,
       );
       
       // Actualizar cuotas pagadas siempre al hacer un pago
@@ -1343,7 +1342,7 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
         currentLoan = updatedLoan;
       });
       await _loadLastCapitalPayment();
-      await _loadSavedMontoRestante(); // Recargar el monto restante guardado
+      await _loadSavedMontoRestante();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

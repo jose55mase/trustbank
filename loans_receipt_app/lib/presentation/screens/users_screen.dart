@@ -208,11 +208,13 @@ class _UsersScreenState extends State<UsersScreen> {
                     builder: (context, snapshot) {
                       final userLoans = snapshot.data ?? [];
                       final totalLent = userLoans.fold<double>(0, (sum, loan) => sum + (loan['amount'] ?? 0));
+                      final totalRemaining = userLoans.fold<double>(0, (sum, loan) => sum + (loan['remainingAmount'] ?? 0));
                       
                       return UserCard(
                         user: user,
                         activeLoans: userLoans.length,
                         totalLent: totalLent,
+                        totalRemaining: totalRemaining,
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

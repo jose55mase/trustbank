@@ -722,13 +722,11 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
       List<ExpenseModel> expenses;
       final now = DateTime.now();
       
-      print('Loading expenses for filter: $selectedFilter');
       
       switch (selectedFilter) {
         case 'Hoy':
           final startOfDay = DateTime(now.year, now.month, now.day);
           final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
-          print('Date range for today: $startOfDay to $endOfDay');
           expenses = await ApiService.getExpensesByDateRange(
             startDate: startOfDay,
             endDate: endOfDay,
@@ -738,7 +736,6 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
           final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
           final startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
           final endDate = now;
-          print('Date range for week: $startDate to $endDate');
           expenses = await ApiService.getExpensesByDateRange(
             startDate: startDate,
             endDate: endDate,
@@ -747,18 +744,15 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
         case 'Mes':
           final startOfMonth = DateTime(now.year, now.month, 1);
           final endDate = now;
-          print('Date range for month: $startOfMonth to $endDate');
           expenses = await ApiService.getExpensesByDateRange(
             startDate: startOfMonth,
             endDate: endDate,
           );
           break;
         default:
-          print('Getting all expenses');
           expenses = await ApiService.getAllExpenses();
       }
       
-      print('Found ${expenses.length} expenses');
       
       // Ordenar gastos por nombre de categoría alfabéticamente
       expenses.sort((a, b) => a.category.name.compareTo(b.category.name));
@@ -773,7 +767,6 @@ class _ExpensesModalWidgetState extends State<_ExpensesModalWidget> {
       // Aplicar filtro de búsqueda si existe
       _applySearchFilter();
     } catch (e) {
-      print('Error loading expenses: $e');
       setState(() => isLoadingModal = false);
     }
   }

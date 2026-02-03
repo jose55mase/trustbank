@@ -98,6 +98,7 @@ public class TransactionController {
         transaction.setInterestAmount(request.getInterestAmount());
         transaction.setPrincipalAmount(request.getPrincipalAmount());
         transaction.setValorRealCuota(request.getValorRealCuota());
+        transaction.setMontoRestanteCompletarCuota(request.getMontoRestanteCompletarCuota());
         
         // Usar fecha enviada desde Flutter o fecha actual como fallback
         LocalDateTime transactionDate;

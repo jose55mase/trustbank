@@ -38,7 +38,6 @@ class _AppDrawerState extends State<AppDrawer> {
         username = user?['username'];
         userPermissions = List<String>.from(user?['permissions'] ?? []);
       });
-      print('Usuario cargado: $username, Rol: $userRole, Permisos: $userPermissions');
     }
   }
 
@@ -72,7 +71,6 @@ class _AppDrawerState extends State<AppDrawer> {
     // Verificar permiso directamente desde el estado
     bool hasPermission = userRole == 'ADMIN' || userPermissions.contains(permission);
     
-    print('Verificando $title - Permiso: $permission - Tiene: $hasPermission');
     
     if (!hasPermission) {
       return const SizedBox.shrink();

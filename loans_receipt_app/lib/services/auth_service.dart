@@ -28,19 +28,14 @@ class AuthService {
     final role = user?['role'];
     final permissions = user?['permissions'] as List<dynamic>? ?? [];
     
-    print('DEBUG - Verificando permiso: $permission');
-    print('DEBUG - Permisos del usuario: $permissions');
-    print('DEBUG - Rol: $role');
     
     // Admin siempre tiene todos los permisos
     if (role == 'ADMIN') {
-      print('DEBUG - Es ADMIN, permiso concedido');
       return true;
     }
     
     // Verificar si el usuario tiene el permiso específico
     final hasPermission = permissions.contains(permission);
-    print('DEBUG - Tiene permiso $permission: $hasPermission');
     return hasPermission;
   }
   
