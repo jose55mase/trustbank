@@ -10,6 +10,19 @@ class ApiService {
   //static const String baseUrl = 'http://localhost:8082/api';
   static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
 
+  static Future<Map<String, String>> getLoanNotesByUserId(String userId) async {
+    final url = Uri.parse('$baseUrl/loans/user/$userId/notes');
+    
+    final response = await http.get(url);
+    
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data.map((key, value) => MapEntry(key, value.toString()));
+    } else {
+      return {};
+    }
+  }
+  
   static Future<bool> login({
     required String username,
     required String password,
