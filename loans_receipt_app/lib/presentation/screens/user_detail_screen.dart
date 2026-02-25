@@ -34,53 +34,41 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   }
 
   Future<void> _loadUserLoans() async {
-    final startTime = DateTime.now();
-    
     try {
-      final loansStartTime = DateTime.now();
+      // Primero cargar los préstamos
       final loans = showCompleted 
         ? await ApiService.getLoansByUserIdAsModels(widget.user.id)
         : await ApiService.getActiveAndOverdueLoansByUserId(widget.user.id);
-      final loansEndTime = DateTime.now();
-      
-      // Cargar monto restante para todos los préstamos en paralelo
-      final transactionsStartTime = DateTime.now();
-      final futures = loans.map((loan) async {
-        try {
-          final transactions = await ApiService.getTransactionsByLoanId(loan.id);
-          final paymentsWithMontoRestante = transactions
-              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
-              .toList();
-          
-          if (paymentsWithMontoRestante.isNotEmpty) {
-            paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-            return MapEntry(loan.id, paymentsWithMontoRestante.first['montoRestanteCompletarCuota'].toString());
-          }
-        } catch (e) {
-        }
-        return null;
-      }).toList();
-      
-      final results = await Future.wait(futures);
-      final transactionsEndTime = DateTime.now();
-      
-      final montoRestanteMap = Map.fromEntries(results.whereType<MapEntry<String, String>>());
       
       setState(() {
         userLoans = loans;
-        loanMontoRestante = montoRestanteMap;
+        loanMontoRestante = {};
         totalLent = loans.fold<double>(0, (sum, loan) => sum + loan.remainingAmount);
         totalProfit = loans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
       });
       
-      final endTime = DateTime.now();
-      final totalTime = endTime.difference(startTime).inMilliseconds;
+      // Luego cargar las notas en segundo plano
+      _loadNotesInBackground(loans);
     } catch (e) {
-      final endTime = DateTime.now();
       setState(() {
         isLoading = false;
       });
+    }
+  }
+  
+  Future<void> _loadNotesInBackground(List<Loan> loans) async {
+    try {
+      // Usar el endpoint optimizado que solo devuelve las notas
+      final notes = await ApiService.getLoanNotesByUserId(widget.user.id);
+      
+      if (mounted) {
+        setState(() {
+          loanMontoRestante = notes;
+        });
+      }
+    } catch (e) {
+      // Silently fail
     }
   }
 

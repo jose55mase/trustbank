@@ -49,6 +49,25 @@ public class LoanController {
         return loanService.findByUserId(userId);
     }
     
+    @GetMapping("/user/{userId}/notes")
+    public ResponseEntity<Map<String, String>> getLoanNotesByUserId(@PathVariable Long userId) {
+        List<Loan> loans = loanService.findByUserId(userId);
+        Map<String, String> notes = new HashMap<>();
+        
+        for (Loan loan : loans) {
+            // Obtener solo la transacción más reciente con nota
+            if (loan.getTransactions() != null && !loan.getTransactions().isEmpty()) {
+                loan.getTransactions().stream()
+                    .filter(t -> t.getMontoRestanteCompletarCuota() != null && 
+                               !t.getMontoRestanteCompletarCuota().trim().isEmpty())
+                    .max((t1, t2) -> t1.getDate().compareTo(t2.getDate()))
+                    .ifPresent(t -> notes.put(loan.getId().toString(), t.getMontoRestanteCompletarCuota()));
+            }
+        }
+        
+        return ResponseEntity.ok(notes);
+    }
+    
     @GetMapping("/user/{userId}/active-and-overdue")
     public List<Loan> getActiveAndOverdueLoansByUserId(@PathVariable Long userId) {
         List<Loan> loans = loanService.findActiveAndOverdueLoansByUserId(userId);
