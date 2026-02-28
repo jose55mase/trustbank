@@ -7,8 +7,8 @@ import '../../domain/models/expense_model.dart';
 import '../../services/auth_service.dart';
 
 class ApiService {
-  //static const String baseUrl = 'http://localhost:8082/api';
-  static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
+  static const String baseUrl = 'http://localhost:8082/api';
+  //static const String baseUrl = 'https://guardianstrustbank.com:8084/api';
 
   static Future<Map<String, String>> getLoanNotesByUserId(String userId) async {
     final url = Uri.parse('$baseUrl/loans/user/$userId/notes');
