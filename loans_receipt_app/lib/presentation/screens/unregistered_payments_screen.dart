@@ -7,6 +7,7 @@ import '../../domain/models/user.dart';
 import '../widgets/app_drawer.dart';
 import 'user_detail_screen.dart';
 import 'new_user_screen.dart';
+import 'new_loan_screen.dart';
 
 class UnregisteredPaymentsScreen extends StatefulWidget {
   const UnregisteredPaymentsScreen({super.key});
@@ -251,6 +252,18 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                   children: [
                     Card(
                       margin: const EdgeInsets.only(bottom: 12, top: 8),
+                      color: payment['salida'] == true 
+                          ? Colors.orange.shade50
+                          : null,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: payment['salida'] == true 
+                              ? Colors.orange.shade300
+                              : Colors.grey.shade300,
+                          width: payment['salida'] == true ? 2 : 1,
+                        ),
+                      ),
                       child: ListTile(
                         onTap: () {
                           final hasUsuarioNuevo = payment['description']?.toString().contains('Usuario Nuevo') == true;
@@ -266,8 +279,17 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                           }
                         },
                         leading: CircleAvatar(
-                          backgroundColor: Colors.orange.withOpacity(0.1),
-                          child: const Icon(Icons.money_off, color: Colors.orange),
+                          backgroundColor: payment['salida'] == true 
+                              ? Colors.orange.withOpacity(0.2)
+                              : Colors.orange.withOpacity(0.1),
+                          child: Icon(
+                            payment['salida'] == true 
+                                ? Icons.arrow_upward
+                                : Icons.money_off,
+                            color: payment['salida'] == true 
+                                ? Colors.deepOrange
+                                : Colors.orange,
+                          ),
                         ),
                         title: Column(
                           children: [
@@ -342,6 +364,32 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (payment['salida'] == true)
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => NewLoanScreen(
+                                        preselectedUser: User(
+                                          id: payment['user']?['id']?.toString() ?? '0',
+                                          name: payment['user']?['name'] ?? 'Usuario',
+                                          userCode: payment['user']?['userCode'] ?? '',
+                                          phone: payment['user']?['phone'] ?? '',
+                                          direccion: payment['user']?['direccion'] ?? '',
+                                          registrationDate: DateTime.now(),
+                                        ),
+                                        prefilledAmount: amount,
+                                        prefilledPaymentMethod: payment['paymentMethod'],
+                                        prefilledDescription: payment['description'],
+                                      ),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.add_card, size: 20),
+                                color: Colors.deepOrange,
+                                tooltip: 'Crear préstamo',
+                              ),
                             IconButton(
                               onPressed: () => _showConfirmationDialog(payment['id']),
                               icon: const Icon(Icons.check_circle_outline, size: 20),

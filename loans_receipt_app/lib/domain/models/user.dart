@@ -33,4 +33,17 @@ class User {
           : DateTime.now(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'userCode': userCode,
+      'phone': phone,
+      'direccion': direccion,
+      'referenceName': referenceName,
+      'referencePhone': referencePhone,
+      'registrationDate': registrationDate.toIso8601String(),
+    };
+  }
 }

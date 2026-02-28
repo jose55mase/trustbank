@@ -9,6 +9,7 @@ import '../widgets/navigation_actions.dart';
 import '../widgets/new_user_modal.dart';
 import 'user_detail_screen.dart';
 import '../../data/services/api_service.dart';
+import '../../data/services/cache_service.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -31,7 +32,21 @@ class _UsersScreenState extends State<UsersScreen> {
   
   Future<void> _loadUsers() async {
     try {
+      // 1️⃣ Intentar cargar desde caché primero
+      final cachedUsers = await CacheService.getUsers();
+      if (cachedUsers != null) {
+        setState(() {
+          users = cachedUsers.map((json) => User.fromJson(json)).toList();
+          isLoading = false;
+        });
+      }
+      
+      // 2️⃣ Cargar desde servidor en segundo plano
       final fetchedUsers = await ApiService.getUsers();
+      
+      // 3️⃣ Guardar en caché
+      await CacheService.saveUsers(fetchedUsers.map((u) => u.toJson()).toList());
+      
       setState(() {
         users = fetchedUsers;
         isLoading = false;

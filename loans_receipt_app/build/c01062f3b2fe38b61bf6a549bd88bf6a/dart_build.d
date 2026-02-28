@@ -1,0 +1,1 @@
+ C:\\Users\\jose.castaneda\\OneDrive\ -\ NEORIS\\Desktop\\dev\\joxe\\trustbank\\loans_receipt_app\\build\\c01062f3b2fe38b61bf6a549bd88bf6a\\dart_build_result.json: 

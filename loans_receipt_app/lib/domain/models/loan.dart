@@ -127,4 +127,31 @@ class Loan {
   double get nextInstallmentInterest {
     return remainingAmount * interestRate / 100;
   }
+  
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user': {
+        'id': userId,
+        'name': userName,
+        'userCode': userCode,
+      },
+      'amount': amount,
+      'interestRate': interestRate,
+      'installments': installments,
+      'paidInstallments': paidInstallments,
+      'startDate': startDate.toIso8601String(),
+      'nextPaymentDate': nextPaymentDate?.toIso8601String(),
+      'status': status.name.toUpperCase(),
+      'remainingAmount': remainingAmount,
+      'pagoAnterior': pagoAnterior,
+      'pagoActual': pagoActual,
+      'loanType': loanType,
+      'paymentFrequency': paymentFrequency,
+      'valorRealCuota': valorRealCuota,
+      'installmentAmount': backendInstallmentAmount,
+      'capital': capital,
+      'sinCuotas': sinCuotas,
+    };
+  }
 }
