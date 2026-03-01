@@ -61,6 +61,9 @@ lib/
 - ✅ Indicadores de stock (Sin Stock, Stock Bajo, En Stock)
 - ✅ Diseño responsive y elegante
 - ✅ Gestión de estado con BLoC
+- ✅ **Módulo de Ventas con reconocimiento de imágenes**
+- ✅ **Comparación inteligente de productos por imagen**
+- ✅ **Detección de productos similares con hash perceptual**
 
 ## 📦 Dependencias
 
@@ -71,6 +74,10 @@ dependencies:
   intl: ^0.19.0            # Formateo de números/fechas
   http: ^1.1.0             # Peticiones HTTP
   shared_preferences: ^2.2.2 # Almacenamiento local
+  image_picker: ^1.0.7     # Captura de imágenes
+  path_provider: ^2.1.2    # Rutas del sistema
+  image: ^4.0.17           # Procesamiento de imágenes
+  crypto: ^3.0.3           # Hashing y encriptación
 ```
 
 ## 🎯 Próximas Funcionalidades
@@ -100,6 +107,23 @@ dependencies:
 1. **Ver Inventario**: La pantalla principal muestra todos los productos
 2. **Agregar Producto**: Presiona el botón flotante "+" para agregar
 3. **Eliminar Producto**: Presiona el ícono de papelera en cada tarjeta
+4. **Módulo de Ventas**: 
+   - Escanea productos con la cámara
+   - El sistema compara automáticamente con el inventario
+   - Detecta productos similares y muestra porcentaje de coincidencia
+   - Agrega productos al carrito y procesa ventas
+
+## 🔍 Sistema de Comparación de Imágenes
+
+El módulo de ventas incluye un sistema inteligente de reconocimiento de productos:
+
+- **Hash Perceptual**: Algoritmo que compara imágenes por características visuales
+- **Detección Automática**: Identifica productos al capturar una foto
+- **Productos Similares**: Alerta cuando encuentra múltiples coincidencias
+- **Umbral de Similitud**: 85% de coincidencia configurable
+- **Procesamiento Local**: No requiere conexión a internet
+
+📖 Ver documentación completa en [IMAGE_COMPARISON.md](IMAGE_COMPARISON.md)
 
 ## 🎨 Personalización
 

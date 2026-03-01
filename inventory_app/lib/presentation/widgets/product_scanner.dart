@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
+import 'image_preview_dialog.dart';
 
 class ProductScanner extends StatelessWidget {
   final Function(String imagePath) onImageCaptured;
@@ -20,8 +20,22 @@ class ProductScanner extends StatelessWidget {
         imageQuality: 85,
       );
       
-      if (image != null) {
-        onImageCaptured(image.path);
+      if (image != null && context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) => ImagePreviewDialog(
+            imagePath: image.path,
+            onConfirm: () {
+              Navigator.pop(dialogContext);
+              onImageCaptured(image.path);
+            },
+            onRetake: () {
+              Navigator.pop(dialogContext);
+              _scanProduct(context);
+            },
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {

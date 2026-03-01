@@ -46,7 +46,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
     final state = context.read<ProductBloc>().state;
     if (state is ProductLoaded) {
-      final product = await _recognitionService.recognizeProduct(
+      final result = await _recognitionService.recognizeProduct(
         imagePath,
         state.products,
       );
@@ -54,14 +54,18 @@ class _SalesScreenState extends State<SalesScreen> {
       if (mounted) {
         setState(() => _isScanning = false);
 
-        if (product != null) {
-          setState(() => _cart.add(product));
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Producto agregado: ${product.name}'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+        if (result.product != null) {
+          if (result.similarProducts.isNotEmpty) {
+            _showSimilarProductsDialog(result.product!, result.similarProducts, result.similarity!);
+          } else {
+            setState(() => _cart.add(result.product!));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Producto agregado: ${result.product!.name}'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -72,6 +76,81 @@ class _SalesScreenState extends State<SalesScreen> {
         }
       }
     }
+  }
+
+  void _showSimilarProductsDialog(Product mainProduct, List<Product> similarProducts, double similarity) {
+    final currencyFormat = NumberFormat.currency(symbol: '\$ ', decimalDigits: 0);
+    final percentFormat = NumberFormat.percentPattern();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: AppColors.warning),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Productos Similares Detectados')),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Coincidencia: ${percentFormat.format(similarity)}',
+                style: AppTextStyles.body.copyWith(
+                  color: AppColors.success,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('Producto Principal:', style: AppTextStyles.caption),
+              const SizedBox(height: 8),
+              Card(
+                color: AppColors.primary.withOpacity(0.1),
+                child: ListTile(
+                  leading: const Icon(Icons.check_circle, color: AppColors.success),
+                  title: Text(mainProduct.name, style: AppTextStyles.body),
+                  subtitle: Text(currencyFormat.format(mainProduct.price)),
+                ),
+              ),
+              if (similarProducts.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text('También encontrados:', style: AppTextStyles.caption),
+                const SizedBox(height: 8),
+                ...similarProducts.map((product) => Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.inventory_2, color: AppColors.textHint),
+                    title: Text(product.name, style: AppTextStyles.body),
+                    subtitle: Text(currencyFormat.format(product.price)),
+                  ),
+                )),
+              ],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _cart.add(mainProduct));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Producto agregado: ${mainProduct.name}'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            child: const Text('Agregar al Carrito'),
+          ),
+        ],
+      ),
+    );
   }
 
   double get _total {
