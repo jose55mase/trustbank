@@ -90,13 +90,14 @@ lib/presentation/widgets/
 Edita `lib/data/services/image_comparison_service.dart`:
 
 ```dart
-static const double _similarityThreshold = 0.85; // 85% por defecto
+static const double _similarityThreshold = 0.70; // 70% por defecto (ajustado)
 ```
 
 **Valores recomendados:**
 - `0.90` - Muy estricto (solo imágenes casi idénticas)
-- `0.85` - Balanceado ⭐ (recomendado)
-- `0.75` - Permisivo (detecta más variaciones)
+- `0.80` - Estricto (fotos similares)
+- `0.70` - Balanceado ⭐ (recomendado - ACTUAL)
+- `0.60` - Permisivo (detecta más variaciones)
 
 ### Ajustar Precisión del Hash
 
@@ -190,16 +191,25 @@ Coincidencias: 62 de 64 bits = 96.8% similar
 ## 🆘 Solución de Problemas
 
 ### "Producto no reconocido" siempre
-**Solución:** Verifica que los productos en el inventario tengan imágenes asociadas
+**Solución:** 
+1. Verifica que los productos en el inventario tengan imágenes asociadas
+2. Revisa los logs en la consola (ver TROUBLESHOOTING_VENTAS.md)
+3. El umbral se redujo a 70% para mejor detección
 
 ### Detecta productos incorrectos
-**Solución:** Aumenta el umbral de similitud a 0.90 o más
+**Solución:** Aumenta el umbral de similitud a 0.80 o más
 
 ### Muy lento al comparar
 **Solución:** Reduce el hashSize a 8 o verifica que no haya muchos productos con imágenes
 
 ### Error al capturar imagen
 **Solución:** Verifica permisos de cámara en la configuración del dispositivo
+
+### 📝 Ver guía completa de diagnóstico
+**Archivo:** [TROUBLESHOOTING_VENTAS.md](TROUBLESHOOTING_VENTAS.md)
+- Logs de depuración activados
+- Pasos detallados de diagnóstico
+- Soluciones para cada problema específico
 
 ---
 

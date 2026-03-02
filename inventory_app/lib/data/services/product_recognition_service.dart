@@ -10,16 +10,28 @@ class ProductRecognitionService {
   ) async {
     final existingImages = <String, String>{};
     
+    // Debug: Contar productos con imágenes
+    int productsWithImages = 0;
     for (var product in products) {
       if (product.imageUrl != null && product.id != null) {
         existingImages[product.id.toString()] = product.imageUrl!;
+        productsWithImages++;
       }
     }
+    
+    print('🔍 DEBUG: Total productos: ${products.length}');
+    print('🔍 DEBUG: Productos con imágenes: $productsWithImages');
+    print('🔍 DEBUG: Imagen a comparar: $imagePath');
     
     final matches = await _comparisonService.compareWithExisting(
       imagePath,
       existingImages,
     );
+    
+    print('🔍 DEBUG: Coincidencias encontradas: ${matches.length}');
+    for (var match in matches) {
+      print('   - Producto ID: ${match.productId}, Similitud: ${(match.similarity * 100).toStringAsFixed(1)}%');
+    }
     
     if (matches.isEmpty) {
       return ProductRecognitionResult(product: null, similarProducts: []);
