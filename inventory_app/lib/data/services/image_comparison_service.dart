@@ -15,7 +15,7 @@ class ImageComparisonResult {
 
 class ImageComparisonService {
   static const int _hashSize = 8;
-  static const double _similarityThreshold = 0.85;
+  static const double _similarityThreshold = 0.70; // Reducido de 0.85 a 0.70 para mejor detección
 
   String _calculatePerceptualHash(img.Image image) {
     final resized = img.copyResize(image, width: _hashSize, height: _hashSize);
@@ -52,25 +52,44 @@ class ImageComparisonService {
   ) async {
     final results = <ImageComparisonResult>[];
     
+    print('📸 Iniciando comparación de imagen: $newImagePath');
+    
     final newFile = File(newImagePath);
-    if (!await newFile.exists()) return results;
+    if (!await newFile.exists()) {
+      print('❌ ERROR: Archivo de imagen no existe: $newImagePath');
+      return results;
+    }
     
     final newBytes = await newFile.readAsBytes();
     final newImage = img.decodeImage(newBytes);
-    if (newImage == null) return results;
+    if (newImage == null) {
+      print('❌ ERROR: No se pudo decodificar la imagen');
+      return results;
+    }
     
     final newHash = _calculatePerceptualHash(newImage);
+    print('✅ Hash calculado para nueva imagen: ${newHash.substring(0, 16)}...');
     
+    int comparedCount = 0;
     for (final entry in existingImages.entries) {
       final existingFile = File(entry.value);
-      if (!await existingFile.exists()) continue;
+      if (!await existingFile.exists()) {
+        print('⚠️ Imagen del producto ${entry.key} no existe: ${entry.value}');
+        continue;
+      }
       
       final existingBytes = await existingFile.readAsBytes();
       final existingImage = img.decodeImage(existingBytes);
-      if (existingImage == null) continue;
+      if (existingImage == null) {
+        print('⚠️ No se pudo decodificar imagen del producto ${entry.key}');
+        continue;
+      }
       
       final existingHash = _calculatePerceptualHash(existingImage);
       final similarity = _compareHashes(newHash, existingHash);
+      
+      comparedCount++;
+      print('   Producto ${entry.key}: ${(similarity * 100).toStringAsFixed(1)}% similar');
       
       if (similarity >= _similarityThreshold) {
         results.add(ImageComparisonResult(
@@ -80,6 +99,8 @@ class ImageComparisonService {
         ));
       }
     }
+    
+    print('📊 Resumen: $comparedCount imágenes comparadas, ${results.length} coincidencias (umbral: ${(_similarityThreshold * 100).toStringAsFixed(0)}%)');
     
     results.sort((a, b) => b.similarity.compareTo(a.similarity));
     return results;
