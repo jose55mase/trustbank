@@ -1,8 +1,8 @@
 import '../models/product.dart';
-import 'image_comparison_service.dart';
+import 'advanced_image_comparison_service.dart';
 
 class ProductRecognitionService {
-  final _comparisonService = ImageComparisonService();
+  final _comparisonService = AdvancedImageComparisonService();
 
   Future<ProductRecognitionResult> recognizeProduct(
     String imagePath,

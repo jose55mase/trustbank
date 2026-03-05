@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>La app necesita acceso a la cámara para escanear productos en tiempo real</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>La app necesita acceso al micrófono para funcionalidad de cámara</string>
 </dict>
 </plist>
