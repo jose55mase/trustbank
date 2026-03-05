@@ -12,6 +12,7 @@ import '../../data/models/customer.dart';
 import '../../data/services/product_recognition_service.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/product_scanner.dart';
+import '../widgets/live_camera_scanner.dart';
 import 'sales_history_screen.dart';
 
 class SalesScreen extends StatefulWidget {
@@ -27,6 +28,7 @@ class _SalesScreenState extends State<SalesScreen> {
   final List<Sale> _pendingSales = [];
   final List<Sale> _processedSales = [];
   bool _isScanning = false;
+  bool _useLiveCamera = false;
   Customer? _selectedCustomer;
   
   final List<User> _users = [
@@ -184,10 +186,64 @@ class _SalesScreenState extends State<SalesScreen> {
       drawer: const AppDrawer(currentRoute: '/sales'),
       body: Column(
         children: [
+          if (!_useLiveCamera)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: ProductScanner(onImageCaptured: _onProductScanned),
+            ),
+          if (_useLiveCamera)
+            BlocBuilder<ProductBloc, ProductState>(
+              builder: (context, state) {
+                if (state is ProductLoaded) {
+                  return Container(
+                    height: 300,
+                    margin: const EdgeInsets.all(16),
+                    child: LiveCameraScanner(
+                      products: state.products,
+                      onProductDetected: (product, similarity) {
+                        setState(() => _cart.add(product));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('✓ ${product.name} agregado'),
+                            backgroundColor: AppColors.success,
+                            duration: const Duration(seconds: 1),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }
+                return const SizedBox();
+              },
+            ),
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: ProductScanner(onImageCaptured: _onProductScanned),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Foto'),
+                        icon: Icon(Icons.camera_alt),
+                      ),
+                      ButtonSegment(
+                        value: true,
+                        label: Text('En Vivo'),
+                        icon: Icon(Icons.videocam),
+                      ),
+                    ],
+                    selected: {_useLiveCamera},
+                    onSelectionChanged: (Set<bool> selection) {
+                      setState(() => _useLiveCamera = selection.first);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
+          const SizedBox(height: 16),
           if (_isScanning)
             const Padding(
               padding: EdgeInsets.all(16),
