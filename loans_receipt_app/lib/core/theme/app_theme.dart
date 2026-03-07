@@ -31,15 +31,14 @@ class AppTheme {
         ),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: const CardTheme(
         color: AppColors.surface,
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black12,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.border.withOpacity(0.5), width: 1),
+          borderRadius: BorderRadius.all(Radius.circular(16)),
         ),
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: EdgeInsets.symmetric(vertical: 8),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
