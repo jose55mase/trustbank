@@ -28,13 +28,13 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   final _accountNumberController = TextEditingController();
   final _typeController = TextEditingController();
   double _currentBalance = 0.0;
-  
+
   @override
   void initState() {
     super.initState();
     _loadCurrentBalance();
   }
-  
+
   Future<void> _loadCurrentBalance() async {
     try {
       final user = await AuthService.getCurrentUser();
@@ -59,224 +59,230 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(TBSpacing.screenPadding),
-        child: Column(
-          children: [
-            // Indicador de saldo disponible
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(TBSpacing.md),
-              margin: const EdgeInsets.only(bottom: TBSpacing.lg),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [TBColors.primary.withOpacity(0.1), TBColors.secondary.withOpacity(0.1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Indicador de saldo disponible
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(TBSpacing.md),
+                margin: const EdgeInsets.only(bottom: TBSpacing.lg),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [TBColors.primary.withOpacity(0.1), TBColors.secondary.withOpacity(0.1)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  border: Border.all(color: TBColors.primary.withOpacity(0.2)),
                 ),
-                borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                border: Border.all(color: TBColors.primary.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    color: TBColors.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: TBSpacing.sm),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Saldo disponible',
-                        style: TBTypography.labelMedium.copyWith(
-                          color: TBColors.grey600,
-                        ),
-                      ),
-                      Text(
-                        CurrencyFormatter.format(_currentBalance),
-                        style: TBTypography.headlineMedium.copyWith(
-                          color: TBColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: _loadCurrentBalance,
-                    icon: Icon(
-                      Icons.refresh,
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.account_balance_wallet,
                       color: TBColors.primary,
-                      size: 20,
+                      size: 24,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: TBSpacing.sm),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Saldo disponible',
+                          style: TBTypography.labelMedium.copyWith(
+                            color: TBColors.grey600,
+                          ),
+                        ),
+                        Text(
+                          CurrencyFormatter.format(_currentBalance),
+                          style: TBTypography.headlineMedium.copyWith(
+                            color: TBColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: _loadCurrentBalance,
+                      icon: Icon(
+                        Icons.refresh,
+                        color: TBColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(TBSpacing.lg),
-              decoration: BoxDecoration(
-                color: TBColors.surface,
-                borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                boxShadow: [
-                  BoxShadow(
-                    color: TBColors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  TBInput(
-                    label: 'Descripción',
-                    hint: 'Descripción del envío',
-                    controller: _descriptionController,
-                    prefixIcon: const Icon(Icons.description_outlined),
-                  ),
-                  const SizedBox(height: TBSpacing.lg),
-                  TBInput(
-                    label: 'Monto',
-                    hint: '\$0.00',
-                    controller: _amountController,
-                    keyboardType: TextInputType.number,
-                    prefixIcon: const Icon(Icons.attach_money),
-                    isCurrency: true,
-                    onChanged: (value) {
-                      setState(() {});
-                    },
-                  ),
-                  // Indicador de validación de monto
-                  if (_amountController.text.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: TBSpacing.xs),
-                      child: Builder(
-                        builder: (context) {
-                          final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
-                          final isValid = amount > 0 && amount <= _currentBalance;
-                          return Row(
-                            children: [
-                              Icon(
-                                isValid ? Icons.check_circle : Icons.error,
-                                size: 16,
-                                color: isValid ? TBColors.success : TBColors.error,
-                              ),
-                              const SizedBox(width: TBSpacing.xs),
-                              Expanded(
-                                child: Text(
-                                  isValid 
-                                      ? 'Monto válido'
-                                      : amount > _currentBalance
-                                          ? 'Saldo insuficiente'
-                                          : 'Ingresa un monto válido',
-                                  style: TBTypography.labelMedium.copyWith(
-                                    color: isValid ? TBColors.success : TBColors.error,
-                                    fontSize: 12,
+              Container(
+                padding: const EdgeInsets.all(TBSpacing.lg),
+                decoration: BoxDecoration(
+                  color: TBColors.surface,
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TBColors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    TBInput(
+                      label: 'Descripción',
+                      hint: 'Descripción del envío',
+                      controller: _descriptionController,
+                      prefixIcon: const Icon(Icons.description_outlined),
+                    ),
+                    const SizedBox(height: TBSpacing.lg),
+                    TBInput(
+                      label: 'Monto',
+                      hint: '\$0.00',
+                      controller: _amountController,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: const Icon(Icons.attach_money),
+                      isCurrency: true,
+                      onChanged: (value) {
+                        setState(() {});
+                      },
+                    ),
+                    // Indicador de validación de monto
+                    if (_amountController.text.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: TBSpacing.xs),
+                        child: Builder(
+                          builder: (context) {
+                            final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
+                            final isValid = amount > 0 && amount <= _currentBalance;
+                            return Row(
+                              children: [
+                                Icon(
+                                  isValid ? Icons.check_circle : Icons.error,
+                                  size: 16,
+                                  color: isValid ? TBColors.success : TBColors.error,
+                                ),
+                                const SizedBox(width: TBSpacing.xs),
+                                Expanded(
+                                  child: Text(
+                                    isValid
+                                        ? 'Monto válido'
+                                        : amount > _currentBalance
+                                        ? 'Saldo insuficiente'
+                                        : 'Ingresa un monto válido',
+                                    style: TBTypography.labelMedium.copyWith(
+                                      color: isValid ? TBColors.success : TBColors.error,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          );
-                        },
+                              ],
+                            );
+                          },
+                        ),
                       ),
+                    const SizedBox(height: TBSpacing.lg),
+                    TBInput(
+                      label: 'Banco',
+                      hint: 'Nombre del banco',
+                      controller: _bankController,
+                      prefixIcon: const Icon(Icons.account_balance),
                     ),
-                  const SizedBox(height: TBSpacing.lg),
-                  TBInput(
-                    label: 'Banco',
-                    hint: 'Nombre del banco',
-                    controller: _bankController,
-                    prefixIcon: const Icon(Icons.account_balance),
-                  ),
-                  const SizedBox(height: TBSpacing.lg),
-                  TBInput(
-                    label: 'Número de cuenta',
-                    hint: 'Número de cuenta destino',
-                    controller: _accountNumberController,
-                    keyboardType: TextInputType.number,
-                    prefixIcon: const Icon(Icons.credit_card),
-                  ),
-                  const SizedBox(height: TBSpacing.lg),
-                  TBInput(
-                    label: 'Tipo',
-                    hint: 'Tipo de transferencia',
-                    controller: _typeController,
-                    prefixIcon: const Icon(Icons.category_outlined),
-                  ),
-                ],
+                    const SizedBox(height: TBSpacing.lg),
+                    TBInput(
+                      label: 'Número de cuenta',
+                      hint: 'Número de cuenta destino',
+                      controller: _accountNumberController,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: const Icon(Icons.credit_card),
+                    ),
+                    const SizedBox(height: TBSpacing.lg),
+                    TBInput(
+                      label: 'Tipo',
+                      hint: 'Tipo de transferencia',
+                      controller: _typeController,
+                      prefixIcon: const Icon(Icons.category_outlined),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Spacer(),
-            TBButton(
-              text: 'Enviar dinero',
-              fullWidth: true,
-              onPressed: () async {
-                final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
-                final description = _descriptionController.text;
-                final bank = _bankController.text;
-                final accountNumber = _accountNumberController.text;
-                final type = _typeController.text;
-                
-                if (amount <= 0 || description.isEmpty || bank.isEmpty || accountNumber.isEmpty || type.isEmpty) {
-                  TBDialogHelper.showWarning(
+              const SizedBox(height: TBSpacing.lg), // Espacio antes del botón
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(TBSpacing.screenPadding),
+        child: TBButton(
+          text: 'Enviar dinero',
+          fullWidth: true,
+          onPressed: () async {
+            final amount = CurrencyInputFormatter.getNumericValue(_amountController.text);
+            final description = _descriptionController.text;
+            final bank = _bankController.text;
+            final accountNumber = _accountNumberController.text;
+            final type = _typeController.text;
+
+            if (amount <= 0 || description.isEmpty || bank.isEmpty || accountNumber.isEmpty || type.isEmpty) {
+              TBDialogHelper.showWarning(
+                context,
+                title: 'Campos incompletos',
+                message: 'Por favor, completa todos los campos requeridos.',
+              );
+              return;
+            }
+
+            // Validar saldo suficiente
+            await _loadCurrentBalance();
+            if (amount > _currentBalance) {
+              TBDialogHelper.showError(
+                context,
+                title: 'Saldo insuficiente',
+                message: 'No tienes suficiente saldo para realizar este envío.\n\nSaldo disponible: ${CurrencyFormatter.format(_currentBalance)}\nMonto a enviar: ${CurrencyFormatter.format(amount)}\n\n¿Deseas hacer una recarga?',
+                buttonText: 'Recargar ahora',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
                     context,
-                    title: 'Campos incompletos',
-                    message: 'Por favor, completa todos los campos requeridos.',
+                    MaterialPageRoute(builder: (context) => const RechargeScreen()),
                   );
-                  return;
-                }
-                
-                // Validar saldo suficiente
-                await _loadCurrentBalance();
-                if (amount > _currentBalance) {
-                  TBDialogHelper.showError(
-                    context,
-                    title: 'Saldo insuficiente',
-                    message: 'No tienes suficiente saldo para realizar este envío.\n\nSaldo disponible: ${CurrencyFormatter.format(_currentBalance)}\nMonto a enviar: ${CurrencyFormatter.format(amount)}\n\n¿Deseas hacer una recarga?',
-                    buttonText: 'Recargar ahora',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const RechargeScreen()),
-                      );
-                    },
-                  );
-                  return;
-                }
-                
-                try {
-                  await TBLoadingOverlay.showWithDelay(
-                    context,
-                    _processSendMoney(amount, description, bank, accountNumber, type),
-                    message: 'Procesando envío...',
-                    minDelayMs: 2500,
-                  );
-                  
-                  TBDialogHelper.showSuccess(
-                    context,
-                    title: '¡Solicitud enviada!',
-                    message: 'Tu solicitud de envío ha sido creada y está pendiente de aprobación.',
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    },
-                  );
-                } catch (e) {
-                  TBDialogHelper.showError(
-                    context,
-                    title: 'Error en el envío',
-                    message: e.toString().replaceAll('Exception: ', ''),
-                  );
-                }
-              },
-            ),
-          ],
+                },
+              );
+              return;
+            }
+
+            try {
+              await TBLoadingOverlay.showWithDelay(
+                context,
+                _processSendMoney(amount, description, bank, accountNumber, type),
+                message: 'Procesando envío...',
+                minDelayMs: 2500,
+              );
+
+              TBDialogHelper.showSuccess(
+                context,
+                title: '¡Solicitud enviada!',
+                message: 'Tu solicitud de envío ha sido creada y está pendiente de aprobación.',
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+              );
+            } catch (e) {
+              TBDialogHelper.showError(
+                context,
+                title: 'Error en el envío',
+                message: e.toString().replaceAll('Exception: ', ''),
+              );
+            }
+          },
         ),
       ),
     );
   }
-  
+
   Future<void> _processSendMoney(double amount, String description, String bank, String accountNumber, String type) async {
     final userId = await AuthService.getCurrentUserId() ?? 1;
     await ApiService.createAdminRequest({

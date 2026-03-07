@@ -11,7 +11,18 @@ import '../widgets/app_drawer.dart';
 import 'home_screen.dart';
 
 class NewLoanScreen extends StatefulWidget {
-  const NewLoanScreen({super.key});
+  final User? preselectedUser;
+  final double? prefilledAmount;
+  final String? prefilledPaymentMethod;
+  final String? prefilledDescription;
+  
+  const NewLoanScreen({
+    super.key,
+    this.preselectedUser,
+    this.prefilledAmount,
+    this.prefilledPaymentMethod,
+    this.prefilledDescription,
+  });
 
   @override
   State<NewLoanScreen> createState() => _NewLoanScreenState();
@@ -49,6 +60,15 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
       _calculateValorRealCuota();
     });
     _loadUsers();
+    
+    // Prellenar datos si existen
+    if (widget.preselectedUser != null) {
+      selectedUser = widget.preselectedUser;
+      selectedUserId = widget.preselectedUser!.id;
+    }
+    if (widget.prefilledAmount != null) {
+      amountController.text = NumberFormat('#,###', 'es_CO').format(widget.prefilledAmount!.toInt());
+    }
   }
   
 
@@ -633,6 +653,10 @@ class _NewLoanScreenState extends State<NewLoanScreen> {
               });
             },
             fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
+              // Prellenar con usuario seleccionado
+              if (selectedUser != null && controller.text.isEmpty) {
+                controller.text = '${selectedUser!.userCode} - ${selectedUser!.name}';
+              }
               userSearchController.text = controller.text;
               return TextField(
                 controller: controller,

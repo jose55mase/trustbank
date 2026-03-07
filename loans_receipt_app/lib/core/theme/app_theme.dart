@@ -31,7 +31,7 @@ class AppTheme {
         ),
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,
         shadowColor: Colors.black.withOpacity(0.08),

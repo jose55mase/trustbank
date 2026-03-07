@@ -35,11 +35,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Future<void> _loadUserLoans() async {
     try {
-      // Primero cargar los préstamos
-      final loans = showCompleted 
+      final loans = showCompleted
         ? await ApiService.getLoansByUserIdAsModels(widget.user.id)
         : await ApiService.getActiveAndOverdueLoansByUserId(widget.user.id);
-      
+
       setState(() {
         userLoans = loans;
         loanMontoRestante = {};
@@ -47,16 +46,16 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
         totalProfit = loans.fold<double>(0, (sum, loan) => sum + loan.profit);
         isLoading = false;
       });
-      
-      // Luego cargar las notas en segundo plano
+
       _loadNotesInBackground(loans);
+
     } catch (e) {
       setState(() {
         isLoading = false;
       });
     }
   }
-  
+
   Future<void> _loadNotesInBackground(List<Loan> loans) async {
     try {
       Map<String, String> notes = {};
@@ -171,6 +170,20 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showNewLoanModal(context),
+                      icon: const Icon(Icons.account_balance_wallet),
+                      label: const Text('Registrar Préstamo'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.amber,
+                        foregroundColor: Colors.black87,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -542,9 +555,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               onPressed: isLoading ? null : () async {
                 if (formKey.currentState!.validate()) {
                   setModalState(() => isLoading = true);
-                  
+
                   try {
-                    
+
                     await ApiService.updateUser(
                       userId: widget.user.id,
                       userCode: userCodeController.text.trim(),
@@ -555,7 +568,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       referencePhone: referencePhoneController.text.trim().isEmpty ? null : referencePhoneController.text.trim(),
                       originalUserCode: widget.user.userCode,
                     );
-                    
+
                     // Actualizar el usuario local inmediatamente
                     setState(() {
                       widget.user.userCode = userCodeController.text.trim();
@@ -565,7 +578,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                       widget.user.referenceName = referenceNameController.text.trim().isEmpty ? null : referenceNameController.text.trim();
                       widget.user.referencePhone = referencePhoneController.text.trim().isEmpty ? null : referencePhoneController.text.trim();
                     });
-                    
+
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -580,7 +593,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     } else if (e.toString().contains('Exception: ')) {
                       errorMessage = e.toString().replaceFirst('Exception: ', '');
                     }
-                    
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(errorMessage),
@@ -731,7 +744,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               onPressed: () async {
                 final cleanAmount = amountController.text.replaceAll(',', '').replaceAll('.', '');
                 final amount = double.tryParse(cleanAmount) ?? 0;
-                
+
                 if (amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -741,9 +754,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                   );
                   return;
                 }
-                
+
                 try {
-                  
+
                   await ApiService.createPayment(
                     userId: widget.user.id,
                     amount: amount,
@@ -753,7 +766,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     interestPayment: pagoIntereses ? amount : 0,
                     pagoMenorACuota: pagoMenorACuota,
                   );
-                  
+
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -771,6 +784,135 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                 }
               },
               child: const Text('Registrar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showNewLoanModal(BuildContext context) {
+    final amountController = TextEditingController();
+    final descriptionController = TextEditingController();
+    String paymentMethod = 'CASH';
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Registrar Préstamo (Entrada)'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    TextInputFormatter.withFunction((oldValue, newValue) {
+                      if (newValue.text.isEmpty) return newValue;
+                      final number = double.tryParse(newValue.text) ?? 0;
+                      final formatted = NumberFormat('#,##0', 'es_CO').format(number.toInt());
+                      return TextEditingValue(
+                        text: formatted,
+                        selection: TextSelection.collapsed(offset: formatted.length),
+                      );
+                    }),
+                  ],
+                  decoration: const InputDecoration(
+                    labelText: 'Monto del Préstamo',
+                    prefixText: '\$ ',
+                    hintText: '5,000,000',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: paymentMethod,
+                  decoration: const InputDecoration(
+                    labelText: 'Método de Pago',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem(value: 'CASH', child: Text('Efectivo')),
+                    const DropdownMenuItem(value: 'TRANSFER', child: Text('Transferencia')),
+                    const DropdownMenuItem(value: 'MIXED', child: Text('Mixto')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      paymentMethod = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    hintText: 'Detalles del préstamo',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final cleanAmount = amountController.text.replaceAll(',', '').replaceAll('.', '');
+                final amount = double.tryParse(cleanAmount) ?? 0;
+
+                if (amount <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Por favor ingresa un monto válido'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                  return;
+                }
+
+                try {
+                  // Guardar como pago no registrado (entrada/salida)
+                  await ApiService.createPayment(
+                    userId: widget.user.id,
+                    amount: amount,
+                    paymentMethod: paymentMethod,
+                    description: descriptionController.text.isEmpty
+                        ? 'Préstamo registrado'
+                        : descriptionController.text,
+                    debtPayment: amount,
+                    interestPayment: 0,
+                    salida: true, // Marcar como salida (préstamo entregado)
+                  );
+
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Préstamo registrado como salida'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al registrar préstamo: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber,
+                foregroundColor: Colors.black87,
+              ),
+              child: const Text('Registrar Entrada'),
             ),
           ],
         ),

@@ -67,7 +67,7 @@ public class LoanController {
         
         return ResponseEntity.ok(notes);
     }
-    
+
     @GetMapping("/user/{userId}/active-and-overdue")
     public List<Loan> getActiveAndOverdueLoansByUserId(@PathVariable Long userId) {
         List<Loan> loans = loanService.findActiveAndOverdueLoansByUserId(userId);
