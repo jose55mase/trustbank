@@ -59,8 +59,24 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   
   Future<void> _loadNotesInBackground(List<Loan> loans) async {
     try {
-      // Usar el endpoint optimizado que solo devuelve las notas
-      final notes = await ApiService.getLoanNotesByUserId(widget.user.id);
+      Map<String, String> notes = {};
+      
+      for (final loan in loans) {
+        final transactions = await ApiService.getTransactionsByLoanId(loan.id);
+        if (transactions.isNotEmpty) {
+          final paymentsWithNotes = transactions
+              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
+              .toList();
+          
+          if (paymentsWithNotes.isNotEmpty) {
+            paymentsWithNotes.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+            final note = paymentsWithNotes.first['montoRestanteCompletarCuota'].toString();
+            if (note.isNotEmpty) {
+              notes[loan.id] = note;
+            }
+          }
+        }
+      }
       
       if (mounted) {
         setState(() {
@@ -183,13 +199,13 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           ),
           const SizedBox(height: 16),
           if (userLoans.isEmpty)
-            const Card(
+            Card(
               child: Padding(
                 padding: EdgeInsets.all(24),
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.account_balance_wallet_outlined, size: 48, color: Colors.grey),
+                      Image.asset('assets/images/logo.png', width: 48, height: 48),
                       SizedBox(height: 16),
                       Text('Este usuario no tiene préstamos aún', style: TextStyle(color: Colors.grey)),
                     ],

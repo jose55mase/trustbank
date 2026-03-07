@@ -39,9 +39,16 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/images/logo.png', width: 120, height: 120),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(),
+          ],
+        ),
       ),
     );
   }
