@@ -1832,69 +1832,140 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
               ),
               const SizedBox(height: 16),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancelar'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        final newNote = noteController.text.trim();
-                        
-                        // Obtener transacciones del préstamo
-                        final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
-                        
-                        if (transactions.isEmpty) {
-                          // No hay transacciones, mostrar mensaje
+                  if (_savedMontoRestante != null && _savedMontoRestante!.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () async {
+                        try {
+                          // Obtener transacciones del préstamo
+                          final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
+                          
+                          if (transactions.isEmpty) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No hay transacciones'),
+                                backgroundColor: AppColors.warning,
+                              ),
+                            );
+                            return;
+                          }
+                          
+                          // Buscar la transacción más reciente
+                          transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                          final transactionId = transactions.first['id'].toString();
+                          
+                          // Eliminar la nota
+                          await ApiService.updateTransactionField(
+                            transactionId: transactionId,
+                            field: 'montoRestanteCompletarCuota',
+                            value: '',
+                          );
+                          
+                          setState(() {
+                            _savedMontoRestante = null;
+                          });
+                          
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('No hay transacciones para agregar nota'),
-                              backgroundColor: AppColors.warning,
+                              content: Text('Nota eliminada exitosamente'),
+                              backgroundColor: AppColors.success,
                             ),
                           );
-                          return;
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error al eliminar nota: $e'),
+                              backgroundColor: AppColors.error,
+                            ),
+                          );
                         }
-                        
-                        // Buscar la transacción más reciente
-                        transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-                        final transactionId = transactions.first['id'].toString();
-                        
-                        // Actualizar la nota
-                        await ApiService.updateTransactionField(
-                          transactionId: transactionId,
-                          field: 'montoRestanteCompletarCuota',
-                          value: newNote,
-                        );
-                        
-                        setState(() {
-                          _savedMontoRestante = newNote.isEmpty ? null : newNote;
-                        });
-                        
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Nota guardada exitosamente'),
-                            backgroundColor: AppColors.success,
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error al guardar nota: $e'),
-                            backgroundColor: AppColors.error,
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                      foregroundColor: Colors.white,
+                      },
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
                     ),
-                    child: const Text('Guardar'),
+                  Row(
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancelar'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () async {
+                          try {
+                            final newNote = noteController.text.trim();
+                            
+                            // Obtener transacciones del préstamo
+                            final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
+                            
+                            if (transactions.isEmpty) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No hay transacciones para agregar nota'),
+                                  backgroundColor: AppColors.warning,
+                                ),
+                              );
+                              return;
+                            }
+                            
+                            // Buscar la transacción más reciente con nota
+                            final transactionsWithNote = transactions
+                                .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
+                                .toList();
+                            
+                            if (transactionsWithNote.isNotEmpty) {
+                              transactionsWithNote.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                              final transactionId = transactionsWithNote.first['id'].toString();
+                              
+                              // Actualizar o eliminar la nota
+                              await ApiService.updateTransactionField(
+                                transactionId: transactionId,
+                                field: 'montoRestanteCompletarCuota',
+                                value: newNote,
+                              );
+                            } else if (newNote.isNotEmpty) {
+                              // Si no hay nota previa pero se quiere agregar una nueva
+                              transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                              final transactionId = transactions.first['id'].toString();
+                              
+                              await ApiService.updateTransactionField(
+                                transactionId: transactionId,
+                                field: 'montoRestanteCompletarCuota',
+                                value: newNote,
+                              );
+                            }
+                            
+                            setState(() {
+                              _savedMontoRestante = newNote.isEmpty ? null : newNote;
+                            });
+                            
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(newNote.isEmpty ? 'Nota eliminada exitosamente' : 'Nota guardada exitosamente'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error al guardar nota: $e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Guardar'),
+                      ),
+                    ],
                   ),
                 ],
               ),

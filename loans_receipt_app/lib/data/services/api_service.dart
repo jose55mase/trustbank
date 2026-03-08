@@ -1007,8 +1007,8 @@ class ApiService {
     final transactionData = jsonDecode(getResponse.body);
     
     // Actualizar solo el campo especificado
-    if (field != null && value != null) {
-      transactionData[field] = value;
+    if (field != null) {
+      transactionData[field] = value ?? '';
       if (field == 'principalAmount') {
         transactionData['amount'] = value; // Sincronizar amount con principalAmount
       }
