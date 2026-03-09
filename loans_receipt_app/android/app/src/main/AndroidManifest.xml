@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="loans_receipt_app"
+        android:label="Inversiones Olaya"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

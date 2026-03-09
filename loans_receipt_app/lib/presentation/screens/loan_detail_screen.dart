@@ -1838,25 +1838,27 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     TextButton.icon(
                       onPressed: () async {
                         try {
-                          // Obtener transacciones del préstamo
                           final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
                           
-                          if (transactions.isEmpty) {
+                          // Buscar la transacción más reciente CON NOTA
+                          final transactionsWithNote = transactions
+                              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
+                              .toList();
+                          
+                          if (transactionsWithNote.isEmpty) {
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('No hay transacciones'),
+                                content: Text('No se encontró la nota'),
                                 backgroundColor: AppColors.warning,
                               ),
                             );
                             return;
                           }
                           
-                          // Buscar la transacción más reciente
-                          transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-                          final transactionId = transactions.first['id'].toString();
+                          transactionsWithNote.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
+                          final transactionId = transactionsWithNote.first['id'].toString();
                           
-                          // Eliminar la nota
                           await ApiService.updateTransactionField(
                             transactionId: transactionId,
                             field: 'montoRestanteCompletarCuota',
