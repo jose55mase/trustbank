@@ -1135,6 +1135,23 @@ class ApiService {
     }
   }
 
+  static Future<void> updateLoanNotes({
+    required String loanId,
+    required String notes,
+  }) async {
+    final url = Uri.parse('$baseUrl/loans/$loanId/notes');
+    
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'notes': notes}),
+    );
+    
+    if (response.statusCode != 200) {
+      throw Exception('Error al actualizar nota: ${response.statusCode}');
+    }
+  }
+
   static Future<Map<String, dynamic>> updateTransactionBreakdown({
     required String transactionId,
     required double principalAmount,

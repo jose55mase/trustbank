@@ -63,6 +63,9 @@ public class Loan {
     @Column(name = "sin_cuotas")
     private Boolean sinCuotas = false;
     
+    @Column(name = "notes", length = 2000)
+    private String notes;
+    
     @Column(name = "next_payment_date")
     private LocalDateTime nextPaymentDate;
     
@@ -178,4 +181,7 @@ public class Loan {
     
     public LocalDateTime getNextPaymentDate() { return nextPaymentDate; }
     public void setNextPaymentDate(LocalDateTime nextPaymentDate) { this.nextPaymentDate = nextPaymentDate; }
+    
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 }

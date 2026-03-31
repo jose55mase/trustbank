@@ -39,21 +39,12 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
   
   Future<void> _loadSavedMontoRestante() async {
     try {
-      final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
-      if (transactions.isNotEmpty) {
-        final paymentsWithMontoRestante = transactions
-            .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
-            .toList();
-        
-        if (paymentsWithMontoRestante.isNotEmpty) {
-          paymentsWithMontoRestante.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-          final montoRestante = paymentsWithMontoRestante.first['montoRestanteCompletarCuota'].toString();
-          if (mounted) {
-            setState(() {
-              _savedMontoRestante = montoRestante.isNotEmpty ? montoRestante : null;
-            });
-          }
-        }
+      final loanData = await ApiService.getLoanById(currentLoan.id);
+      final notes = loanData['notes']?.toString();
+      if (mounted) {
+        setState(() {
+          _savedMontoRestante = (notes != null && notes.isNotEmpty) ? notes : null;
+        });
       }
     } catch (e) {
       // Silently fail
@@ -1838,31 +1829,9 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                     TextButton.icon(
                       onPressed: () async {
                         try {
-                          final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
-                          
-                          // Buscar la transacción más reciente CON NOTA
-                          final transactionsWithNote = transactions
-                              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
-                              .toList();
-                          
-                          if (transactionsWithNote.isEmpty) {
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('No se encontró la nota'),
-                                backgroundColor: AppColors.warning,
-                              ),
-                            );
-                            return;
-                          }
-                          
-                          transactionsWithNote.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-                          final transactionId = transactionsWithNote.first['id'].toString();
-                          
-                          await ApiService.updateTransactionField(
-                            transactionId: transactionId,
-                            field: 'montoRestanteCompletarCuota',
-                            value: '',
+                          await ApiService.updateLoanNotes(
+                            loanId: currentLoan.id,
+                            notes: '',
                           );
                           
                           setState(() {
@@ -1900,46 +1869,10 @@ class _LoanDetailScreenState extends State<LoanDetailScreen> {
                           try {
                             final newNote = noteController.text.trim();
                             
-                            // Obtener transacciones del préstamo
-                            final transactions = await ApiService.getTransactionsByLoanId(currentLoan.id);
-                            
-                            if (transactions.isEmpty) {
-                              Navigator.pop(context);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('No hay transacciones para agregar nota'),
-                                  backgroundColor: AppColors.warning,
-                                ),
-                              );
-                              return;
-                            }
-                            
-                            // Buscar la transacción más reciente con nota
-                            final transactionsWithNote = transactions
-                                .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
-                                .toList();
-                            
-                            if (transactionsWithNote.isNotEmpty) {
-                              transactionsWithNote.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-                              final transactionId = transactionsWithNote.first['id'].toString();
-                              
-                              // Actualizar o eliminar la nota
-                              await ApiService.updateTransactionField(
-                                transactionId: transactionId,
-                                field: 'montoRestanteCompletarCuota',
-                                value: newNote,
-                              );
-                            } else if (newNote.isNotEmpty) {
-                              // Si no hay nota previa pero se quiere agregar una nueva
-                              transactions.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-                              final transactionId = transactions.first['id'].toString();
-                              
-                              await ApiService.updateTransactionField(
-                                transactionId: transactionId,
-                                field: 'montoRestanteCompletarCuota',
-                                value: newNote,
-                              );
-                            }
+                            await ApiService.updateLoanNotes(
+                              loanId: currentLoan.id,
+                              notes: newNote,
+                            );
                             
                             setState(() {
                               _savedMontoRestante = newNote.isEmpty ? null : newNote;

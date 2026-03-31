@@ -21,6 +21,7 @@ class Loan {
   final double? backendInstallmentAmount;
   final double? capital;
   final bool sinCuotas;
+  final String? notes;
 
   Loan({
     required this.id,
@@ -43,6 +44,7 @@ class Loan {
     this.backendInstallmentAmount,
     this.capital,
     this.sinCuotas = false,
+    this.notes,
   });
 
   factory Loan.fromJson(Map<String, dynamic> json) {
@@ -67,6 +69,7 @@ class Loan {
       backendInstallmentAmount: json['installmentAmount'] != null ? (json['installmentAmount'] as num).toDouble() : null,
       capital: json['capital'] != null ? (json['capital'] as num).toDouble() : null,
       sinCuotas: json['sinCuotas'] ?? false,
+      notes: json['notes'],
     );
   }
 
@@ -152,6 +155,7 @@ class Loan {
       'installmentAmount': backendInstallmentAmount,
       'capital': capital,
       'sinCuotas': sinCuotas,
+      'notes': notes,
     };
   }
 }

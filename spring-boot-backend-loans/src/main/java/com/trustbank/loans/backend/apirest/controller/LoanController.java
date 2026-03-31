@@ -55,13 +55,8 @@ public class LoanController {
         Map<String, String> notes = new HashMap<>();
         
         for (Loan loan : loans) {
-            // Obtener solo la transacción más reciente con nota
-            if (loan.getTransactions() != null && !loan.getTransactions().isEmpty()) {
-                loan.getTransactions().stream()
-                    .filter(t -> t.getMontoRestanteCompletarCuota() != null && 
-                               !t.getMontoRestanteCompletarCuota().trim().isEmpty())
-                    .max((t1, t2) -> t1.getDate().compareTo(t2.getDate()))
-                    .ifPresent(t -> notes.put(loan.getId().toString(), t.getMontoRestanteCompletarCuota()));
+            if (loan.getNotes() != null && !loan.getNotes().trim().isEmpty()) {
+                notes.put(loan.getId().toString(), loan.getNotes());
             }
         }
         
@@ -229,6 +224,54 @@ public class LoanController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+    
+    @PutMapping("/{id}/notes")
+    public ResponseEntity<Loan> updateLoanNotes(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        return loanService.findById(id)
+                .map(loan -> {
+                    loan.setNotes(body.get("notes"));
+                    return ResponseEntity.ok(loanService.save(loan));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+    
+    @PostMapping("/migrate-notes")
+    public ResponseEntity<Map<String, Object>> migrateNotesFromTransactions() {
+        List<Loan> allLoans = loanService.findAll();
+        int migrated = 0;
+        int skipped = 0;
+        
+        for (Loan loan : allLoans) {
+            // Si ya tiene nota en el préstamo, no sobreescribir
+            if (loan.getNotes() != null && !loan.getNotes().trim().isEmpty()) {
+                skipped++;
+                continue;
+            }
+            
+            if (loan.getTransactions() != null && !loan.getTransactions().isEmpty()) {
+                loan.getTransactions().stream()
+                    .filter(t -> t.getMontoRestanteCompletarCuota() != null && 
+                               !t.getMontoRestanteCompletarCuota().trim().isEmpty())
+                    .max((t1, t2) -> t1.getDate().compareTo(t2.getDate()))
+                    .ifPresent(t -> {
+                        loan.setNotes(t.getMontoRestanteCompletarCuota());
+                        loanService.save(loan);
+                    });
+                
+                if (loan.getNotes() != null && !loan.getNotes().trim().isEmpty()) {
+                    migrated++;
+                }
+            }
+        }
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalLoans", allLoans.size());
+        result.put("migrated", migrated);
+        result.put("skipped", skipped);
+        result.put("message", "Migración de notas completada");
+        
+        return ResponseEntity.ok(result);
     }
     
     @GetMapping("/{id}/progress")
