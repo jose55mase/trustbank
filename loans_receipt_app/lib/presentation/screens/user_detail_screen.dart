@@ -61,19 +61,8 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       Map<String, String> notes = {};
       
       for (final loan in loans) {
-        final transactions = await ApiService.getTransactionsByLoanId(loan.id);
-        if (transactions.isNotEmpty) {
-          final paymentsWithNotes = transactions
-              .where((t) => t['montoRestanteCompletarCuota'] != null && t['montoRestanteCompletarCuota'].toString().isNotEmpty)
-              .toList();
-          
-          if (paymentsWithNotes.isNotEmpty) {
-            paymentsWithNotes.sort((a, b) => DateTime.parse(b['date']).compareTo(DateTime.parse(a['date'])));
-            final note = paymentsWithNotes.first['montoRestanteCompletarCuota'].toString();
-            if (note.isNotEmpty) {
-              notes[loan.id] = note;
-            }
-          }
+        if (loan.notes != null && loan.notes!.isNotEmpty) {
+          notes[loan.id] = loan.notes!;
         }
       }
       

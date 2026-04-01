@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
+import '../../data/services/api_service.dart';
 import '../screens/home_screen.dart';
 import '../screens/users_screen.dart';
 import '../screens/new_loan_screen.dart';
@@ -50,6 +51,57 @@ class _AppDrawerState extends State<AppDrawer> {
         (route) => false,
       );
     }
+  }
+
+  void _showMigrateNotesDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Migrar Notas Antiguas'),
+        content: const Text(
+          'Esto copiará las notas guardadas en transacciones al campo de notas de cada préstamo.\n\n'
+          'Las notas que ya existan en los préstamos no serán sobreescritas.\n\n'
+          '¿Deseas continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              Navigator.pop(context); // Cerrar drawer
+              try {
+                final result = await ApiService.migrateNotesFromTransactions();
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Migración completada: ${result['migrated']} notas migradas, ${result['skipped']} omitidas de ${result['totalLoans']} préstamos',
+                      ),
+                      backgroundColor: AppColors.success,
+                      duration: const Duration(seconds: 5),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error al migrar notas: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            child: const Text('Migrar', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildMenuItem({
@@ -266,6 +318,13 @@ class _AppDrawerState extends State<AppDrawer> {
                   MaterialPageRoute(builder: (_) => const UserPermissionsScreen()),
                 );
               },
+            ),
+          if (userRole == 'ADMIN')
+            _buildMenuItem(
+              icon: Icons.sync,
+              title: 'Migrar Notas Antiguas',
+              iconColor: Colors.teal,
+              onTap: () => _showMigrateNotesDialog(context),
             ),
           const Divider(),
           ListTile(

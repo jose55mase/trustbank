@@ -1152,6 +1152,18 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> migrateNotesFromTransactions() async {
+    final url = Uri.parse('$baseUrl/loans/migrate-notes');
+    
+    final response = await http.post(url);
+    
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error al migrar notas: ${response.statusCode}');
+    }
+  }
+
   static Future<Map<String, dynamic>> updateTransactionBreakdown({
     required String transactionId,
     required double principalAmount,

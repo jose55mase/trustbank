@@ -52,12 +52,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
         foregroundColor: Colors.white,
       ),
       drawer: const AppDrawer(),
-      /*
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddPaymentModal(context),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),*/
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : DefaultTabController(
@@ -67,7 +61,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                   final tabController = DefaultTabController.of(context);
                   tabController.addListener(() {
                     if (tabController.index == 1) {
-                      // Tab "Registrados" seleccionado
                       _loadAllPayments();
                     }
                   });
@@ -172,7 +165,6 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
               onPressed: () {
                 final cleanAmount = amountController.text.replaceAll(',', '');
                 final amount = double.tryParse(cleanAmount) ?? 0;
-                
                 if (amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -182,13 +174,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                   );
                   return;
                 }
-                
-                _addPayment(
-                  amount: amount,
-                  paymentMethod: selectedPaymentMethod,
-                  description: descriptionController.text,
-                );
-                
+                _addPayment(amount: amount, paymentMethod: selectedPaymentMethod, description: descriptionController.text);
                 Navigator.pop(context);
               },
               child: const Text('Agregar'),
@@ -199,11 +185,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
     );
   }
 
-  void _addPayment({
-    required double amount,
-    required String paymentMethod,
-    required String description,
-  }) {
+  void _addPayment({required double amount, required String paymentMethod, required String description}) {
     setState(() {
       unregisteredPayments.add({
         'amount': amount,
@@ -212,12 +194,184 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
         'date': DateTime.now(),
       });
     });
-    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Entrada/Salida agregada'),
-        backgroundColor: AppColors.success,
-      ),
+      const SnackBar(content: Text('Entrada/Salida agregada'), backgroundColor: AppColors.success),
+    );
+  }
+
+  Widget _buildPaymentCard(dynamic payment, {required bool isRegistered}) {
+    final userName = payment['user']?['name'] ?? 'Usuario desconocido';
+    final amount = payment['amount']?.toDouble() ?? 0.0;
+    final paymentDate = payment['paymentDate'] != null
+        ? DateTime.parse(payment['paymentDate'])
+        : DateTime.now();
+    final isSalida = payment['salida'] == true;
+    final hasUsuarioNuevo = payment['description']?.toString().contains('Usuario Nuevo') == true;
+    final currencyFormat = NumberFormat('#,##0', 'es_CO');
+
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.only(bottom: 12, top: 8),
+          color: isSalida ? Colors.orange.shade50 : null,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: isSalida ? Colors.orange.shade300 : Colors.grey.shade300,
+              width: isSalida ? 2 : 1,
+            ),
+          ),
+          child: ListTile(
+            onTap: () {
+              if (!isRegistered && hasUsuarioNuevo) {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NewUserScreen()));
+              } else {
+                _navigateToUserDetail(payment['user']);
+              }
+            },
+            leading: CircleAvatar(
+              backgroundColor: isSalida
+                  ? Colors.orange.withOpacity(0.2)
+                  : isRegistered
+                      ? AppColors.success.withOpacity(0.1)
+                      : Colors.orange.withOpacity(0.1),
+              child: Icon(
+                isSalida
+                    ? Icons.arrow_upward
+                    : isRegistered
+                        ? Icons.payment
+                        : Icons.money_off,
+                color: isSalida
+                    ? Colors.deepOrange
+                    : isRegistered
+                        ? AppColors.success
+                        : Colors.orange,
+              ),
+            ),
+            title: Column(
+              children: [
+                if (!isRegistered && hasUsuarioNuevo)
+                  const Text('Usuario Nuevo', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                else
+                  Text(' $userName '),
+                Row(
+                  children: [
+                    Text('${DateFormat('dd/MM/yyyy').format(paymentDate)} '),
+                    Text(DateFormat('HH:mm').format(paymentDate), style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Total: \$${currencyFormat.format(amount)}'),
+                if (!(!isRegistered && hasUsuarioNuevo))
+                  Row(
+                    children: [
+                      Icon(
+                        (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
+                        size: 16,
+                        color: (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
+                      ),
+                      const SizedBox(width: 4),
+                      Text('Deuda: ${(payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
+                      const SizedBox(width: 16),
+                      Icon(
+                        (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
+                        size: 16,
+                        color: (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
+                      ),
+                      const SizedBox(width: 4),
+                      Text('Interés: ${(payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
+                    ],
+                  ),
+                Text('Método: ${payment['paymentMethod'] ?? 'N/A'}'),
+                if (payment['description'] != null && payment['description'].isNotEmpty)
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(color: Colors.black, fontSize: 14),
+                      children: [
+                        const TextSpan(text: 'Desc: '),
+                        if (isSalida && hasUsuarioNuevo)
+                          TextSpan(text: payment['description'], style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold))
+                        else
+                          TextSpan(text: payment['description']),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (!isRegistered && isSalida)
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NewLoanScreen(
+                            preselectedUser: User(
+                              id: payment['user']?['id']?.toString() ?? '0',
+                              name: payment['user']?['name'] ?? 'Usuario',
+                              userCode: payment['user']?['userCode'] ?? '',
+                              phone: payment['user']?['phone'] ?? '',
+                              direccion: payment['user']?['direccion'] ?? '',
+                              registrationDate: DateTime.now(),
+                            ),
+                            prefilledAmount: amount,
+                            prefilledPaymentMethod: payment['paymentMethod'],
+                            prefilledDescription: payment['description'],
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add_card, size: 20),
+                    color: Colors.deepOrange,
+                    tooltip: 'Crear préstamo',
+                  ),
+                if (!isRegistered)
+                  IconButton(
+                    onPressed: () => _showConfirmationDialog(payment['id']),
+                    icon: const Icon(Icons.check_circle_outline, size: 20),
+                    color: AppColors.success,
+                    tooltip: 'Marcar como registrado',
+                  ),
+                if (isRegistered)
+                  const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                if (isRegistered)
+                  const SizedBox(width: 4),
+                IconButton(
+                  onPressed: () => _showDeleteConfirmation(payment['id'].toString(), userName, amount),
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  color: AppColors.error,
+                  tooltip: 'Eliminar pago',
+                ),
+                const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 0,
+          right: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2)),
+              ],
+            ),
+            child: Text(
+              '${payment['user']?['userCode'] ?? 'N/A'}',
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -238,208 +392,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: unregisteredPayments.length,
-              itemBuilder: (context, index) {
-                final payment = unregisteredPayments[index];
-                final userName = payment['user']?['name'] ?? 'Usuario desconocido';
-                final amount = payment['amount']?.toDouble() ?? 0.0;
-                final paymentDate = payment['paymentDate'] != null 
-                    ? DateTime.parse(payment['paymentDate'])
-                    : DateTime.now();
-                
-                // Debug logs
-                
-                return Stack(
-                  children: [
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 12, top: 8),
-                      color: payment['salida'] == true 
-                          ? Colors.orange.shade50
-                          : null,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: payment['salida'] == true 
-                              ? Colors.orange.shade300
-                              : Colors.grey.shade300,
-                          width: payment['salida'] == true ? 2 : 1,
-                        ),
-                      ),
-                      child: ListTile(
-                        onTap: () {
-                          final hasUsuarioNuevo = payment['description']?.toString().contains('Usuario Nuevo') == true;
-                          if (hasUsuarioNuevo) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const NewUserScreen(),
-                              ),
-                            );
-                          } else {
-                            _navigateToUserDetail(payment['user']);
-                          }
-                        },
-                        leading: CircleAvatar(
-                          backgroundColor: payment['salida'] == true 
-                              ? Colors.orange.withOpacity(0.2)
-                              : Colors.orange.withOpacity(0.1),
-                          child: Icon(
-                            payment['salida'] == true 
-                                ? Icons.arrow_upward
-                                : Icons.money_off,
-                            color: payment['salida'] == true 
-                                ? Colors.deepOrange
-                                : Colors.orange,
-                          ),
-                        ),
-                        title: Column(
-                          children: [
-                            Builder(
-                              builder: (context) {
-                                final hasUsuarioNuevo = payment['description']?.toString().contains('Usuario Nuevo') == true;
-                                return hasUsuarioNuevo
-                                    ? const Text(
-                                        'Usuario Nuevo',
-                                        style: TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    : Text(' $userName ');
-                              },
-                            ),
-                            Row(
-                              children: [
-                                Text('${DateFormat('dd/MM/yyyy').format(paymentDate)} '),
-                                Text('${DateFormat('HH:mm').format(paymentDate)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Total: \$${NumberFormat('#,##0', 'es_CO').format(amount)}'),
-                            if (!(payment['description']?.toString().contains('Usuario Nuevo') == true))
-                              Row(
-                                children: [
-                                  Icon(
-                                    (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
-                                    size: 16,
-                                    color: (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text('Deuda: ${(payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
-                                  const SizedBox(width: 16),
-                                  Icon(
-                                    (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
-                                    size: 16,
-                                    color: (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text('Interés: ${(payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
-                                ],
-                              ),
-                            Text('Método: ${payment['paymentMethod'] ?? 'N/A'}'),
-                            if (payment['description'] != null && payment['description'].isNotEmpty)
-                              RichText(
-                                text: TextSpan(
-                                  style: const TextStyle(color: Colors.black, fontSize: 14),
-                                  children: [
-                                    const TextSpan(text: 'Desc: '),
-                                    if (payment['salida'] == true && payment['description'].toString().contains('Usuario Nuevo'))
-                                      TextSpan(
-                                        text: payment['description'],
-                                        style: const TextStyle(
-                                          color: Colors.red,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    else
-                                      TextSpan(text: payment['description']),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (payment['salida'] == true)
-                              IconButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => NewLoanScreen(
-                                        preselectedUser: User(
-                                          id: payment['user']?['id']?.toString() ?? '0',
-                                          name: payment['user']?['name'] ?? 'Usuario',
-                                          userCode: payment['user']?['userCode'] ?? '',
-                                          phone: payment['user']?['phone'] ?? '',
-                                          direccion: payment['user']?['direccion'] ?? '',
-                                          registrationDate: DateTime.now(),
-                                        ),
-                                        prefilledAmount: amount,
-                                        prefilledPaymentMethod: payment['paymentMethod'],
-                                        prefilledDescription: payment['description'],
-                                      ),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.add_card, size: 20),
-                                color: Colors.deepOrange,
-                                tooltip: 'Crear préstamo',
-                              ),
-                            IconButton(
-                              onPressed: () => _showConfirmationDialog(payment['id']),
-                              icon: const Icon(Icons.check_circle_outline, size: 20),
-                              color: AppColors.success,
-                              tooltip: 'Marcar como registrado',
-                            ),
-                            IconButton(
-                              onPressed: () => _showDeleteConfirmation(
-                                payment['id'].toString(),
-                                userName,
-                                amount,
-                              ),
-                              icon: const Icon(Icons.delete_outline, size: 20),
-                              color: AppColors.error,
-                              tooltip: 'Eliminar pago',
-                            ),
-                            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          '${payment['user']?['userCode'] ?? 'N/A'}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+              itemBuilder: (context, index) => _buildPaymentCard(unregisteredPayments[index], isRegistered: false),
             ),
           );
   }
@@ -461,104 +414,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: registeredPayments.length,
-              itemBuilder: (context, index) {
-                final payment = registeredPayments[index];
-                final userName = payment['user']?['name'] ?? 'Usuario desconocido';
-                final amount = payment['amount']?.toDouble() ?? 0.0;
-                final paymentDate = payment['paymentDate'] != null 
-                    ? DateTime.parse(payment['paymentDate'])
-                    : DateTime.now();
-                
-                return Stack(
-                  children: [
-                    Card(
-                      margin: const EdgeInsets.only(bottom: 12, top: 8),
-                      child: ListTile(
-                        onTap: () => _navigateToUserDetail(payment['user']),
-                        leading: CircleAvatar(
-                          backgroundColor: AppColors.success.withOpacity(0.1),
-                          child: const Icon(Icons.payment, color: AppColors.success),
-                        ),
-                        title: Text('\$${NumberFormat('#,##0', 'es_CO').format(amount)}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Total: \$${NumberFormat('#,##0', 'es_CO').format(amount)}'),
-                            Row(
-                              children: [
-                                Icon(
-                                  (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
-                                  size: 16,
-                                  color: (payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
-                                ),
-                                const SizedBox(width: 4),
-                                Text('Deuda: ${(payment['debtPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
-                                const SizedBox(width: 16),
-                                Icon(
-                                  (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? Icons.check_circle : Icons.cancel,
-                                  size: 16,
-                                  color: (payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? AppColors.success : AppColors.error,
-                                ),
-                                const SizedBox(width: 4),
-                                Text('Interés: ${(payment['interestPayment']?.toDouble() ?? 0.0) > 0 ? "Sí" : "No"}'),
-                              ],
-                            ),
-                            Text('Usuario: $userName'),
-                            Text('Método: ${payment['paymentMethod'] ?? 'N/A'}'),
-                            if (payment['description'] != null && payment['description'].isNotEmpty)
-                              Text('Desc: ${payment['description']}'),
-                            Text('Fecha: ${DateFormat('dd/MM/yyyy HH:mm').format(paymentDate)}'),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.check_circle, color: AppColors.success, size: 20),
-                            const SizedBox(width: 4),
-                            IconButton(
-                              onPressed: () => _showDeleteConfirmation(
-                                payment['id'].toString(),
-                                userName,
-                                amount,
-                              ),
-                              icon: const Icon(Icons.delete_outline, size: 20),
-                              color: AppColors.error,
-                              tooltip: 'Eliminar pago',
-                            ),
-                            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 0,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          '${payment['user']?['userCode'] ?? 'N/A'}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
+              itemBuilder: (context, index) => _buildPaymentCard(registeredPayments[index], isRegistered: true),
             ),
           );
   }
@@ -566,10 +422,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
   void _navigateToUserDetail(dynamic userData) {
     if (userData == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Información de usuario no disponible'),
-          backgroundColor: AppColors.error,
-        ),
+        const SnackBar(content: Text('Información de usuario no disponible'), backgroundColor: AppColors.error),
       );
       return;
     }
@@ -580,17 +433,12 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
       userCode: userData['userCode'] ?? '',
       phone: userData['phone'] ?? '',
       direccion: userData['direccion'] ?? '',
-      registrationDate: userData['registrationDate'] != null 
+      registrationDate: userData['registrationDate'] != null
           ? DateTime.parse(userData['registrationDate'])
           : DateTime.now(),
     );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserDetailScreen(user: user),
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => UserDetailScreen(user: user)));
   }
 
   void _showConfirmationDialog(int paymentId) {
@@ -600,10 +448,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
         title: const Text('Confirmar Registro'),
         content: const Text('¿Estás seguro de que deseas marcar este pago como registrado?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
@@ -619,26 +464,19 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
   Future<void> _deletePayment(String paymentId) async {
     try {
       await ApiService.deletePayment(paymentId);
-      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pago eliminado correctamente'),
-          backgroundColor: AppColors.success,
-        ),
+        const SnackBar(content: Text('Pago eliminado correctamente'), backgroundColor: AppColors.success),
       );
-      
       await _loadAllPayments();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al eliminar: $e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: AppColors.error),
       );
     }
   }
 
   void _showDeleteConfirmation(String paymentId, String userName, double amount) {
+    final currencyFormat = NumberFormat('#,##0', 'es_CO');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -654,23 +492,17 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '¿Estás seguro de que deseas eliminar este pago?',
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text('¿Estás seguro de que deseas eliminar este pago?', style: TextStyle(fontSize: 16)),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('ID: $paymentId', style: const TextStyle(fontWeight: FontWeight.bold)),
                   Text('Usuario: $userName'),
-                  Text('Monto: \$${NumberFormat('#,##0', 'es_CO').format(amount)}'),
+                  Text('Monto: \$${currencyFormat.format(amount)}'),
                 ],
               ),
             ),
@@ -687,10 +519,7 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
                   Icon(Icons.info, color: AppColors.error, size: 16),
                   const SizedBox(width: 8),
                   const Expanded(
-                    child: Text(
-                      'Esta acción no se puede deshacer',
-                      style: TextStyle(fontSize: 12, color: AppColors.error),
-                    ),
+                    child: Text('Esta acción no se puede deshacer', style: TextStyle(fontSize: 12, color: AppColors.error)),
                   ),
                 ],
               ),
@@ -698,19 +527,13 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _deletePayment(paymentId);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error, foregroundColor: Colors.white),
             child: const Text('Eliminar'),
           ),
         ],
@@ -723,17 +546,11 @@ class _UnregisteredPaymentsScreenState extends State<UnregisteredPaymentsScreen>
       await ApiService.markPaymentAsRegistered(paymentId.toString());
       await _loadAllPayments();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pago marcado como registrado'),
-          backgroundColor: AppColors.success,
-        ),
+        const SnackBar(content: Text('Pago marcado como registrado'), backgroundColor: AppColors.success),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: AppColors.error,
-        ),
+        SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error),
       );
     }
   }
