@@ -5,7 +5,7 @@
             "pos": [3990.789794921875, 7.972933292388916, 2618.076416015625],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.0,
-            "enableCEPersistency": 1,
+            "enableCEPersistency": 0,
             "customString": ""
         },
         {
@@ -13,7 +13,7 @@
             "pos": [4008.78369140625, 7.8289570808410648, 2618.700439453125],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.0,
-            "enableCEPersistency": 1,
+            "enableCEPersistency": 0,
             "customString": ""
         },
         {
@@ -21,7 +21,7 @@
             "pos": [3997.084716796875, 7.922565937042236, 2618.717041015625],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.0,
-            "enableCEPersistency": 1,
+            "enableCEPersistency": 0,
             "customString": ""
         },
         {
@@ -29,15 +29,7 @@
             "pos": [4003.00146484375, 7.875235080718994, 2618.876953125],
             "ypr": [0.0, 0.0, 0.0],
             "scale": 1.0,
-            "enableCEPersistency": 1,
-            "customString": ""
-        },
-        {
-            "name": "Land_Container_1Moh_DE",
-            "pos": [4015.0, 7.8, 2618.5],
-            "ypr": [0.0, 0.0, 0.0],
-            "scale": 1.0,
-            "enableCEPersistency": 1,
+            "enableCEPersistency": 0,
             "customString": ""
         }
     ]
