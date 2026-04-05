@@ -1,0 +1,22 @@
+{
+    "Triggers":
+	[
+		{
+			"Position": [ 13674.7, 35.9746, 12298.9 ],
+			"Orientation": [ 0, 0, 0 ],
+			"Size": [ 15, 25.7, 40.8 ],
+			"EyeAccommodation": 0,
+			"Breadcrumbs":[ ],
+			"IntermpolationSpeed": 1
+		},
+		{
+			"Position": [ 14287.7, 137.101, 14966.8 ],
+			"Orientation": [ 0, 0, 0 ],
+			"Size": [ 170, 80, 120 ],
+			"EyeAccommodation": 0.8,
+			"Breadcrumbs":[ ],
+			"IntermpolationSpeed": 0.5
+		}
+
+	]
+}

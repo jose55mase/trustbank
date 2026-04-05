@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<playerspawnpoints>
+    <fresh>
+        <spawn_params>
+            <min_dist_infected>0</min_dist_infected>
+            <max_dist_infected>0</max_dist_infected>
+            <min_dist_player>0</min_dist_player>
+            <max_dist_player>0</max_dist_player>
+            <min_dist_static>0</min_dist_static>
+            <max_dist_static>0</max_dist_static>
+        </spawn_params>
+        <generator_params>
+            <grid_density>4</grid_density>
+            <grid_width>0</grid_width>
+            <grid_height>0</grid_height>
+            <min_dist_static>0</min_dist_static>
+            <max_dist_static>2</max_dist_static>
+            <min_steepness>-45</min_steepness>
+            <max_steepness>45</max_steepness>
+        </generator_params>
+        <group_params>
+            <enablegroups>true</enablegroups>
+            <groups_as_regular>true</groups_as_regular>
+            <lifetime>360</lifetime>
+            <counter>-1</counter>
+        </group_params>
+        <generator_posbubbles>
+            <group name="WestCherno" lifetime="240" counter="-1"> 
+		
+		<!--pos x="14151" z="15013.1" /--> <!-- city -->
+		<pos x="3997" z="2497" /> <!-- Kamarovo -->
+                <pos x="2759" z="5524" /> <!-- Zeleno -->
+                <pos x="8686" z="2567" /> <!-- Cherno --> 
+                <pos x="13313" z="6439" /> <!-- Solnichy --> 
+                <pos x="10887" z="12225" /> <!-- Krasno -->
+                <!--pos x="8943" z="11868" /--> <!-- Gvozdno --> 
+			 
+			
+	   </group>            
+        </generator_posbubbles>
+    </fresh>
+   
+</playerspawnpoints>

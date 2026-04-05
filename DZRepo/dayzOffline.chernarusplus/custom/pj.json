@@ -1,0 +1,158 @@
+{
+    "spawnWeight": 1,
+    "name": "Player",
+    "characterTypes": [
+        "SurvivorF_Baty",
+	"SurvivorM_Boris",
+	"SurvivorF_Eva",
+	"SurvivorF_Frida",
+	"SurvivorM_Elias",
+	"SurvivorM_Cyril",
+	"SurvivorF_Linda",
+	"SurvivorF_Keiko",
+	"SurvivorM_Kaito",
+	"SurvivorM_Mirek",
+	"SurvivorM_Niki",
+	"SurvivorF_Irena"
+    ],
+    "attachmentSlotItemSets": [
+        {
+            "slotName": "Body",
+            "discreteItemSets": [
+                {
+                    "itemType": "TrackSuitJacket_Black",
+                    "spawnWeight": 1,
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": -1
+                }
+            ]
+        },
+        {
+            "slotName": "Legs",
+            "discreteItemSets": [
+                {
+                    "itemType": "TrackSuitPants_Black",
+                    "spawnWeight": 1,
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": -1
+                }
+            ]
+        },
+        {
+            "slotName": "Headgear",
+            "discreteItemSets": [
+                {
+                    "itemType": "BaseballCap_CMMG_Black",
+                    "spawnWeight": 1,
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": -1
+                }
+            ]
+        },
+        {
+            "slotName": "Feet",
+            "discreteItemSets": [
+                {
+                    "itemType": "Sneakers_White",
+                    "spawnWeight": 1,
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": -1
+                }
+            ]
+        }
+    ],
+    "discreteUnsortedItemSets": [
+        {
+            "name": "Cargo1",
+            "spawnWeight": 1,
+            "attributes": {
+                "healthMin": 1,
+                "healthMax": 1,
+                "quantityMin": 1,
+                "quantityMax": 1
+            },
+            "complexChildrenTypes": [
+                {
+                    "itemType": "BandageDressing",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 2
+                },
+                {
+                    "itemType": "Chemlight_Red",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 1
+                },
+                {
+                    "itemType": "Pear",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 3
+                },
+                {
+                    "itemType": "Pear",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 3
+                },
+                {
+                    "itemType": "ChernarusMap",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 7
+                },
+                {
+                    "itemType": "HuntingKnife",
+                    "attributes": {
+                        "healthMin": 1,
+                        "healthMax": 1,
+                        "quantityMin": 1,
+                        "quantityMax": 1
+                    },
+                    "quickBarSlot": 5
+                }
+            ]
+        }
+    ]
+}
