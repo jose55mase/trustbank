@@ -1262,8 +1262,8 @@
       <child lootmax="0" lootmin="0" max="5" min="3" type="Truck_01_Covered_Orange"/> 
     </children> 
   </event>
-  <!-- Contenedor cerrado de TEST via evento - siempre aparece -->
-  <event name="LockedContainer_Test">
+  <!-- Mochila de TEST con loot - siempre aparece al lado de contenedores -->
+  <event name="Item_TestBag">
     <nominal>1</nominal>
     <min>1</min>
     <max>1</max>
@@ -1272,12 +1272,12 @@
     <saferadius>0</saferadius>
     <distanceradius>0</distanceradius>
     <cleanupradius>200</cleanupradius>
-    <flags deletable="0" init_random="0" remove_damaged="0"/>
+    <flags deletable="0" init_random="0" remove_damaged="1"/>
     <position>fixed</position>
     <limit>child</limit>
     <active>1</active>
     <children>
-      <child lootmax="10" lootmin="3" max="1" min="1" type="Land_ContainerLocked_Blue_DE"/>
+      <child lootmax="0" lootmin="0" max="1" min="1" type="MountainBag_Blue"/>
     </children>
   </event>
   <!-- Contenedores cerrados con llave - spawn dinámico Tier 1 y 2 -->
