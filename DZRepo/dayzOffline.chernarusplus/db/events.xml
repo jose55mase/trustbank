@@ -1280,23 +1280,6 @@
       <child lootmax="10" lootmin="3" max="1" min="1" type="Land_Container_1Aoh_Locked_Blue_DE"/>
     </children>
   </event>
-  <event name="LockedContainer_Green">
-    <nominal>3</nominal>
-    <min>1</min>
-    <max>1</max>
-    <lifetime>2500</lifetime>
-    <restock>1800</restock>
-    <saferadius>100</saferadius>
-    <distanceradius>200</distanceradius>
-    <cleanupradius>200</cleanupradius>
-    <flags deletable="0" init_random="0" remove_damaged="0"/>
-    <position>fixed</position>
-    <limit>child</limit>
-    <active>1</active>
-    <children>
-      <child lootmax="10" lootmin="3" max="1" min="1" type="Land_Container_1Aoh_Locked_Green_DE"/>
-    </children>
-  </event>
   <event name="LockedContainer_Yellow">
     <nominal>3</nominal>
     <min>1</min>

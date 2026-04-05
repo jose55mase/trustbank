@@ -1,0 +1,136 @@
+{
+	"Objects": [
+		{
+			"name": "DZ\\structures\\furniture\\cases\\wooden_crate\\wooden_crate.p3d",
+			"pos": [4000.0, 0.0, 2495.0],
+			"ypr": [15.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\wooden_crate\\wooden_crate.p3d",
+			"pos": [3994.0, 0.0, 2494.0],
+			"ypr": [-30.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\wooden_crate\\wooden_crate.p3d",
+			"pos": [3994.0, 0.5, 2494.5],
+			"ypr": [45.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\various\\barrel\\barrel_blue.p3d",
+			"pos": [4002.0, 0.0, 2500.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\various\\barrel\\barrel_green.p3d",
+			"pos": [3992.0, 0.0, 2500.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\various\\barrel\\barrel_red.p3d",
+			"pos": [4003.5, 0.0, 2498.0],
+			"ypr": [10.0, 15.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures_bliss\\miscellaneous\\camping\\tent_medium\\tent_medium.p3d",
+			"pos": [3990.0, 0.0, 2505.0],
+			"ypr": [30.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures_bliss\\miscellaneous\\camping\\tent_medium\\tent_medium.p3d",
+			"pos": [4005.0, 0.0, 2505.0],
+			"ypr": [-30.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\sandbag\\sandbag_long.p3d",
+			"pos": [3988.0, 0.0, 2485.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\sandbag\\sandbag_long.p3d",
+			"pos": [3997.0, 0.0, 2484.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\sandbag\\sandbag_long.p3d",
+			"pos": [4006.0, 0.0, 2485.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\sandbag\\sandbag_short.p3d",
+			"pos": [3984.0, 0.0, 2488.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\cases\\sandbag\\sandbag_short.p3d",
+			"pos": [4010.0, 0.0, 2488.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\tables\\table_wooden_small\\table_wooden_small.p3d",
+			"pos": [3997.0, 0.0, 2497.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\chairs\\chair_folding\\chair_folding.p3d",
+			"pos": [3996.0, 0.0, 2496.0],
+			"ypr": [30.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\chairs\\chair_folding\\chair_folding.p3d",
+			"pos": [3998.5, 0.0, 2496.0],
+			"ypr": [-30.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\furniture\\chairs\\chair_folding\\chair_folding.p3d",
+			"pos": [3997.0, 0.0, 2498.5],
+			"ypr": [180.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\structures\\signs\\misc\\sign_arrow\\sign_arrow.p3d",
+			"pos": [3997.0, 0.0, 2480.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\plants\\tree\\t_piceaabies_2s.p3d",
+			"pos": [3985.0, 0.0, 2510.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\plants\\tree\\t_piceaabies_2s.p3d",
+			"pos": [4010.0, 0.0, 2508.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\plants\\tree\\t_piceaabies_2s.p3d",
+			"pos": [3983.0, 0.0, 2492.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "DZ\\plants\\tree\\t_piceaabies_2s.p3d",
+			"pos": [4012.0, 0.0, 2493.0],
+			"ypr": [0.0, 0.0, 0.0],
+			"scale": 1
+		}
+	]
+}

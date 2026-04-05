@@ -1,0 +1,28 @@
+{
+	"Objects": [
+		{
+			"name": "Land_Container_1Aoh_DE",
+			"pos": [3960.0, 0.0, 2470.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "Land_Container_1Bo_DE",
+			"pos": [3960.0, 0.0, 2455.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "Land_Container_1Moh_DE",
+			"pos": [3960.0, 0.0, 2440.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		},
+		{
+			"name": "Land_Container_1Mo_DE",
+			"pos": [3960.0, 0.0, 2425.0],
+			"ypr": [90.0, 0.0, 0.0],
+			"scale": 1
+		}
+	]
+}
