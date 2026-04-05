@@ -4421,7 +4421,7 @@
 	</type>
 -->
 	<!-- Contenedores cerrados con llave - Loot SOLO Tier 1 y 2 -->
-	<type name="Land_Container_1Aoh_Locked_Blue_DE">
+	<type name="Land_ContainerLocked_Blue_DE">
 		<!-- Armas Tier 1-2 con cargador parcial -->
 		<cargo chance="0.7">
 			<item name="Colt1911" chance="0.15" />
@@ -4482,7 +4482,7 @@
 		</cargo>
 	</type>
 
-	<type name="Land_Container_1Aoh_Locked_Yellow_DE">
+	<type name="Land_ContainerLocked_Yellow_DE">
 		<!-- Armas Tier 1-2 con cargador parcial -->
 		<cargo chance="0.7">
 			<item name="Colt1911" chance="0.15" />
@@ -4544,7 +4544,7 @@
 	</type>
 
 	<!-- Contenedor naranja - Loot militar Tier 3, ropa militar/caza, granadas -->
-	<type name="Land_Container_1Moh_Locked_Orange_DE">
+	<type name="Land_ContainerLocked_Orange_DE">
 		<!-- Armas militares Tier 3 -->
 		<cargo chance="0.8">
 			<item name="AK74" chance="0.15" />
@@ -4608,7 +4608,7 @@
 	</type>
 
 	<!-- Contenedor rojo - Loot militar Tier 4, ropa negra, granadas -->
-	<type name="Land_Container_1Moh_Locked_Red_DE">
+	<type name="Land_ContainerLocked_Red_DE">
 		<!-- Armas militares Tier 4 -->
 		<cargo chance="0.8">
 			<item name="AK101" chance="0.15" />
