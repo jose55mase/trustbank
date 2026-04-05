@@ -1432,6 +1432,10 @@
   <event name="AnimalRoeDeer"/>  
   <event name="AnimalWolf"/>  
   <event name="AnimalWildBoar"/>
+  <!-- Contenedor de TEST via evento -->
+  <event name="LockedContainer_Test">
+    <pos x="4020.0" z="2618.5" a="0"/>
+  </event>
   <!-- Posiciones aleatorias para contenedores cerrados - Tier 1 y 2 -->
   <event name="LockedContainer_Blue">
     <pos x="4856.0" z="2487.0" a="0"/>

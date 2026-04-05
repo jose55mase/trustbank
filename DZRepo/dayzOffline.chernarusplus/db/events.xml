@@ -1262,6 +1262,24 @@
       <child lootmax="0" lootmin="0" max="5" min="3" type="Truck_01_Covered_Orange"/> 
     </children> 
   </event>
+  <!-- Contenedor cerrado de TEST via evento - siempre aparece -->
+  <event name="LockedContainer_Test">
+    <nominal>1</nominal>
+    <min>1</min>
+    <max>1</max>
+    <lifetime>2500</lifetime>
+    <restock>0</restock>
+    <saferadius>0</saferadius>
+    <distanceradius>0</distanceradius>
+    <cleanupradius>200</cleanupradius>
+    <flags deletable="0" init_random="0" remove_damaged="0"/>
+    <position>fixed</position>
+    <limit>child</limit>
+    <active>1</active>
+    <children>
+      <child lootmax="10" lootmin="3" max="1" min="1" type="Land_ContainerLocked_Blue_DE"/>
+    </children>
+  </event>
   <!-- Contenedores cerrados con llave - spawn dinámico Tier 1 y 2 -->
   <event name="LockedContainer_Blue">
     <nominal>3</nominal>
