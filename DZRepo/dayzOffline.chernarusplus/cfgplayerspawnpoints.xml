@@ -27,13 +27,11 @@
         <generator_posbubbles>
             <group name="WestCherno" lifetime="240" counter="-1"> 
 		
-		<!--pos x="14151" z="15013.1" /--> <!-- city -->
-		<pos x="3997" z="2497" /> <!-- Kamarovo -->
-                <pos x="2759" z="5524" /> <!-- Zeleno -->
-                <pos x="8686" z="2567" /> <!-- Cherno --> 
-                <pos x="13313" z="6439" /> <!-- Solnichy --> 
-                <pos x="10887" z="12225" /> <!-- Krasno -->
-                <!--pos x="8943" z="11868" /--> <!-- Gvozdno --> 
+		<pos x="3997" z="2497" /> <!-- Kamarovo - TEST -->
+                <!--pos x="2759" z="5524" /--> <!-- Zeleno - DESACTIVADO PARA TEST -->
+                <!--pos x="8686" z="2567" /--> <!-- Cherno - DESACTIVADO PARA TEST --> 
+                <!--pos x="13313" z="6439" /--> <!-- Solnichy - DESACTIVADO PARA TEST --> 
+                <!--pos x="10887" z="12225" /--> <!-- Krasno - DESACTIVADO PARA TEST -->
 			 
 			
 	   </group>            
