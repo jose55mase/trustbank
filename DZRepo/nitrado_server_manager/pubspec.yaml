@@ -1,0 +1,29 @@
+name: nitrado_server_manager
+description: "Nitrado Server Manager - DayZ server administration app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  go_router: ^14.2.7
+  dio: ^5.7.0
+  flutter_secure_storage: ^9.2.2
+  xml: ^6.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  mocktail: ^1.0.4
+  glados: ^1.1.1
+
+flutter:
+  uses-material-design: true
