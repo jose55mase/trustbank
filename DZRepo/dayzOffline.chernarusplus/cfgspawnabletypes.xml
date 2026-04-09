@@ -328,8 +328,49 @@
 		<cargo preset="mixArmy" />
 	</type>
 	<type name="DuffelBagSmall_Green">
-		<cargo preset="foodArmy" />
-		<cargo preset="mixArmy" />
+		<!-- Comida variada (tier 1-2) — siempre aparece -->
+		<cargo chance="1.0">
+			<item name="SodaCan_Cola" chance="0.15" />
+			<item name="SodaCan_Spite" chance="0.15" />
+			<item name="TunaCan" chance="0.15" />
+			<item name="BakedBeansCan" chance="0.15" />
+			<item name="SpaghettiCan" chance="0.15" />
+			<item name="Apple" chance="0.10" />
+			<item name="Pear" chance="0.10" />
+			<item name="WaterBottle" chance="0.05" />
+		</cargo>
+		<!-- Herramientas y suministros básicos (tier 1) -->
+		<cargo chance="0.50">
+			<item name="Rag" chance="0.15" />
+			<item name="BandageDressing" chance="0.15" />
+			<item name="Matchbox" chance="0.10" />
+			<item name="Flashlight" chance="0.10" />
+			<item name="Battery9V" chance="0.10" />
+			<item name="Compass" chance="0.10" />
+			<item name="ChernarusMap" chance="0.10" />
+			<item name="SewingKit" chance="0.10" />
+			<item name="DuctTape" chance="0.10" />
+		</cargo>
+		<!-- Armas cuerpo a cuerpo y pistolas básicas (tier 1-2) -->
+		<cargo chance="0.25">
+			<item name="KitchenKnife" chance="0.20" />
+			<item name="Steak_Knife" chance="0.15" />
+			<item name="Screwdriver" chance="0.15" />
+			<item name="Wrench" chance="0.10" />
+			<item name="Crowbar" chance="0.10" />
+			<item name="HuntingKnife" chance="0.10" />
+			<item name="Ammo_9x19" chance="0.10" />
+			<item name="Ammo_380" chance="0.10" />
+		</cargo>
+		<!-- Medicina tier 2 -->
+		<cargo chance="0.20">
+			<item name="PainkillerTablets" chance="0.25" />
+			<item name="VitaminBottle" chance="0.25" />
+			<item name="DisinfectantAlcohol" chance="0.15" />
+			<item name="TetracyclineAntibiotics" chance="0.15" />
+			<item name="Thermometer" chance="0.10" />
+			<item name="IodineTincture" chance="0.10" />
+		</cargo>
 	</type>
 	<type name="FirstAidKit">
 		<tag name="shelves" />

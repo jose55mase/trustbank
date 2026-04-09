@@ -77,7 +77,8 @@ class NitradoApiClientImpl implements NitradoApiClient {
           final details = s as Map<String, dynamic>;
           final game = (details['details'] as Map<String, dynamic>?)?['game']
               as String?;
-          return game?.toLowerCase() == 'dayz';
+          // Aceptar cualquier variante: "DayZ", "dayzxb", "DayZ (Xbox)", etc.
+          return game != null && game.toLowerCase().contains('dayz');
         })
         .map((s) => _parseGameServer(s as Map<String, dynamic>))
         .toList();
@@ -217,8 +218,14 @@ class NitradoApiClientImpl implements NitradoApiClient {
     final token = data['token'] as Map<String, dynamic>;
     final url = token['url'] as String;
 
-    // Nitrado returns a temporary download URL; fetch the actual content.
-    final fileResponse = await Dio().get<String>(url);
+    // Nitrado devuelve una URL temporal para descargar.
+    // Usamos un Dio limpio (sin auth interceptor) pero con el mismo
+    // baseUrl para que en web pase por el proxy CORS.
+    final downloadDio = Dio(BaseOptions(
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+    ));
+    final fileResponse = await downloadDio.get<String>(url);
     return fileResponse.data ?? '';
   }
 
@@ -239,11 +246,32 @@ class NitradoApiClientImpl implements NitradoApiClient {
 
   @override
   Future<String> getServerLogs(int serverId) async {
-    // Download the server log file via the file server endpoint.
-    return downloadFile(
-      serverId,
-      '/games/ni${serverId}_dayz/logs/server_log.ADM',
-    );
+    // Primero obtenemos los detalles del servidor para saber la carpeta correcta.
+    // La ruta típica es /games/{folder}/logs/ pero el nombre de la carpeta varía.
+    // Intentamos listar la raíz de /games/ para encontrarla.
+    try {
+      final gamesEntries = await listFiles(serverId, '/games');
+      // Buscar la carpeta que contenga "dayz" en el nombre.
+      final dayzFolder = gamesEntries.firstWhere(
+        (e) => e.type == 'dir' && e.name.toLowerCase().contains('dayz'),
+        orElse: () => gamesEntries.isNotEmpty
+            ? gamesEntries.first
+            : const FileEntry(name: '', path: '/games', type: 'dir'),
+      );
+
+      if (dayzFolder.name.isEmpty) {
+        return 'No se encontró la carpeta del juego en /games/';
+      }
+
+      final logPath = '${dayzFolder.path}/logs/server_log.ADM';
+      return downloadFile(serverId, logPath);
+    } catch (e) {
+      // Fallback: intentar la ruta clásica.
+      return downloadFile(
+        serverId,
+        '/games/ni${serverId}_dayz/logs/server_log.ADM',
+      );
+    }
   }
 
   // ── Private helpers ────────────────────────────────────────────
