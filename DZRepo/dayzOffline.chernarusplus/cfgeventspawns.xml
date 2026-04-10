@@ -4,6 +4,9 @@
   <event name="Item_MochilaMont"> 
     <pos x="300.329" z="4609.66" a="-1"/> 
   </event>  
+  <event name="Item_DuffelBagLoot"> 
+    <pos x="6187.56" z="2326.42" a="0"/> 
+  </event>  
   <event name="VehicleSedan02person"> 
     <pos x="9666.76" z="6753.28" a="317.953339"/> 
   </event>  
