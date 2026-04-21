@@ -5,6 +5,9 @@ import com.trustbank.loans.backend.apirest.repository.UserRepository;
 import com.trustbank.loans.backend.apirest.repository.LoanRepository;
 import com.trustbank.loans.backend.apirest.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ public class UserService {
     @Autowired
     private PaymentRepository paymentRepository;
     
+    @Cacheable(value = "users")
     public List<User> findAll() {
         List<User> users = userRepository.findAllByOrderByUserCodeAsc();
         users.sort((a, b) -> {
@@ -42,14 +46,20 @@ public class UserService {
         return userRepository.findAll(pageable);
     }
     
+    @Cacheable(value = "users_by_code", key = "#userCode")
     public List<User> findByUserCodeOrderedAlphabetically(String userCode) {
         return userRepository.findByUserCodeContainingIgnoreCaseOrderByUserCodeAsc(userCode);
     }
     
+    @Cacheable(value = "user", key = "#id")
     public Optional<User> findById(Long id) {
         return userRepository.findById(id);
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "users", allEntries = true),
+        @CacheEvict(value = "users_by_code", allEntries = true)
+    })
     public User save(User user) {
         if (user.getUserCode() == null || user.getUserCode().isEmpty()) {
             user.setUserCode(generateUserCode());
@@ -62,6 +72,11 @@ public class UserService {
         return userRepository.save(user);
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "users", allEntries = true),
+        @CacheEvict(value = "users_by_code", allEntries = true),
+        @CacheEvict(value = "user", key = "#user.id")
+    })
     public User updateUser(User user, String originalUserCode) {
         // Si el código no cambió, permitir la actualización
         if (originalUserCode != null && originalUserCode.equals(user.getUserCode())) {
@@ -84,6 +99,11 @@ public class UserService {
         return code;
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "users", allEntries = true),
+        @CacheEvict(value = "users_by_code", allEntries = true),
+        @CacheEvict(value = "user", key = "#id")
+    })
     public void deleteById(Long id) {
         // Verificar si el usuario existe
         User user = userRepository.findById(id)
