@@ -3,6 +3,9 @@ package com.trustbank.loans.backend.apirest.service;
 import com.trustbank.loans.backend.apirest.entity.ExpenseCategory;
 import com.trustbank.loans.backend.apirest.repository.ExpenseCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,6 +17,7 @@ public class ExpenseCategoryService {
     @Autowired
     private ExpenseCategoryRepository expenseCategoryRepository;
     
+    @Cacheable(value = "expense_categories")
     public List<ExpenseCategory> findAll() {
         return expenseCategoryRepository.findAll();
     }
@@ -22,6 +26,7 @@ public class ExpenseCategoryService {
         return expenseCategoryRepository.findById(id);
     }
     
+    @CacheEvict(value = "expense_categories", allEntries = true)
     public ExpenseCategory save(ExpenseCategory category) {
         if (expenseCategoryRepository.existsByName(category.getName())) {
             throw new RuntimeException("Ya existe una categoría con ese nombre");
@@ -29,6 +34,7 @@ public class ExpenseCategoryService {
         return expenseCategoryRepository.save(category);
     }
     
+    @CacheEvict(value = "expense_categories", allEntries = true)
     public ExpenseCategory update(Long id, ExpenseCategory categoryDetails) {
         ExpenseCategory category = expenseCategoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Categoría no encontrada"));
@@ -46,8 +52,8 @@ public class ExpenseCategoryService {
         return expenseCategoryRepository.save(category);
     }
     
+    @CacheEvict(value = "expense_categories", allEntries = true)
     public void deleteById(Long id) {
-        if (!expenseCategoryRepository.existsById(id)) {
             throw new RuntimeException("Categoría no encontrada");
         }
         expenseCategoryRepository.deleteById(id);

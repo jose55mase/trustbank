@@ -5,6 +5,8 @@ import com.trustbank.loans.backend.apirest.entity.ExpenseCategory;
 import com.trustbank.loans.backend.apirest.repository.ExpenseRepository;
 import com.trustbank.loans.backend.apirest.repository.ExpenseCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +22,7 @@ public class ExpenseService {
     @Autowired
     private ExpenseCategoryRepository expenseCategoryRepository;
     
+    @Cacheable(value = "expenses")
     public List<Expense> findAll() {
         return expenseRepository.findAllOrderByExpenseDateDesc();
     }
@@ -36,6 +39,7 @@ public class ExpenseService {
         return expenseRepository.findByCategoryId(categoryId);
     }
     
+    @CacheEvict(value = "expenses", allEntries = true)
     public Expense save(Expense expense) {
         // Validar que la categoría existe
         if (expense.getCategory() == null || expense.getCategory().getId() == null) {
@@ -49,6 +53,7 @@ public class ExpenseService {
         return expenseRepository.save(expense);
     }
     
+    @CacheEvict(value = "expenses", allEntries = true)
     public Expense update(Long id, Expense expenseDetails) {
         Expense expense = expenseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Gasto no encontrado"));
@@ -66,8 +71,8 @@ public class ExpenseService {
         return expenseRepository.save(expense);
     }
     
+    @CacheEvict(value = "expenses", allEntries = true)
     public void deleteById(Long id) {
-        if (!expenseRepository.existsById(id)) {
             throw new RuntimeException("Gasto no encontrado");
         }
         expenseRepository.deleteById(id);
