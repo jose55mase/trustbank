@@ -35,10 +35,12 @@ public class LoanService {
         return loanRepository.findById(id);
     }
     
+    @Cacheable(value = "loans_by_user", key = "#userId")
     public List<Loan> findByUserId(Long userId) {
         return loanRepository.findByUserId(userId);
     }
     
+    @Cacheable(value = "loans_by_user_active", key = "#userId")
     public List<Loan> findActiveAndOverdueLoansByUserId(Long userId) {
         List<Loan> allLoans = loanRepository.findByUserId(userId);
         return allLoans.stream()
@@ -59,7 +61,9 @@ public class LoanService {
     
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Loan save(Loan loan) {
         if (loan.getUser() != null && loan.getUser().getId() != null) {
@@ -163,7 +167,9 @@ public class LoanService {
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", allEntries = true),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Map<String, Object> recalculateAllBalances() {
         List<Loan> allLoans = loanRepository.findAll();
@@ -209,7 +215,9 @@ public class LoanService {
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", key = "#id"),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public void deleteById(Long id) {
         loanRepository.deleteById(id);
@@ -218,7 +226,9 @@ public class LoanService {
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", key = "#id"),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Loan updateStatus(Long id, LoanStatus newStatus) {
         Optional<Loan> loanOpt = loanRepository.findById(id);
@@ -234,7 +244,9 @@ public class LoanService {
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", key = "#id"),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Loan updatePaymentStatus(Long id, Boolean pagoAnterior, Boolean pagoActual) {
         Optional<Loan> loanOpt = loanRepository.findById(id);
@@ -251,7 +263,9 @@ public class LoanService {
     @Caching(evict = {
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", key = "#id"),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Loan updatePaidInstallments(Long id, Integer paidInstallments) {
         Optional<Loan> loanOpt = loanRepository.findById(id);

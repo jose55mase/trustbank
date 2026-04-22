@@ -67,6 +67,8 @@ public class RedisConfig extends CachingConfigurerSupport {
         cacheConfigs.put("users_by_code", defaultConfig.entryTtl(Duration.ofMinutes(10)));
         cacheConfigs.put("loans", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("loan", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("loans_by_user", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigs.put("loans_by_user_active", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("payments", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("transactions", defaultConfig.entryTtl(Duration.ofMinutes(5)));
         cacheConfigs.put("expenses", defaultConfig.entryTtl(Duration.ofMinutes(10)));

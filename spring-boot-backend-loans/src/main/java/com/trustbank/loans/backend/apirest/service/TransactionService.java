@@ -40,7 +40,9 @@ public class TransactionService {
         @CacheEvict(value = "transactions", allEntries = true),
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", allEntries = true),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Transaction save(Transaction transaction) {
         return transactionRepository.save(transaction);
@@ -54,7 +56,9 @@ public class TransactionService {
         @CacheEvict(value = "transactions", allEntries = true),
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", allEntries = true),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public void deleteById(Long id) {
         transactionRepository.deleteById(id);
@@ -64,7 +68,9 @@ public class TransactionService {
         @CacheEvict(value = "transactions", allEntries = true),
         @CacheEvict(value = "loans", allEntries = true),
         @CacheEvict(value = "loan", allEntries = true),
-        @CacheEvict(value = "loan_stats", allEntries = true)
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
     })
     public Transaction saveWithLoan(Transaction transaction, boolean shouldUpdateInstallments) {
         // Asegurar que el préstamo existe y está correctamente asociado
