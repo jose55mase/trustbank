@@ -73,6 +73,7 @@ public class ExpenseService {
     
     @CacheEvict(value = "expenses", allEntries = true)
     public void deleteById(Long id) {
+        if (!expenseRepository.existsById(id)) {
             throw new RuntimeException("Gasto no encontrado");
         }
         expenseRepository.deleteById(id);

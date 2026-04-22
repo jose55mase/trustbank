@@ -54,6 +54,7 @@ public class ExpenseCategoryService {
     
     @CacheEvict(value = "expense_categories", allEntries = true)
     public void deleteById(Long id) {
+        if (!expenseCategoryRepository.existsById(id)) {
             throw new RuntimeException("Categoría no encontrada");
         }
         expenseCategoryRepository.deleteById(id);
