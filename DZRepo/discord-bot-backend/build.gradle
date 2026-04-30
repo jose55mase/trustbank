@@ -21,6 +21,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
     // JDA 5.x - Discord API
     implementation('net.dv8tion:JDA:5.2.2') {
