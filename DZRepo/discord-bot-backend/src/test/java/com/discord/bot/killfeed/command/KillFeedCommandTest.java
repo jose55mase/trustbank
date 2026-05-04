@@ -1,6 +1,5 @@
 package com.discord.bot.killfeed.command;
 
-import com.discord.bot.BotInitializer;
 import com.discord.bot.killfeed.model.KillEvent;
 import com.discord.bot.killfeed.model.KillFeedConfig;
 import com.discord.bot.killfeed.service.KillFeedEmbedBuilder;
@@ -44,7 +43,6 @@ class KillFeedCommandTest {
     @Mock private NitradoApiClient nitradoApiClient;
     @Mock private KillFeedConfigStore configStore;
     @Mock private KillFeedEmbedBuilder embedBuilder;
-    @Mock private BotInitializer botInitializer;
 
     @Mock private SlashCommandInteractionEvent event;
     @Mock private Member member;
@@ -62,7 +60,7 @@ class KillFeedCommandTest {
 
     @BeforeEach
     void setUp() {
-        command = new KillFeedCommand(nitradoApiClient, configStore, embedBuilder, botInitializer);
+        command = new KillFeedCommand(nitradoApiClient, configStore, embedBuilder);
     }
 
     // --- Helper methods ---
@@ -277,7 +275,7 @@ class KillFeedCommandTest {
         when(embedBuilder.createDummyEvent()).thenReturn(dummyEvent);
         when(embedBuilder.buildEmbed(dummyEvent)).thenReturn(messageEmbed);
 
-        when(botInitializer.getJda()).thenReturn(jda);
+        when(event.getJDA()).thenReturn(jda);
         when(jda.getTextChannelById("channel456")).thenReturn(textChannel);
         when(textChannel.sendMessageEmbeds(messageEmbed)).thenReturn(messageCreateAction);
 

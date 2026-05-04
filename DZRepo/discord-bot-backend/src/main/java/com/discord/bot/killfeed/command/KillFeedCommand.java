@@ -1,6 +1,5 @@
 package com.discord.bot.killfeed.command;
 
-import com.discord.bot.BotInitializer;
 import com.discord.bot.command.SlashCommand;
 import com.discord.bot.killfeed.model.KillEvent;
 import com.discord.bot.killfeed.model.KillFeedConfig;
@@ -38,16 +37,13 @@ public class KillFeedCommand implements SlashCommand {
     private final NitradoApiClient nitradoApiClient;
     private final KillFeedConfigStore configStore;
     private final KillFeedEmbedBuilder embedBuilder;
-    private final BotInitializer botInitializer;
 
     public KillFeedCommand(NitradoApiClient nitradoApiClient,
                            KillFeedConfigStore configStore,
-                           KillFeedEmbedBuilder embedBuilder,
-                           BotInitializer botInitializer) {
+                           KillFeedEmbedBuilder embedBuilder) {
         this.nitradoApiClient = nitradoApiClient;
         this.configStore = configStore;
         this.embedBuilder = embedBuilder;
-        this.botInitializer = botInitializer;
     }
 
     @Override
@@ -151,7 +147,7 @@ public class KillFeedCommand implements SlashCommand {
         KillEvent dummyEvent = embedBuilder.createDummyEvent();
         MessageEmbed embed = embedBuilder.buildEmbed(dummyEvent);
 
-        TextChannel channel = botInitializer.getJda().getTextChannelById(config.channelId());
+        TextChannel channel = event.getJDA().getTextChannelById(config.channelId());
         if (channel == null) {
             event.reply("❌ No se encontró el canal configurado. Verifica la configuración con `/killfeed setup`.")
                     .setEphemeral(true).queue();

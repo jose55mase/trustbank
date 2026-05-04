@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.exceptions.InsufficientPermissionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
@@ -46,7 +47,7 @@ public class KillFeedService {
                            LogParser logParser,
                            KillFeedConfigStore configStore,
                            KillFeedEmbedBuilder embedBuilder,
-                           BotInitializer botInitializer) {
+                           @Lazy BotInitializer botInitializer) {
         this.nitradoApiClient = nitradoApiClient;
         this.logParser = logParser;
         this.configStore = configStore;
