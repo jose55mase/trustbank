@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/config_editor/config_editor_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/economy_config/economy_config_screen.dart';
 import '../../features/events_manager/events_manager_screen.dart';
 import '../../features/globals_manager/globals_manager_screen.dart';
 import '../../features/logs/logs_screen.dart';
+import '../../features/player_stats/player_stats_screen.dart';
 import '../../features/players/players_screen.dart';
 import '../../features/server_control/server_control_screen.dart';
 import '../../features/server_selection/server_selection_screen.dart';
@@ -71,6 +73,16 @@ final appRouter = GoRouter(
           path: '/logs',
           name: 'logs',
           builder: (context, state) => const LogsScreen(),
+        ),
+        GoRoute(
+          path: '/economy',
+          name: 'economy',
+          builder: (context, state) => const EconomyConfigScreen(),
+        ),
+        GoRoute(
+          path: '/player-stats',
+          name: 'player-stats',
+          builder: (context, state) => const PlayerStatsScreen(),
         ),
       ],
     ),

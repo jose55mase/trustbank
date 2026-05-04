@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:nitrado_server_manager/core/api/api_exceptions.dart';
 import 'package:nitrado_server_manager/core/api/nitrado_api_client.dart';
+import 'package:nitrado_server_manager/features/economy_config/models/economy_config_model.dart';
+import 'package:nitrado_server_manager/features/player_stats/models/player_stats_model.dart';
 import 'package:nitrado_server_manager/shared/models/models.dart';
 
 /// Implementation of [NitradoApiClient] that routes all requests through
@@ -247,5 +249,61 @@ class BackendApiClient implements NitradoApiClient {
       () => dio.get<Map<String, dynamic>>('/api/servers/$serverId/logs'),
     );
     return response.data?['content'] as String? ?? '';
+  }
+
+  // ── Economy Configuration ────────────────────────────────────────
+
+  Future<EconomyConfigModel> getEconomyConfig(String guildId) async {
+    final response = await request(
+      () => dio.get<Map<String, dynamic>>(
+        '/api/economy/config',
+        queryParameters: {'guildId': guildId},
+      ),
+    );
+    return EconomyConfigModel.fromJson(response.data!);
+  }
+
+  Future<EconomyConfigModel> updateEconomyConfig(
+      String guildId, EconomyConfigModel config) async {
+    final response = await request(
+      () => dio.put<Map<String, dynamic>>(
+        '/api/economy/config',
+        queryParameters: {'guildId': guildId},
+        data: config.toJson(),
+      ),
+    );
+    return EconomyConfigModel.fromJson(response.data!);
+  }
+
+  // ── Player Statistics ────────────────────────────────────────────
+
+  Future<List<PlayerStatsModel>> getPlayerStats() async {
+    final response = await request(
+      () => dio.get<List<dynamic>>('/api/players/stats'),
+    );
+    final players = response.data ?? [];
+    return players
+        .map((p) => PlayerStatsModel.fromJson(p as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<PlayerStatsModel> getPlayerStatsById(String discordId) async {
+    final response = await request(
+      () => dio.get<Map<String, dynamic>>('/api/players/$discordId/stats'),
+    );
+    return PlayerStatsModel.fromJson(response.data!);
+  }
+
+  // ── Transactions ─────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getTransactions(
+      {int page = 0, int size = 20}) async {
+    final response = await request(
+      () => dio.get<Map<String, dynamic>>(
+        '/api/economy/transactions',
+        queryParameters: {'page': page, 'size': size},
+      ),
+    );
+    return response.data!;
   }
 }
