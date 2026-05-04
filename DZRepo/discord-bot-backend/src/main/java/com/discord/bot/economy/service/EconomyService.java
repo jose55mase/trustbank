@@ -4,10 +4,12 @@ import com.discord.bot.economy.dto.EconomyConfigUpdateDto;
 import com.discord.bot.economy.exception.InsufficientBalanceException;
 import com.discord.bot.economy.exception.InvalidAmountException;
 import com.discord.bot.economy.exception.PlayerNotLinkedException;
+import com.discord.bot.economy.exception.SelfTransferException;
 import com.discord.bot.economy.model.CurrencyTransaction;
 import com.discord.bot.economy.model.EconomyConfig;
 import com.discord.bot.economy.model.PlayerProfile;
 import com.discord.bot.economy.model.TransactionType;
+import com.discord.bot.economy.model.TransferResult;
 import com.discord.bot.economy.repository.CurrencyTransactionRepository;
 import com.discord.bot.economy.repository.EconomyConfigRepository;
 import com.discord.bot.economy.repository.PlayerProfileRepository;
@@ -113,6 +115,61 @@ public class EconomyService {
         log.info("Debited {} coins from player '{}' (type={}). New balance: {}",
                 amount, profile.getDayzPlayerName(), type, profile.getBalance());
         return saved;
+    }
+
+    /**
+     * Transfers coins from one player to another atomically.
+     * Debits the sender, credits the receiver, and creates transaction
+     * records for both parties within a single database transaction.
+     *
+     * @param sender   the player profile sending coins
+     * @param receiver the player profile receiving coins
+     * @param amount   the number of coins to transfer (must be &gt; 0)
+     * @return a {@link TransferResult} containing both transaction records
+     * @throws InvalidAmountException       if amount is &lt;= 0
+     * @throws SelfTransferException        if sender and receiver are the same player
+     * @throws InsufficientBalanceException if sender's balance is less than amount
+     */
+    @Transactional
+    public TransferResult transferCoins(PlayerProfile sender, PlayerProfile receiver, long amount) {
+        if (amount <= 0) {
+            throw new InvalidAmountException("La cantidad debe ser positiva. Recibido: " + amount);
+        }
+
+        if (sender.getId().equals(receiver.getId())) {
+            throw new SelfTransferException("No puedes transferirte monedas a ti mismo.");
+        }
+
+        if (sender.getBalance() < amount) {
+            throw new InsufficientBalanceException(
+                    "Balance insuficiente. Balance actual: " + sender.getBalance()
+                            + ", cantidad solicitada: " + amount,
+                    sender.getBalance(), amount);
+        }
+
+        // Debit sender
+        sender.setBalance(sender.getBalance() - amount);
+        playerProfileRepository.save(sender);
+
+        CurrencyTransaction sentTransaction = new CurrencyTransaction(
+                sender, TransactionType.PLAYER_TRANSFER_SENT, amount, sender.getBalance(),
+                "Transferencia enviada a " + receiver.getDayzPlayerName(), LocalDateTime.now());
+        CurrencyTransaction savedSentTx = currencyTransactionRepository.save(sentTransaction);
+
+        // Credit receiver
+        receiver.setBalance(receiver.getBalance() + amount);
+        playerProfileRepository.save(receiver);
+
+        CurrencyTransaction receivedTransaction = new CurrencyTransaction(
+                receiver, TransactionType.PLAYER_TRANSFER_RECEIVED, amount, receiver.getBalance(),
+                "Transferencia recibida de " + sender.getDayzPlayerName(), LocalDateTime.now());
+        CurrencyTransaction savedReceivedTx = currencyTransactionRepository.save(receivedTransaction);
+
+        log.info("Transferred {} coins from '{}' to '{}'. Sender balance: {}, Receiver balance: {}",
+                amount, sender.getDayzPlayerName(), receiver.getDayzPlayerName(),
+                sender.getBalance(), receiver.getBalance());
+
+        return new TransferResult(savedSentTx, savedReceivedTx);
     }
 
     /**

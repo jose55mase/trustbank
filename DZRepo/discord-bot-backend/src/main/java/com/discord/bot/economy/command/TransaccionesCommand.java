@@ -120,6 +120,8 @@ public class TransaccionesCommand implements SlashCommand {
             case ZOMBIE_KILL_REWARD -> "🧟 Recompensa Zombie";
             case ADMIN_CREDIT -> "💰 Crédito Admin";
             case ADMIN_DEBIT -> "💸 Débito Admin";
+            case PLAYER_TRANSFER_SENT -> "📤 Transferencia Enviada";
+            case PLAYER_TRANSFER_RECEIVED -> "📥 Transferencia Recibida";
         };
     }
 
@@ -127,6 +129,6 @@ public class TransaccionesCommand implements SlashCommand {
      * Returns {@code true} if the transaction type represents a debit (money leaving the account).
      */
     private static boolean isDebitType(TransactionType type) {
-        return type == TransactionType.ADMIN_DEBIT;
+        return type == TransactionType.ADMIN_DEBIT || type == TransactionType.PLAYER_TRANSFER_SENT;
     }
 }

@@ -9,5 +9,9 @@ public enum TransactionType {
     /** Coins credited by an administrator. */
     ADMIN_CREDIT,
     /** Coins debited by an administrator. */
-    ADMIN_DEBIT
+    ADMIN_DEBIT,
+    /** Coins sent to another player via /transferir. */
+    PLAYER_TRANSFER_SENT,
+    /** Coins received from another player via /transferir. */
+    PLAYER_TRANSFER_RECEIVED
 }
