@@ -16,7 +16,7 @@ import '../../features/types_manager/types_manager_screen.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/auth',
+  initialLocation: '/servers',
   routes: [
     // Auth and server selection remain outside the navigation shell.
     GoRoute(
