@@ -1,6 +1,7 @@
 package com.discord.bot.command;
 
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 
 /**
  * Contract that all slash commands must implement.
@@ -24,4 +25,15 @@ public interface SlashCommand {
      * @param event the slash command interaction event from Discord
      */
     void execute(SlashCommandInteractionEvent event);
+
+    /**
+     * Returns custom CommandData for commands that need subcommands or options.
+     * When this returns non-null, the CommandRegistry uses it instead of
+     * building a simple command from getName()/getDescription().
+     *
+     * @return custom CommandData, or null to use the default registration
+     */
+    default CommandData getCommandData() {
+        return null;
+    }
 }
