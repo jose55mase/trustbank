@@ -496,7 +496,7 @@ public class NitradoApiClient {
             }
         }
 
-        // Step 3: If file server has entries, try downloading via file server (PC servers)
+        // Step 3: If file server has entries with a DayZ folder, download from there (PC servers)
         if (logPath != null) {
             try {
                 return downloadFile(serviceId, logPath);
@@ -506,56 +506,89 @@ public class NitradoApiClient {
             }
         }
 
-        // Step 4: File server empty (console servers like Xbox/PS) — use game logs endpoint
-        log.info("[NitradoClient] File server empty, trying console logs endpoint (serviceId={})", serviceId);
+        // Step 4: File server empty or no DayZ folder (console servers like Xbox/PS)
+        // Try the Xbox/PS console path: /games/{folderId}/noftp/dayzxb/config/DayZServer_X1_x64.ADM
+        log.info("[NitradoClient] No DayZ folder found via file listing, trying console paths (serviceId={})", serviceId);
+
+        // Get the game server folder ID from the gameservers endpoint
+        String folderId = getGameServerFolderId(serviceId);
+
+        // Try known console log file paths
+        String[] consolePaths;
+        if (folderId != null) {
+            consolePaths = new String[]{
+                    "/games/" + folderId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
+                    "/games/" + folderId + "/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
+                    "/games/" + folderId + "/noftp/dayzxb/config/server_log.ADM",
+                    "/games/" + folderId + "/noftp/dayzxb/logs/server_log.ADM",
+                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM"
+            };
+        } else {
+            consolePaths = new String[]{
+                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
+                    "/games/ni" + serviceId + "_dayz/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
+                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/server_log.ADM"
+            };
+        }
+
+        for (String path : consolePaths) {
+            try {
+                log.info("[NitradoClient] Trying console path: {} (serviceId={})", path, serviceId);
+                String content = downloadFile(serviceId, path);
+                if (content != null && !content.isBlank()) {
+                    log.info("[NitradoClient] Found logs at: {} (serviceId={})", path, serviceId);
+                    return content;
+                }
+            } catch (NitradoNotFoundException e) {
+                log.debug("[NitradoClient] Path not found: {} (serviceId={})", path, serviceId);
+            } catch (Exception e) {
+                log.debug("[NitradoClient] Error trying path {}: {} (serviceId={})", path, e.getMessage(), serviceId);
+            }
+        }
+
+        throw new NitradoNotFoundException(
+                "Logs no disponibles para este servidor de consola (serviceId=" + serviceId + "). " +
+                "Ningún path de log conocido fue encontrado.");
+    }
+
+    /**
+     * Attempts to retrieve the game server folder ID from the gameservers endpoint.
+     * This ID is used to construct file paths for console servers.
+     *
+     * @param serviceId the Nitrado service ID
+     * @return the folder ID string, or null if not found
+     */
+    @SuppressWarnings("unchecked")
+    private String getGameServerFolderId(int serviceId) {
         try {
-            String url = "/services/" + serviceId + "/gameservers/games/logs";
-            ResponseEntity<Map> response = execute(HttpMethod.GET, url, serviceId, null);
+            ResponseEntity<Map> response = execute(HttpMethod.GET,
+                    "/services/" + serviceId + "/gameservers", serviceId, null);
 
             Map<String, Object> body = response.getBody();
-            if (body == null) {
-                throw new NitradoNotFoundException("Logs no disponibles (serviceId=" + serviceId + ")");
-            }
+            if (body == null) return null;
 
             Map<String, Object> data = (Map<String, Object>) body.get("data");
-            if (data == null) {
-                throw new NitradoNotFoundException("Logs no disponibles (serviceId=" + serviceId + ")");
-            }
+            if (data == null) return null;
 
-            // The console logs endpoint may return logs in different formats:
-            // Option A: { "data": { "logs": "full log content as string" } }
-            // Option B: { "data": { "logs": [ { "message": "...", ... }, ... ] } }
-            Object logsObj = data.get("logs");
+            Map<String, Object> gameserver = (Map<String, Object>) data.get("gameserver");
+            if (gameserver == null) return null;
 
-            if (logsObj instanceof String logsString) {
-                return logsString;
-            }
+            // Try common field names that might contain the folder ID
+            // Nitrado uses "game_specific" or "settings" or "folder_short"
+            Object folderId = gameserver.get("folder_short");
+            if (folderId != null) return folderId.toString();
 
-            if (logsObj instanceof List<?> logsList) {
-                StringBuilder sb = new StringBuilder();
-                for (Object entry2 : logsList) {
-                    if (entry2 instanceof Map<?, ?> logEntry) {
-                        Object msg = logEntry.get("message");
-                        if (msg != null) {
-                            sb.append(msg).append("\n");
-                        }
-                    } else if (entry2 instanceof String s) {
-                        sb.append(s).append("\n");
-                    }
-                }
-                return sb.toString();
-            }
+            // Try service_id as folder name pattern
+            Object gsId = gameserver.get("id");
+            if (gsId != null) return gsId.toString();
 
-            log.warn("[NitradoClient] Unexpected logs format: {} (serviceId={})",
-                    logsObj != null ? logsObj.getClass().getSimpleName() : "null", serviceId);
-            throw new NitradoNotFoundException("Formato de logs no reconocido (serviceId=" + serviceId + ")");
+            // Log available keys for debugging
+            log.info("[NitradoClient] Gameserver keys: {} (serviceId={})", gameserver.keySet(), serviceId);
 
-        } catch (NitradoNotFoundException e) {
-            throw e;
+            return null;
         } catch (Exception e) {
-            log.error("[NitradoClient] Error fetching console logs (serviceId={}): {}", serviceId, e.getMessage());
-            throw new NitradoNotFoundException(
-                    "Logs no disponibles para este servidor (serviceId=" + serviceId + "): " + e.getMessage());
+            log.debug("[NitradoClient] Could not get folder ID: {} (serviceId={})", e.getMessage(), serviceId);
+            return null;
         }
     }
 
