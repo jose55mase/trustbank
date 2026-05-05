@@ -24,6 +24,7 @@ const navItems = <NavItem>[
   NavItem(label: 'Globals', icon: Icons.tune, route: '/globals'),
   NavItem(label: 'Eventos', icon: Icons.event, route: '/events'),
   NavItem(label: 'Logs', icon: Icons.article, route: '/logs'),
+  NavItem(label: 'Game Logs', icon: Icons.sports_esports, route: '/game-logs'),
   NavItem(label: 'Economía', icon: Icons.monetization_on, route: '/economy'),
   NavItem(label: 'Estadísticas', icon: Icons.leaderboard, route: '/player-stats'),
 ];

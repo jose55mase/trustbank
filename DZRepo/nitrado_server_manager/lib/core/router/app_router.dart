@@ -7,6 +7,7 @@ import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/economy_config/economy_config_screen.dart';
 import '../../features/events_manager/events_manager_screen.dart';
 import '../../features/globals_manager/globals_manager_screen.dart';
+import '../../features/game_logs/game_logs_screen.dart';
 import '../../features/logs/logs_screen.dart';
 import '../../features/player_stats/player_stats_screen.dart';
 import '../../features/players/players_screen.dart';
@@ -73,6 +74,11 @@ final appRouter = GoRouter(
           path: '/logs',
           name: 'logs',
           builder: (context, state) => const LogsScreen(),
+        ),
+        GoRoute(
+          path: '/game-logs',
+          name: 'game-logs',
+          builder: (context, state) => const GameLogsScreen(),
         ),
         GoRoute(
           path: '/economy',

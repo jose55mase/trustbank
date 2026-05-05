@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nitrado_server_manager/core/api/api_exceptions.dart';
 import 'package:nitrado_server_manager/core/api/nitrado_api_client.dart';
 import 'package:nitrado_server_manager/features/economy_config/models/economy_config_model.dart';
+import 'package:nitrado_server_manager/features/game_logs/models/game_log_event.dart';
 import 'package:nitrado_server_manager/features/player_stats/models/player_stats_model.dart';
 import 'package:nitrado_server_manager/shared/models/models.dart';
 
@@ -249,6 +250,33 @@ class BackendApiClient implements NitradoApiClient {
       () => dio.get<Map<String, dynamic>>('/api/servers/$serverId/logs'),
     );
     return response.data?['content'] as String? ?? '';
+  }
+
+  // ── Game Events ────────────────────────────────────────────────
+
+  Future<List<GameLogEvent>> getGameEvents(
+    int serverId, {
+    String? category,
+    String? search,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (category != null && category.isNotEmpty) {
+      queryParams['category'] = category;
+    }
+    if (search != null && search.isNotEmpty) {
+      queryParams['search'] = search;
+    }
+
+    final response = await request(
+      () => dio.get<List<dynamic>>(
+        '/api/servers/$serverId/game-events',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+      ),
+    );
+    final events = response.data ?? [];
+    return events
+        .map((e) => GameLogEvent.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   // ── Economy Configuration ────────────────────────────────────────
