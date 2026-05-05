@@ -309,17 +309,20 @@ public class NitradoApiClient {
         ResponseEntity<Map> response = execute(HttpMethod.GET, url, serviceId, null);
 
         Map<String, Object> body = response.getBody();
+        log.info("[NitradoClient] listFiles response body for path='{}': {}", path, body);
         if (body == null) {
             return Collections.emptyList();
         }
 
         Map<String, Object> data = (Map<String, Object>) body.get("data");
         if (data == null) {
+            log.warn("[NitradoClient] listFiles: 'data' key is null. Body keys: {}", body.keySet());
             return Collections.emptyList();
         }
 
         List<Map<String, Object>> entries = (List<Map<String, Object>>) data.get("entries");
         if (entries == null) {
+            log.warn("[NitradoClient] listFiles: 'entries' key is null. Data keys: {}", data.keySet());
             return Collections.emptyList();
         }
 
