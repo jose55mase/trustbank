@@ -480,6 +480,7 @@ public class NitradoApiClient {
      * @return the log file content as a String
      * @throws NitradoNotFoundException if the log file does not exist (Req 13.4)
      */
+    @SuppressWarnings("unchecked")
     public String getServerLogs(int serviceId) {
         // Step 1: List files in /games to find the DayZ folder
         List<FileEntryDto> entries = listFiles(serviceId, "/games");
@@ -495,18 +496,66 @@ public class NitradoApiClient {
             }
         }
 
-        // Step 3: Fallback if no DayZ folder was found (Req 13.3)
-        if (logPath == null) {
-            log.info("[NitradoClient] DayZ folder not found in /games, using fallback path (serviceId={})", serviceId);
-            logPath = "/games/ni" + serviceId + "_dayz/logs/server_log.ADM";
+        // Step 3: If file server has entries, try downloading via file server (PC servers)
+        if (logPath != null) {
+            try {
+                return downloadFile(serviceId, logPath);
+            } catch (NitradoNotFoundException e) {
+                throw new NitradoNotFoundException(
+                        "Archivo de log no encontrado: " + logPath + " (serviceId=" + serviceId + ")");
+            }
         }
 
-        // Step 4: Download the log file; NitradoNotFoundException propagates if 404 (Req 13.4)
+        // Step 4: File server empty (console servers like Xbox/PS) — use game logs endpoint
+        log.info("[NitradoClient] File server empty, trying console logs endpoint (serviceId={})", serviceId);
         try {
-            return downloadFile(serviceId, logPath);
+            String url = "/services/" + serviceId + "/gameservers/games/logs";
+            ResponseEntity<Map> response = execute(HttpMethod.GET, url, serviceId, null);
+
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                throw new NitradoNotFoundException("Logs no disponibles (serviceId=" + serviceId + ")");
+            }
+
+            Map<String, Object> data = (Map<String, Object>) body.get("data");
+            if (data == null) {
+                throw new NitradoNotFoundException("Logs no disponibles (serviceId=" + serviceId + ")");
+            }
+
+            // The console logs endpoint may return logs in different formats:
+            // Option A: { "data": { "logs": "full log content as string" } }
+            // Option B: { "data": { "logs": [ { "message": "...", ... }, ... ] } }
+            Object logsObj = data.get("logs");
+
+            if (logsObj instanceof String logsString) {
+                return logsString;
+            }
+
+            if (logsObj instanceof List<?> logsList) {
+                StringBuilder sb = new StringBuilder();
+                for (Object entry2 : logsList) {
+                    if (entry2 instanceof Map<?, ?> logEntry) {
+                        Object msg = logEntry.get("message");
+                        if (msg != null) {
+                            sb.append(msg).append("\n");
+                        }
+                    } else if (entry2 instanceof String s) {
+                        sb.append(s).append("\n");
+                    }
+                }
+                return sb.toString();
+            }
+
+            log.warn("[NitradoClient] Unexpected logs format: {} (serviceId={})",
+                    logsObj != null ? logsObj.getClass().getSimpleName() : "null", serviceId);
+            throw new NitradoNotFoundException("Formato de logs no reconocido (serviceId=" + serviceId + ")");
+
         } catch (NitradoNotFoundException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("[NitradoClient] Error fetching console logs (serviceId={}): {}", serviceId, e.getMessage());
             throw new NitradoNotFoundException(
-                    "Archivo de log no encontrado: " + logPath + " (serviceId=" + serviceId + ")");
+                    "Logs no disponibles para este servidor (serviceId=" + serviceId + "): " + e.getMessage());
         }
     }
 
