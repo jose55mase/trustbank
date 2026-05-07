@@ -419,14 +419,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       // Encabezados principales
       final headers1 = [
         'ID', 'TIPO', 'FECHA', 'MONTO', 'METODO', 'TIPO DE', 
-        'FORMA', 'ID', 'CODIGO', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', 'CUOTAS', 
+        'FORMA', 'ID', 'CODIGO', 'CLIENTE', 'TELEFONO', 'NOMBRE', 'TELEFONO', '%', 'CUOTAS', 
         'CUOTAS', 'CUOTAS', 'VALOR REAL', 'MONTO', 'MONTO', 'CAPITAL', 'CAPITAL', 'INTERES', 'NOTAS'
       ];
       
       // Encabezados secundarios
       final headers2 = [
         '', '', '', '', 'DE PAGO', 'PRESTAMO', 
-        'DE PAGO', 'PRESTAMO', 'USUARIO', '', '', 'REFERENCIA', 'REFERENCIA', 'TOTALES', 
+        'DE PAGO', 'PRESTAMO', 'USUARIO', '', '', 'REFERENCIA', 'REFERENCIA', 'PRESTAMO', 'TOTALES', 
         'PAGADAS', 'RESTANTES', 'DE CUOTA', 'PRESTADO', 'RESTANTE', '', 'FIJO', '', ''
       ];
       
@@ -617,6 +617,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           }
         }
         
+        // Obtener porcentaje del préstamo
+        final porcentajePrestamo = isLoan 
+            ? '${item['interestRate'] ?? 0}%'
+            : '${item['loan']?['interestRate'] ?? 0}%';
+        
         final row = [
           item['id']?.toString() ?? '',
           isLoan ? 'Prestamo' : (isPayment ? 'Pago' : 'Transaccion'),
@@ -637,6 +642,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           userPhone,
           referenceName,
           referencePhone,
+          porcentajePrestamo,
           isLoan 
             ? (item['installments']?.toString() ?? '')
             : (item['loan']?['installments']?.toString() ?? ''),
