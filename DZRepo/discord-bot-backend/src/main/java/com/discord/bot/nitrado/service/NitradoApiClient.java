@@ -506,30 +506,19 @@ public class NitradoApiClient {
             }
         }
 
-        // Step 4: File server empty or no DayZ folder (console servers like Xbox/PS)
-        // Try the Xbox/PS console path: /games/{folderId}/noftp/dayzxb/config/DayZServer_X1_x64.ADM
-        log.info("[NitradoClient] No DayZ folder found via file listing, trying console paths (serviceId={})", serviceId);
+        // Step 4: File server empty (console servers like Xbox/PS)
+        // Xbox path structure: /games/{folderId}/noftp/dayzxb/config/DayZServer_X1_x64.ADM
+        log.info("[NitradoClient] No DayZ folder found via file listing, trying Xbox/PS console paths (serviceId={})", serviceId);
 
-        // Get the game server folder ID from the gameservers endpoint
-        String folderId = getGameServerFolderId(serviceId);
-
-        // Try known console log file paths
-        String[] consolePaths;
-        if (folderId != null) {
-            consolePaths = new String[]{
-                    "/games/" + folderId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
-                    "/games/" + folderId + "/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
-                    "/games/" + folderId + "/noftp/dayzxb/config/server_log.ADM",
-                    "/games/" + folderId + "/noftp/dayzxb/logs/server_log.ADM",
-                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM"
-            };
-        } else {
-            consolePaths = new String[]{
-                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
-                    "/games/ni" + serviceId + "_dayz/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
-                    "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/server_log.ADM"
-            };
-        }
+        // Try known console log file paths with common folder ID patterns
+        String[] consolePaths = {
+                "/games/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
+                "/games/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
+                "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
+                "/games/ni" + serviceId + "_dayz/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
+                "/games/" + serviceId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
+                "/noftp/dayzxb/config/DayZServer_X1_x64.ADM"
+        };
 
         for (String path : consolePaths) {
             try {
@@ -549,47 +538,6 @@ public class NitradoApiClient {
         throw new NitradoNotFoundException(
                 "Logs no disponibles para este servidor de consola (serviceId=" + serviceId + "). " +
                 "Ningún path de log conocido fue encontrado.");
-    }
-
-    /**
-     * Attempts to retrieve the game server folder ID from the gameservers endpoint.
-     * This ID is used to construct file paths for console servers.
-     *
-     * @param serviceId the Nitrado service ID
-     * @return the folder ID string, or null if not found
-     */
-    @SuppressWarnings("unchecked")
-    private String getGameServerFolderId(int serviceId) {
-        try {
-            ResponseEntity<Map> response = execute(HttpMethod.GET,
-                    "/services/" + serviceId + "/gameservers", serviceId, null);
-
-            Map<String, Object> body = response.getBody();
-            if (body == null) return null;
-
-            Map<String, Object> data = (Map<String, Object>) body.get("data");
-            if (data == null) return null;
-
-            Map<String, Object> gameserver = (Map<String, Object>) data.get("gameserver");
-            if (gameserver == null) return null;
-
-            // Try common field names that might contain the folder ID
-            // Nitrado uses "game_specific" or "settings" or "folder_short"
-            Object folderId = gameserver.get("folder_short");
-            if (folderId != null) return folderId.toString();
-
-            // Try service_id as folder name pattern
-            Object gsId = gameserver.get("id");
-            if (gsId != null) return gsId.toString();
-
-            // Log available keys for debugging
-            log.info("[NitradoClient] Gameserver keys: {} (serviceId={})", gameserver.keySet(), serviceId);
-
-            return null;
-        } catch (Exception e) {
-            log.debug("[NitradoClient] Could not get folder ID: {} (serviceId={})", e.getMessage(), serviceId);
-            return null;
-        }
     }
 
     // ── Private mapping helpers ──
