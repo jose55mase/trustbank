@@ -523,12 +523,23 @@ public class NitradoApiClient {
         // Build paths to try - with folderId first, then fallbacks
         java.util.List<String> paths = new java.util.ArrayList<>();
         if (folderId != null && !folderId.isBlank()) {
-            paths.add("/games/" + folderId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
-            paths.add("/games/" + folderId + "/noftp/dayzps/config/DayZServer_PS4_x64.ADM");
+            // For Xbox/PS, ADM files have timestamps in their names (e.g. DayZServer_X1_x64_2026-05-11_20-12-39.ADM)
+            // We need to list the config directory and find the most recent .ADM file
+            String configDir = "/games/" + folderId + "/noftp/dayzxb/config";
+            String admFile = findMostRecentAdmFile(serviceId, configDir);
+            if (admFile != null) {
+                paths.add(admFile);
+            }
+            // Also try the static name as fallback
+            paths.add(configDir + "/DayZServer_X1_x64.ADM");
+
+            // Try PS path too
+            String psConfigDir = "/games/" + folderId + "/noftp/dayzps/config";
+            String psAdmFile = findMostRecentAdmFile(serviceId, psConfigDir);
+            if (psAdmFile != null) {
+                paths.add(psAdmFile);
+            }
         }
-        // Fallback paths
-        paths.add("/games/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
-        paths.add("/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
 
         for (String path : paths) {
             try {
@@ -548,6 +559,43 @@ public class NitradoApiClient {
         throw new NitradoNotFoundException(
                 "Logs no disponibles para este servidor de consola (serviceId=" + serviceId + "). " +
                 "Ningún path de log conocido fue encontrado.");
+    }
+
+    /**
+     * Lists files in a directory and finds the most recent .ADM file by name.
+     * Xbox/PS DayZ servers create timestamped ADM files like: DayZServer_X1_x64_2026-05-11_20-12-39.ADM
+     *
+     * @param serviceId the Nitrado service ID
+     * @param configDir the directory path to search
+     * @return the full path to the most recent .ADM file, or null if none found
+     */
+    private String findMostRecentAdmFile(int serviceId, String configDir) {
+        try {
+            List<FileEntryDto> files = listFiles(serviceId, configDir);
+            String mostRecent = null;
+
+            for (FileEntryDto file : files) {
+                if ("file".equalsIgnoreCase(file.type())
+                        && file.name() != null
+                        && file.name().toUpperCase().endsWith(".ADM")) {
+                    // Pick the one with the latest name (timestamps sort lexicographically)
+                    if (mostRecent == null || file.name().compareTo(mostRecent) > 0) {
+                        mostRecent = file.path();
+                    }
+                }
+            }
+
+            if (mostRecent != null) {
+                log.info("[NitradoClient] Found most recent ADM file: {} (serviceId={})", mostRecent, serviceId);
+            } else {
+                log.info("[NitradoClient] No .ADM files found in {} (serviceId={})", configDir, serviceId);
+            }
+
+            return mostRecent;
+        } catch (Exception e) {
+            log.debug("[NitradoClient] Error listing files in {}: {} (serviceId={})", configDir, e.getMessage(), serviceId);
+            return null;
+        }
     }
 
     /**
