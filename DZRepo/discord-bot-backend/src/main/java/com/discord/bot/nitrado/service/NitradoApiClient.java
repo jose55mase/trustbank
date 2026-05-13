@@ -508,22 +508,32 @@ public class NitradoApiClient {
 
         // Step 4: File server empty (console servers like Xbox/PS)
         // Xbox path structure: /games/{folderId}/noftp/dayzxb/config/DayZServer_X1_x64.ADM
+        // The folderId (e.g. "ni9508869_1") comes from the gameservers endpoint
         log.info("[NitradoClient] No DayZ folder found via file listing, trying Xbox/PS console paths (serviceId={})", serviceId);
 
-        // Try known console log file paths with common folder ID patterns
-        String[] consolePaths = {
-                "/games/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
-                "/games/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
-                "/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
-                "/games/ni" + serviceId + "_dayz/noftp/dayzps/config/DayZServer_PS4_x64.ADM",
-                "/games/" + serviceId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM",
-                "/noftp/dayzxb/config/DayZServer_X1_x64.ADM"
-        };
+        // First, try the configured folder ID (from application properties)
+        String configuredFolderId = config.getGameServerFolderId();
 
-        for (String path : consolePaths) {
+        // Then try to get it dynamically from the gameservers endpoint
+        String folderId = (configuredFolderId != null && !configuredFolderId.isBlank())
+                ? configuredFolderId
+                : getGameServerFolderId(serviceId);
+        log.info("[NitradoClient] Resolved folderId: {} (serviceId={})", folderId, serviceId);
+
+        // Build paths to try - with folderId first, then fallbacks
+        java.util.List<String> paths = new java.util.ArrayList<>();
+        if (folderId != null && !folderId.isBlank()) {
+            paths.add("/games/" + folderId + "/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
+            paths.add("/games/" + folderId + "/noftp/dayzps/config/DayZServer_PS4_x64.ADM");
+        }
+        // Fallback paths
+        paths.add("/games/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
+        paths.add("/games/ni" + serviceId + "_dayz/noftp/dayzxb/config/DayZServer_X1_x64.ADM");
+
+        for (String path : paths) {
             try {
                 log.info("[NitradoClient] Trying console path: {} (serviceId={})", path, serviceId);
-                String content = downloadFile(serviceId, path);
+                String content = downloadFileAsStream(serviceId, path);
                 if (content != null && !content.isBlank()) {
                     log.info("[NitradoClient] Found logs at: {} (serviceId={})", path, serviceId);
                     return content;
@@ -531,13 +541,118 @@ public class NitradoApiClient {
             } catch (NitradoNotFoundException e) {
                 log.debug("[NitradoClient] Path not found: {} (serviceId={})", path, serviceId);
             } catch (Exception e) {
-                log.debug("[NitradoClient] Error trying path {}: {} (serviceId={})", path, e.getMessage(), serviceId);
+                log.info("[NitradoClient] Error trying path {}: {} (serviceId={})", path, e.getMessage(), serviceId);
             }
         }
 
         throw new NitradoNotFoundException(
                 "Logs no disponibles para este servidor de consola (serviceId=" + serviceId + "). " +
                 "Ningún path de log conocido fue encontrado.");
+    }
+
+    /**
+     * Downloads a file directly as a stream, similar to how the Node.js code works
+     * with Accept: application/octet-stream. This is the method used for Xbox/PS console servers.
+     *
+     * @param serviceId the Nitrado service ID
+     * @param filePath the file path to download
+     * @return the file content as a string
+     */
+    private String downloadFileAsStream(int serviceId, String filePath) {
+        String url = config.getBaseUrl() + "/services/" + serviceId +
+                "/gameservers/file_server/download?file=" + filePath;
+
+        log.info("[NitradoClient] Direct stream download: {} (serviceId={})", url, serviceId);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(config.getApiToken());
+            headers.set("Accept", "application/octet-stream");
+
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, String.class);
+
+            String body = response.getBody();
+
+            // Nitrado may return a JSON with a download URL instead of direct content
+            if (body != null && body.trim().startsWith("{")) {
+                // It's JSON - parse the token URL and download from there
+                try {
+                    Map<String, Object> json = objectMapper.readValue(body, Map.class);
+                    Map<String, Object> data = (Map<String, Object>) json.get("data");
+                    if (data != null) {
+                        Map<String, Object> token = (Map<String, Object>) data.get("token");
+                        if (token != null) {
+                            String downloadUrl = (String) token.get("url");
+                            if (downloadUrl != null && !downloadUrl.isBlank()) {
+                                log.info("[NitradoClient] Got download URL, fetching content (serviceId={})", serviceId);
+                                return restTemplate.getForObject(downloadUrl, String.class);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.debug("[NitradoClient] Failed to parse as JSON token response: {}", e.getMessage());
+                }
+            }
+
+            return body;
+        } catch (HttpClientErrorException e) {
+            int status = e.getStatusCode().value();
+            if (status == 404) {
+                throw new NitradoNotFoundException("File not found: " + filePath);
+            }
+            throw new NitradoApiException("Error downloading file: " + e.getMessage(), status);
+        } catch (HttpServerErrorException e) {
+            int status = e.getStatusCode().value();
+            throw new NitradoServerException("Server error downloading file: " + e.getMessage(), status);
+        } catch (ResourceAccessException e) {
+            throw new NitradoConnectionException("Connection error downloading file", e);
+        }
+    }
+
+    /**
+     * Gets the game server folder ID (e.g. "ni9508869_1") from the gameservers endpoint.
+     * This is needed to construct file paths for console servers.
+     */
+    @SuppressWarnings("unchecked")
+    private String getGameServerFolderId(int serviceId) {
+        try {
+            ResponseEntity<Map> response = execute(HttpMethod.GET,
+                    "/services/" + serviceId + "/gameservers", serviceId, null);
+
+            Map<String, Object> body = response.getBody();
+            if (body == null) return null;
+
+            Map<String, Object> data = (Map<String, Object>) body.get("data");
+            if (data == null) return null;
+
+            Map<String, Object> gameserver = (Map<String, Object>) data.get("gameserver");
+            if (gameserver == null) return null;
+
+            // Log all keys for debugging
+            log.info("[NitradoClient] Gameserver response keys: {} (serviceId={})", gameserver.keySet(), serviceId);
+
+            // The folder ID is typically in "folder_short" or can be derived from "id"
+            // Common patterns: "ni{number}_{number}" like "ni9508869_1"
+            Object folderShort = gameserver.get("folder_short");
+            if (folderShort != null && !folderShort.toString().isBlank()) {
+                return folderShort.toString();
+            }
+
+            // Try "game_specific.path" or similar nested fields
+            Object gameSpecific = gameserver.get("game_specific");
+            if (gameSpecific instanceof Map<?, ?> gsMap) {
+                Object gsPath = gsMap.get("path");
+                if (gsPath != null) return gsPath.toString();
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.warn("[NitradoClient] Could not get folder ID: {} (serviceId={})", e.getMessage(), serviceId);
+            return null;
+        }
     }
 
     // ── Private mapping helpers ──

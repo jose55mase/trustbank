@@ -17,6 +17,13 @@ public class NitradoConfigProperties {
 
     private int readTimeoutMs = 10_000;
 
+    /**
+     * The game server folder ID used for constructing file paths on console servers (Xbox/PS).
+     * Format: "ni{number}_{number}" (e.g., "ni11126176_1").
+     * Required for downloading logs from Xbox/PlayStation DayZ servers.
+     */
+    private String gameServerFolderId;
+
     public String getApiToken() {
         return apiToken;
     }
@@ -47,5 +54,13 @@ public class NitradoConfigProperties {
 
     public void setReadTimeoutMs(int readTimeoutMs) {
         this.readTimeoutMs = readTimeoutMs;
+    }
+
+    public String getGameServerFolderId() {
+        return gameServerFolderId;
+    }
+
+    public void setGameServerFolderId(String gameServerFolderId) {
+        this.gameServerFolderId = gameServerFolderId;
     }
 }
