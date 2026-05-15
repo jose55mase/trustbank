@@ -572,26 +572,28 @@ public class NitradoApiClient {
     private String findMostRecentAdmFile(int serviceId, String configDir) {
         try {
             List<FileEntryDto> files = listFiles(serviceId, configDir);
-            String mostRecent = null;
+            String mostRecentName = null;
+            String mostRecentPath = null;
 
             for (FileEntryDto file : files) {
                 if ("file".equalsIgnoreCase(file.type())
                         && file.name() != null
                         && file.name().toUpperCase().endsWith(".ADM")) {
                     // Pick the one with the latest name (timestamps sort lexicographically)
-                    if (mostRecent == null || file.name().compareTo(mostRecent) > 0) {
-                        mostRecent = file.path();
+                    if (mostRecentName == null || file.name().compareTo(mostRecentName) > 0) {
+                        mostRecentName = file.name();
+                        mostRecentPath = file.path();
                     }
                 }
             }
 
-            if (mostRecent != null) {
-                log.info("[NitradoClient] Found most recent ADM file: {} (serviceId={})", mostRecent, serviceId);
+            if (mostRecentPath != null) {
+                log.info("[NitradoClient] Found most recent ADM file: {} (serviceId={})", mostRecentPath, serviceId);
             } else {
                 log.info("[NitradoClient] No .ADM files found in {} (serviceId={})", configDir, serviceId);
             }
 
-            return mostRecent;
+            return mostRecentPath;
         } catch (Exception e) {
             log.debug("[NitradoClient] Error listing files in {}: {} (serviceId={})", configDir, e.getMessage(), serviceId);
             return null;
