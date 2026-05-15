@@ -21,11 +21,17 @@ import java.util.regex.Pattern;
 public class DisconnectionLineParser implements EventLineParser {
 
     /**
-     * Regex capturing groups:
-     * 1 = timestamp (HH:mm:ss)
-     * 2 = player name
+     * Matches both formats:
+     * Xbox/PS: {@code HH:mm:ss | Player "NAME" (id=ID pos=<X, Y, Z>) has been disconnected}
+     * PC: {@code HH:mm:ss | Player "NAME" has been disconnected}
+     *
+     * Capturing groups: 1=timestamp, 2=player name
      */
-    private static final Pattern DISCONNECTION_PATTERN = Pattern.compile(
+    private static final Pattern DISCONNECTION_PATTERN_CONSOLE = Pattern.compile(
+            "^(\\d{2}:\\d{2}:\\d{2}) \\| Player \"(.+?)\" \\(id=.+?(?:\\s+pos=<[^>]+>)?\\) has been disconnected$"
+    );
+
+    private static final Pattern DISCONNECTION_PATTERN_PC = Pattern.compile(
             "^(\\d{2}:\\d{2}:\\d{2}) \\| Player \"(.+?)\" has been disconnected$"
     );
 
@@ -35,9 +41,16 @@ public class DisconnectionLineParser implements EventLineParser {
             return Optional.empty();
         }
 
-        Matcher matcher = DISCONNECTION_PATTERN.matcher(line.trim());
+        String trimmed = line.trim();
+
+        // Try console format first (Xbox/PS): Player "NAME" (id=... pos=<...>) has been disconnected
+        Matcher matcher = DISCONNECTION_PATTERN_CONSOLE.matcher(trimmed);
         if (!matcher.matches()) {
-            return Optional.empty();
+            // Try PC format: Player "NAME" has been disconnected
+            matcher = DISCONNECTION_PATTERN_PC.matcher(trimmed);
+            if (!matcher.matches()) {
+                return Optional.empty();
+            }
         }
 
         String timestamp = matcher.group(1);
@@ -49,7 +62,7 @@ public class DisconnectionLineParser implements EventLineParser {
                 timestamp,
                 GameLogCategory.DISCONNECTION,
                 playerName,
-                line.trim(),
+                trimmed,
                 details,
                 lineIndex
         ));

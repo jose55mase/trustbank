@@ -21,12 +21,19 @@ import java.util.regex.Pattern;
 public class ConnectionLineParser implements EventLineParser {
 
     /**
-     * Regex capturing groups:
+     * Regex capturing groups for Xbox/PS format:
+     * {@code HH:mm:ss | Player "NAME" (id=ID pos=<X, Y, Z>) is connected}
      * 1 = timestamp (HH:mm:ss)
      * 2 = player name
      * 3 = player id
+     *
+     * Also supports PC format: {@code HH:mm:ss | Player "NAME" is connected (id=ID)}
      */
-    private static final Pattern CONNECTION_PATTERN = Pattern.compile(
+    private static final Pattern CONNECTION_PATTERN_CONSOLE = Pattern.compile(
+            "^(\\d{2}:\\d{2}:\\d{2}) \\| Player \"(.+?)\" \\(id=(.+?)(?:\\s+pos=<[^>]+>)?\\) is connected$"
+    );
+
+    private static final Pattern CONNECTION_PATTERN_PC = Pattern.compile(
             "^(\\d{2}:\\d{2}:\\d{2}) \\| Player \"(.+?)\" is connected \\(id=(.+?)\\)$"
     );
 
@@ -36,9 +43,16 @@ public class ConnectionLineParser implements EventLineParser {
             return Optional.empty();
         }
 
-        Matcher matcher = CONNECTION_PATTERN.matcher(line.trim());
+        String trimmed = line.trim();
+
+        // Try console format first (Xbox/PS): Player "NAME" (id=ID pos=<X,Y,Z>) is connected
+        Matcher matcher = CONNECTION_PATTERN_CONSOLE.matcher(trimmed);
         if (!matcher.matches()) {
-            return Optional.empty();
+            // Try PC format: Player "NAME" is connected (id=ID)
+            matcher = CONNECTION_PATTERN_PC.matcher(trimmed);
+            if (!matcher.matches()) {
+                return Optional.empty();
+            }
         }
 
         String timestamp = matcher.group(1);
@@ -53,7 +67,7 @@ public class ConnectionLineParser implements EventLineParser {
                 timestamp,
                 GameLogCategory.CONNECTION,
                 playerName,
-                line.trim(),
+                trimmed,
                 details,
                 lineIndex
         ));
