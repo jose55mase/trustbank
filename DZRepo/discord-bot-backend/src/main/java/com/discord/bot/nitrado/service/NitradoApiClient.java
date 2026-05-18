@@ -544,7 +544,7 @@ public class NitradoApiClient {
         for (String path : paths) {
             try {
                 log.info("[NitradoClient] Trying console path: {} (serviceId={})", path, serviceId);
-                String content = downloadFileAsStream(serviceId, path);
+                String content = downloadFile(serviceId, path);
                 if (content != null && !content.isBlank()) {
                     log.info("[NitradoClient] Found logs at: {} (serviceId={})", path, serviceId);
                     return content;
@@ -597,68 +597,6 @@ public class NitradoApiClient {
         } catch (Exception e) {
             log.debug("[NitradoClient] Error listing files in {}: {} (serviceId={})", configDir, e.getMessage(), serviceId);
             return null;
-        }
-    }
-
-    /**
-     * Downloads a file directly as a stream, similar to how the Node.js code works
-     * with Accept: application/octet-stream. This is the method used for Xbox/PS console servers.
-     *
-     * @param serviceId the Nitrado service ID
-     * @param filePath the file path to download
-     * @return the file content as a string
-     */
-    private String downloadFileAsStream(int serviceId, String filePath) {
-        String url = config.getBaseUrl() + "/services/" + serviceId +
-                "/gameservers/file_server/download?file=" + filePath;
-
-        log.info("[NitradoClient] Direct stream download: {} (serviceId={})", url, serviceId);
-
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(config.getApiToken());
-            headers.set("Accept", "application/octet-stream");
-
-            HttpEntity<?> entity = new HttpEntity<>(headers);
-
-            ResponseEntity<String> response = restTemplate.exchange(
-                    url, HttpMethod.GET, entity, String.class);
-
-            String body = response.getBody();
-
-            // Nitrado may return a JSON with a download URL instead of direct content
-            if (body != null && body.trim().startsWith("{")) {
-                // It's JSON - parse the token URL and download from there
-                try {
-                    Map<String, Object> json = objectMapper.readValue(body, Map.class);
-                    Map<String, Object> data = (Map<String, Object>) json.get("data");
-                    if (data != null) {
-                        Map<String, Object> token = (Map<String, Object>) data.get("token");
-                        if (token != null) {
-                            String downloadUrl = (String) token.get("url");
-                            if (downloadUrl != null && !downloadUrl.isBlank()) {
-                                log.info("[NitradoClient] Got download URL, fetching content (serviceId={})", serviceId);
-                                return restTemplate.getForObject(downloadUrl, String.class);
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    log.debug("[NitradoClient] Failed to parse as JSON token response: {}", e.getMessage());
-                }
-            }
-
-            return body;
-        } catch (HttpClientErrorException e) {
-            int status = e.getStatusCode().value();
-            if (status == 404) {
-                throw new NitradoNotFoundException("File not found: " + filePath);
-            }
-            throw new NitradoApiException("Error downloading file: " + e.getMessage(), status);
-        } catch (HttpServerErrorException e) {
-            int status = e.getStatusCode().value();
-            throw new NitradoServerException("Server error downloading file: " + e.getMessage(), status);
-        } catch (ResourceAccessException e) {
-            throw new NitradoConnectionException("Connection error downloading file", e);
         }
     }
 

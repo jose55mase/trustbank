@@ -42,17 +42,20 @@ public class KillFeedService {
     private final KillFeedConfigStore configStore;
     private final KillFeedEmbedBuilder embedBuilder;
     private final BotInitializer botInitializer;
+    private final ConnectionNotificationService connectionNotificationService;
 
     public KillFeedService(NitradoApiClient nitradoApiClient,
                            LogParser logParser,
                            KillFeedConfigStore configStore,
                            KillFeedEmbedBuilder embedBuilder,
-                           @Lazy BotInitializer botInitializer) {
+                           @Lazy BotInitializer botInitializer,
+                           ConnectionNotificationService connectionNotificationService) {
         this.nitradoApiClient = nitradoApiClient;
         this.logParser = logParser;
         this.configStore = configStore;
         this.embedBuilder = embedBuilder;
         this.botInitializer = botInitializer;
+        this.connectionNotificationService = connectionNotificationService;
     }
 
     /**
@@ -128,6 +131,9 @@ public class KillFeedService {
 
         // Parse kill events from the log
         List<KillEvent> allEvents = logParser.parseKillEvents(logContent);
+
+        // Process connection notifications for unlinked players
+        connectionNotificationService.processConnections(config.guildId(), logContent);
 
         // Filter duplicates using the last processed state
         LastProcessedState lastState = configStore.getLastProcessed(config.guildId()).orElse(null);
