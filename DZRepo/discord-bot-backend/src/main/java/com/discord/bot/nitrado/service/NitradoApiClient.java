@@ -408,31 +408,65 @@ public class NitradoApiClient {
     }
 
     /**
-     * Uploads a file to a game server via the Nitrado API.
+     * Uploads a file to a game server via the Nitrado API (two-step process).
      *
-     * <p>Sends a POST to {@code /services/{serviceId}/gameservers/file_server/upload?path={filePath}}
-     * with the file content as the request body using {@code Content-Type: application/octet-stream}.
+     * <p>Step 1: POST to {@code /services/{serviceId}/gameservers/file_server/upload}
+     * with {@code path} and {@code file} parameters to obtain a temporary upload URL.
+     * <p>Step 2: POST the file content to the temporary URL using multipart/form-data.
      *
      * @param serviceId the Nitrado service ID
-     * @param filePath  the destination path on the server (e.g., "/games/dayz/config.cfg")
+     * @param filePath  the destination path on the server (e.g., "/games/dayz/custom/shop_spawns.json")
      * @param content   the file content to upload
      */
+    @SuppressWarnings("unchecked")
     public void uploadFile(int serviceId, String filePath, String content) {
-        String url = "/services/" + serviceId + "/gameservers/file_server/upload?path=" + filePath;
+        // Extract directory and filename from the full path
+        String dir = filePath.substring(0, filePath.lastIndexOf('/'));
+        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+
+        // Step 1: Get temporary upload URL
+        String url = "/services/" + serviceId + "/gameservers/file_server/upload?path=" + dir + "&file=" + fileName;
         log.info("[NitradoClient] POST {} (serviceId={})", url, serviceId);
         long startTime = System.currentTimeMillis();
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(config.getApiToken());
-            headers.set(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
+            HttpEntity<?> entity = new HttpEntity<>(buildHeaders());
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
 
-            HttpEntity<String> entity = new HttpEntity<>(content, headers);
+            Map<String, Object> body = response.getBody();
+            if (body == null) {
+                throw new NitradoApiException("No se recibió respuesta al solicitar URL de upload", 500);
+            }
 
-            restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            Map<String, Object> data = (Map<String, Object>) body.get("data");
+            if (data == null) {
+                throw new NitradoApiException("Respuesta de upload sin campo 'data'", 500);
+            }
+
+            Map<String, Object> token = (Map<String, Object>) data.get("token");
+            if (token == null) {
+                throw new NitradoApiException("Respuesta de upload sin campo 'token'", 500);
+            }
+
+            String uploadUrl = token.get("url") instanceof String s ? s : null;
+            if (uploadUrl == null || uploadUrl.isBlank()) {
+                throw new NitradoApiException("URL temporal de upload no encontrada en la respuesta", 500);
+            }
+
+            // Step 2: Upload file content to temporary URL
+            log.info("[NitradoClient] Uploading file to temporary URL (serviceId={})", serviceId);
+
+            HttpHeaders uploadHeaders = new HttpHeaders();
+            uploadHeaders.set(HttpHeaders.CONTENT_TYPE, "application/octet-stream");
+            HttpEntity<byte[]> uploadEntity = new HttpEntity<>(content.getBytes(java.nio.charset.StandardCharsets.UTF_8), uploadHeaders);
+
+            restTemplate.exchange(uploadUrl, HttpMethod.POST, uploadEntity, String.class);
 
             long elapsed = System.currentTimeMillis() - startTime;
-            log.debug("[NitradoClient] Response OK in {}ms", elapsed);
+            log.info("[NitradoClient] File uploaded successfully in {}ms (serviceId={})", elapsed, serviceId);
+
+        } catch (NitradoApiException e) {
+            throw e;
         } catch (HttpClientErrorException e) {
             int status = e.getStatusCode().value();
             String message = extractMessage(e.getResponseBodyAsString());
