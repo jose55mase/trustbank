@@ -122,6 +122,7 @@ public class TransaccionesCommand implements SlashCommand {
             case ADMIN_DEBIT -> "💸 Débito Admin";
             case PLAYER_TRANSFER_SENT -> "📤 Transferencia Enviada";
             case PLAYER_TRANSFER_RECEIVED -> "📥 Transferencia Recibida";
+            case SHOP_PURCHASE -> "🛒 Compra Tienda";
         };
     }
 
@@ -129,6 +130,8 @@ public class TransaccionesCommand implements SlashCommand {
      * Returns {@code true} if the transaction type represents a debit (money leaving the account).
      */
     private static boolean isDebitType(TransactionType type) {
-        return type == TransactionType.ADMIN_DEBIT || type == TransactionType.PLAYER_TRANSFER_SENT;
+        return type == TransactionType.ADMIN_DEBIT
+                || type == TransactionType.PLAYER_TRANSFER_SENT
+                || type == TransactionType.SHOP_PURCHASE;
     }
 }

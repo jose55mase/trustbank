@@ -27,6 +27,9 @@ public class Product {
     @Column(nullable = false)
     private String category;
 
+    @Column(name = "dayz_class_name")
+    private String dayzClassName;
+
     @Column(nullable = false)
     private long price;
 
@@ -43,6 +46,11 @@ public class Product {
         this.available = true;
     }
 
+    public Product(String name, String description, String category, long price, String dayzClassName) {
+        this(name, description, category, price);
+        this.dayzClassName = dayzClassName;
+    }
+
     public Long getId() { return id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -50,6 +58,8 @@ public class Product {
     public void setDescription(String description) { this.description = description; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getDayzClassName() { return dayzClassName; }
+    public void setDayzClassName(String dayzClassName) { this.dayzClassName = dayzClassName; }
     public long getPrice() { return price; }
     public void setPrice(long price) { this.price = price; }
     public boolean isAvailable() { return available; }

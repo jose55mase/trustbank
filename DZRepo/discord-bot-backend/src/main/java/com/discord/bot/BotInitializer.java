@@ -6,6 +6,7 @@ import com.discord.bot.command.CommandHandler;
 import com.discord.bot.command.CommandRegistry;
 import com.discord.bot.config.BotConfigProperties;
 import com.discord.bot.listener.DiscordEventListener;
+import com.discord.bot.shop.command.ShopInteractionListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class BotInitializer implements ApplicationRunner {
     private final DiscordEventListener eventListener;
     private final CommandHandler commandHandler;
     private final CommandRegistry commandRegistry;
+    private final ShopInteractionListener shopInteractionListener;
     private final ApplicationContext applicationContext;
 
     private JDA jda;
@@ -40,11 +42,13 @@ public class BotInitializer implements ApplicationRunner {
                           DiscordEventListener eventListener,
                           CommandHandler commandHandler,
                           CommandRegistry commandRegistry,
+                          ShopInteractionListener shopInteractionListener,
                           ApplicationContext applicationContext) {
         this.config = config;
         this.eventListener = eventListener;
         this.commandHandler = commandHandler;
         this.commandRegistry = commandRegistry;
+        this.shopInteractionListener = shopInteractionListener;
         this.applicationContext = applicationContext;
     }
 
@@ -55,7 +59,7 @@ public class BotInitializer implements ApplicationRunner {
 
             jda = JDABuilder.createDefault(config.getToken())
                     .setAutoReconnect(true)
-                    .addEventListeners(eventListener)
+                    .addEventListeners(eventListener, shopInteractionListener)
                     .build();
 
             jda.awaitReady();
