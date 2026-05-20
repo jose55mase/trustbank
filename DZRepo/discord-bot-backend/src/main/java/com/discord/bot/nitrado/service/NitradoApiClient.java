@@ -338,6 +338,37 @@ public class NitradoApiClient {
         return result;
     }
 
+    // ── Path resolution ──
+
+    /**
+     * Resolves a relative mission path to the full server file path.
+     * If the path already starts with "/games/", it is returned as-is.
+     * Otherwise, the configured game server folder ID is used to build the full path.
+     *
+     * <p>Example: "/dayzOffline.chernarusplus/custom/shop_spawns.json"
+     * becomes "/games/ni11126176_1/ftproot/dayzxb_missions/dayzOffline.chernarusplus/custom/shop_spawns.json"
+     *
+     * @param filePath the relative or absolute file path
+     * @return the resolved full server path
+     */
+    private String resolveServerPath(String filePath) {
+        if (filePath.startsWith("/games/")) {
+            return filePath;
+        }
+
+        String folderId = config.getGameServerFolderId();
+        if (folderId == null || folderId.isBlank()) {
+            // No folder ID configured, return path as-is (PC servers don't need prefix)
+            return filePath;
+        }
+
+        // Xbox/PS servers: /games/{folderId}/ftproot/dayzxb_missions{filePath}
+        String prefix = "/games/" + folderId + "/ftproot/dayzxb_missions";
+        String resolved = prefix + filePath;
+        log.debug("[NitradoClient] Resolved path: {} -> {}", filePath, resolved);
+        return resolved;
+    }
+
     /**
      * Downloads a file from a game server using Nitrado's two-step download process.
      *
@@ -354,7 +385,8 @@ public class NitradoApiClient {
     @SuppressWarnings("unchecked")
     public String downloadFile(int serviceId, String filePath) {
         // Step 1: Get temporary download URL
-        String url = "/services/" + serviceId + "/gameservers/file_server/download?file=" + filePath;
+        String resolvedPath = resolveServerPath(filePath);
+        String url = "/services/" + serviceId + "/gameservers/file_server/download?file=" + resolvedPath;
         ResponseEntity<Map> response = execute(HttpMethod.GET, url, serviceId, null);
 
         Map<String, Object> body = response.getBody();
@@ -448,9 +480,12 @@ public class NitradoApiClient {
      */
     @SuppressWarnings("unchecked")
     public void uploadFile(int serviceId, String filePath, String content) {
+        // Resolve full server path if a relative mission path is provided
+        String resolvedPath = resolveServerPath(filePath);
+
         // Extract directory and filename from the full path
-        String dir = filePath.substring(0, filePath.lastIndexOf('/'));
-        String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
+        String dir = resolvedPath.substring(0, resolvedPath.lastIndexOf('/'));
+        String fileName = resolvedPath.substring(resolvedPath.lastIndexOf('/') + 1);
 
         // Step 1: Get temporary upload URL
         String url = "/services/" + serviceId + "/gameservers/file_server/upload?path=" + dir + "&file=" + fileName;
