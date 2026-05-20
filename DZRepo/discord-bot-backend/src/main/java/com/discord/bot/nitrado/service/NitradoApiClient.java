@@ -409,17 +409,18 @@ public class NitradoApiClient {
 
     /**
      * Deletes a file from a game server via the Nitrado API.
+     * Uses POST method as required by the Nitrado file_server API.
      *
      * @param serviceId the Nitrado service ID
      * @param filePath  the full path of the file to delete on the server
      */
     public void deleteFile(int serviceId, String filePath) {
         String url = "/services/" + serviceId + "/gameservers/file_server/delete?path=" + filePath;
-        log.info("[NitradoClient] DELETE {} (serviceId={})", url, serviceId);
+        log.info("[NitradoClient] Deleting file: {} (serviceId={})", filePath, serviceId);
 
         try {
             HttpEntity<?> entity = new HttpEntity<>(buildHeaders());
-            restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+            restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
             log.debug("[NitradoClient] File deleted: {} (serviceId={})", filePath, serviceId);
         } catch (HttpClientErrorException e) {
             int status = e.getStatusCode().value();
@@ -429,18 +430,17 @@ public class NitradoApiClient {
             }
             log.warn("[NitradoClient] Error {} deleting file: {} (serviceId={})", status, filePath, serviceId);
         } catch (Exception e) {
-            log.warn("[NitradoClient] Could not delete file before upload: {} (serviceId={})", filePath, serviceId);
+            log.warn("[NitradoClient] Could not delete file: {} (serviceId={})", filePath, serviceId);
         }
     }
 
     /**
      * Uploads a file to a game server via the Nitrado API (two-step process).
-     * Deletes the existing file first to ensure overwrite.
+     * The Nitrado upload API overwrites existing files automatically.
      *
-     * <p>Step 1: DELETE existing file (if any) to allow overwrite.
-     * <p>Step 2: POST to {@code /services/{serviceId}/gameservers/file_server/upload}
-     * with {@code path} and {@code file} parameters to obtain a temporary upload URL.
-     * <p>Step 3: POST the file content to the temporary URL with the upload token.
+     * <p>Step 1: POST to {@code /services/{serviceId}/gameservers/file_server/upload}
+     * with {@code path} and {@code file} parameters to obtain a temporary upload URL and token.
+     * <p>Step 2: POST the file content to the temporary URL with the upload token header.
      *
      * @param serviceId the Nitrado service ID
      * @param filePath  the destination path on the server (e.g., "/games/dayz/custom/shop_spawns.json")
@@ -451,9 +451,6 @@ public class NitradoApiClient {
         // Extract directory and filename from the full path
         String dir = filePath.substring(0, filePath.lastIndexOf('/'));
         String fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-
-        // Step 0: Delete existing file to allow overwrite
-        deleteFile(serviceId, filePath);
 
         // Step 1: Get temporary upload URL
         String url = "/services/" + serviceId + "/gameservers/file_server/upload?path=" + dir + "&file=" + fileName;
