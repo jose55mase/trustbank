@@ -80,6 +80,9 @@ public class ShopDeliveryScheduler {
      * Called when the server comes back online (items have already spawned).
      */
     private void confirmAndCleanup() {
+        // TEMPORARILY DISABLED for testing — uncomment when confirmed items spawn correctly
+        log.info("[ShopDelivery] Cleanup disabled for testing. Pending orders will NOT be cleared.");
+        /*
         try {
             List<ShopOrder> pending = shopService.getPendingOrders();
             if (pending.isEmpty()) {
@@ -92,5 +95,6 @@ public class ShopDeliveryScheduler {
         } catch (Exception e) {
             log.error("[ShopDelivery] Failed to confirm deliveries: {}", e.getMessage());
         }
+        */
     }
 }

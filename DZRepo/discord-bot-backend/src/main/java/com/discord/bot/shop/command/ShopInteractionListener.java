@@ -165,6 +165,9 @@ public class ShopInteractionListener extends ListenerAdapter {
             return;
         }
 
+        // Defer reply immediately — upload to Nitrado can take several seconds
+        event.deferReply(true).queue();
+
         try {
             ShopOrder order = shopService.processPurchase(discordId, productId, quantity, coordX, coordY);
 
@@ -180,13 +183,13 @@ public class ShopInteractionListener extends ListenerAdapter {
                     .setFooter("Tu pedido se entregará en el próximo reinicio del servidor")
                     .build();
 
-            event.replyEmbeds(confirmEmbed).setEphemeral(true).queue();
+            event.getHook().editOriginalEmbeds(confirmEmbed).queue();
 
             publishOrderToChannel(event, order);
 
         } catch (Exception e) {
             log.error("Error processing purchase for user {}: {}", discordId, e.getMessage());
-            event.reply("❌ " + e.getMessage()).setEphemeral(true).queue();
+            event.getHook().editOriginal("❌ " + e.getMessage()).queue();
         }
     }
 
