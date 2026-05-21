@@ -2,8 +2,6 @@
 <economycore>
 	<ce folder="db">
 		<file name="shop_events.xml" type="events"/>
-	</ce>
-	<ce folder="">
 		<file name="shop_eventspawns.xml" type="eventspawns"/>
 	</ce>
 	<classes>
@@ -27,7 +25,7 @@ Do not forget to add attribute act="car", if root class represents moveable vehi
 		<default name="dyn_dmin" value="1" />
 		<default name="dyn_dmax" value="5" />
 		<default name="log_ce_loop" value="false"/>
-		<default name="log_ce_dynamicevent" value="false"/>
+		<default name="log_ce_dynamicevent" value="true"/>
 		<default name="log_ce_vehicle" value="false"/>
 		<default name="log_ce_lootspawn" value="false"/>
 		<default name="log_ce_lootcleanup" value="false"/>
