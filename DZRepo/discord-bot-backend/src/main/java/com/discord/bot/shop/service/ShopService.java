@@ -83,7 +83,16 @@ public class ShopService {
                 saved.getId(), profile.getDayzPlayerName(), product.getName(),
                 quantity, totalPrice, coordX, coordY);
 
-        // Order stays PENDING — items will spawn on next server restart via event system
+        // Upload event files immediately with all pending orders (including this one)
+        try {
+            List<ShopOrder> allPending = shopOrderRepository.findByStatusOrderByCreatedAtAsc("PENDING");
+            itemSpawnService.uploadPendingOrders(allPending);
+            log.info("Order #{} — uploaded event files with {} total pending orders.", saved.getId(), allPending.size());
+        } catch (Exception e) {
+            log.warn("Order #{} — failed to upload event files (will retry on restart): {}", saved.getId(), e.getMessage());
+        }
+
+        // Order stays PENDING — items will spawn on next server restart
         log.info("Order #{} queued for delivery via event system (next restart)", saved.getId());
 
         return saved;

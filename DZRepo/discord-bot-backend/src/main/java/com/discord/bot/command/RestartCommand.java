@@ -18,8 +18,8 @@ import java.util.List;
 
 /**
  * Slash command that restarts a DayZ server hosted on Nitrado.
- * Before restarting, uploads pending shop orders to the event files
- * so items spawn when the server comes back online.
+ * After restarting, marks pending shop orders as delivered and clears event files
+ * (since items will spawn when the server loads the event XMLs on startup).
  */
 @Component
 public class RestartCommand extends AbstractServerCommand {
@@ -71,16 +71,6 @@ public class RestartCommand extends AbstractServerCommand {
         event.deferReply().queue();
 
         try {
-            // Upload pending shop orders before restart
-            List<ShopOrder> pendingOrders = shopService.getPendingOrders();
-            String deliveryMsg = "";
-            if (!pendingOrders.isEmpty()) {
-                shopService.prepareDelivery();
-                deliveryMsg = "\n📦 " + pendingOrders.size() + " pedido(s) preparados para entrega.";
-                log.info("Uploaded {} pending shop orders before restart.", pendingOrders.size());
-            }
-
-            // Execute restart
             List<GameServerDto> servers = nitradoApiClient.getServers();
 
             if (servers.isEmpty()) {
@@ -89,15 +79,18 @@ public class RestartCommand extends AbstractServerCommand {
                 GameServerDto server = servers.get(0);
                 nitradoApiClient.serverAction(server.id(), getAction());
 
-                // Mark orders as delivered (they'll spawn when server starts)
-                if (!pendingOrders.isEmpty()) {
+                // After restart, mark pending orders as delivered and clear event files
+                String deliveryMsg = "";
+                List<ShopOrder> pending = shopService.getPendingOrders();
+                if (!pending.isEmpty()) {
                     shopService.confirmDelivery();
+                    deliveryMsg = "\n📦 " + pending.size() + " pedido(s) entregados (aparecerán al iniciar).";
                 }
 
                 event.getHook().editOriginal("✅ " + getSuccessMessage(server.name()) + deliveryMsg).queue();
             } else {
                 StringBuilder sb = new StringBuilder();
-                sb.append("Hay varios servidores disponibles. Por favor, especifica cuál deseas controlar:\n");
+                sb.append("Hay varios servidores disponibles:\n");
                 for (int i = 0; i < servers.size(); i++) {
                     GameServerDto s = servers.get(i);
                     String statusEmoji = "started".equalsIgnoreCase(s.status()) ? "🟢" : "🔴";
