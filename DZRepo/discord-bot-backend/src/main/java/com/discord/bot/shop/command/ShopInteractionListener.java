@@ -176,10 +176,8 @@ public class ShopInteractionListener extends ListenerAdapter {
                     .addField("Total", order.getTotalPrice() + " TNT Coins", true)
                     .addField("Coordenadas", String.format("X: %.1f | Y: %.1f", order.getCoordX(), order.getCoordY()), false)
                     .addField("Pedido #", String.valueOf(order.getId()), true)
-                    .addField("Estado", "DELIVERED".equals(order.getStatus()) ? "✅ ENTREGADO" : "⏳ PENDIENTE", true)
-                    .setFooter("DELIVERED".equals(order.getStatus())
-                            ? "Item spawneado en el servidor"
-                            : "Tu pedido será entregado pronto")
+                    .addField("Estado", "⏳ PENDIENTE (se entrega en próximo restart)", true)
+                    .setFooter("Tu pedido se entregará en el próximo reinicio del servidor")
                     .build();
 
             event.replyEmbeds(confirmEmbed).setEphemeral(true).queue();

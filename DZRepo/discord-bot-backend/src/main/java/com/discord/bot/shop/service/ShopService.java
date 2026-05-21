@@ -83,22 +83,40 @@ public class ShopService {
                 saved.getId(), profile.getDayzPlayerName(), product.getName(),
                 quantity, totalPrice, coordX, coordY);
 
-        // Auto-deliver: spawn item on server
-        try {
-            itemSpawnService.spawnItem(saved);
-            saved.setStatus("DELIVERED");
-            shopOrderRepository.save(saved);
-            log.info("Order #{} auto-delivered successfully", saved.getId());
-        } catch (ItemSpawnService.ItemSpawnException e) {
-            log.error("Order #{} created but auto-delivery failed: {}", saved.getId(), e.getMessage());
-            // Order stays PENDING — can be retried manually
-        }
+        // Order stays PENDING — items will spawn on next server restart via event system
+        log.info("Order #{} queued for delivery via event system (next restart)", saved.getId());
 
         return saved;
     }
 
     public List<ShopOrder> getPendingOrders() {
         return shopOrderRepository.findByStatusOrderByCreatedAtAsc("PENDING");
+    }
+
+    /**
+     * Prepares pending orders for delivery by uploading event files to the server.
+     * Call this before a server restart.
+     */
+    @Transactional
+    public void prepareDelivery() {
+        List<ShopOrder> pending = getPendingOrders();
+        itemSpawnService.uploadPendingOrders(pending);
+        log.info("Prepared {} orders for delivery on next restart.", pending.size());
+    }
+
+    /**
+     * Marks all pending orders as delivered and clears the event files.
+     * Call this after a server restart when items have spawned.
+     */
+    @Transactional
+    public void confirmDelivery() {
+        List<ShopOrder> pending = getPendingOrders();
+        for (ShopOrder order : pending) {
+            order.setStatus("DELIVERED");
+            shopOrderRepository.save(order);
+        }
+        itemSpawnService.uploadEmptyFiles();
+        log.info("Confirmed delivery of {} orders and cleared event files.", pending.size());
     }
 
     @Transactional
