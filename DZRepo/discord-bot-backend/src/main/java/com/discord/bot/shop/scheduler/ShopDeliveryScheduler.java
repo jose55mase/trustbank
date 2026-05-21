@@ -14,18 +14,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Scheduler that automatically manages shop deliveries around server restarts.
+ * Scheduler that monitors server status and cleans up shop event files
+ * after the server has restarted and loaded the items.
  *
- * <p>Monitors the DayZ server status every 60 seconds. When it detects the server
- * has stopped or is restarting, it uploads pending orders to the event files.
- * When the server comes back online, it confirms the deliveries and clears the files.</p>
- *
- * <p>State machine:
- * <ul>
- *   <li>ONLINE → server running, orders accumulate as PENDING</li>
- *   <li>OFFLINE detected → upload event files with pending orders (prepareDelivery)</li>
- *   <li>ONLINE detected after OFFLINE → confirm deliveries (confirmDelivery)</li>
- * </ul>
+ * <p>Event files are uploaded immediately when orders are placed.
+ * This scheduler only handles cleanup: when the server comes back online
+ * after being offline, it marks orders as DELIVERED and clears the event files
+ * so items don't respawn on the next restart.</p>
  */
 @Component
 public class ShopDeliveryScheduler {
@@ -41,19 +36,17 @@ public class ShopDeliveryScheduler {
     /** Tracks whether the server was online in the last check. */
     private Boolean lastKnownOnline = null;
 
-    /** Whether we already uploaded files for this offline cycle. */
-    private boolean filesUploaded = false;
-
     public ShopDeliveryScheduler(NitradoApiClient nitradoApiClient, ShopService shopService) {
         this.nitradoApiClient = nitradoApiClient;
         this.shopService = shopService;
     }
 
     /**
-     * Checks server status every 60 seconds and manages delivery lifecycle.
+     * Checks server status every 60 seconds.
+     * When server transitions from offline → online, confirms deliveries and clears files.
      */
     @Scheduled(fixedRate = 60000)
-    public void checkServerAndManageDeliveries() {
+    public void checkServerAndCleanup() {
         if (serviceId <= 0) {
             return;
         }
@@ -63,58 +56,30 @@ public class ShopDeliveryScheduler {
             GameServerDto status = nitradoApiClient.getServerStatus(serviceId);
             currentlyOnline = "started".equalsIgnoreCase(status.status());
         } catch (Exception e) {
-            log.debug("Could not check server status for shop delivery: {}", e.getMessage());
+            log.debug("[ShopDelivery] Could not check server status: {}", e.getMessage());
             return;
         }
 
         // First run — just record the state
         if (lastKnownOnline == null) {
             lastKnownOnline = currentlyOnline;
-            // If server is already online on first check, upload pending orders
-            // so they're ready for the next restart
-            if (currentlyOnline) {
-                uploadPendingIfNeeded();
-            }
             return;
         }
 
-        // Server went OFFLINE (was online, now it's not)
-        if (lastKnownOnline && !currentlyOnline) {
-            log.info("[ShopDelivery] Server went offline. Uploading pending orders for next startup...");
-            uploadPendingIfNeeded();
-            lastKnownOnline = false;
-        }
-
-        // Server came back ONLINE (was offline, now it's online)
+        // Server came back ONLINE after being offline
         if (!lastKnownOnline && currentlyOnline) {
-            log.info("[ShopDelivery] Server is back online. Confirming deliveries...");
-            confirmDeliveriesIfNeeded();
-            lastKnownOnline = true;
-            filesUploaded = false;
+            log.info("[ShopDelivery] Server is back online. Cleaning up delivered orders...");
+            confirmAndCleanup();
         }
+
+        lastKnownOnline = currentlyOnline;
     }
 
-    private void uploadPendingIfNeeded() {
-        if (filesUploaded) {
-            return;
-        }
-
-        try {
-            List<ShopOrder> pending = shopService.getPendingOrders();
-            if (pending.isEmpty()) {
-                log.debug("[ShopDelivery] No pending orders to upload.");
-                return;
-            }
-
-            shopService.prepareDelivery();
-            filesUploaded = true;
-            log.info("[ShopDelivery] Uploaded {} pending orders to event files.", pending.size());
-        } catch (Exception e) {
-            log.error("[ShopDelivery] Failed to upload pending orders: {}", e.getMessage());
-        }
-    }
-
-    private void confirmDeliveriesIfNeeded() {
+    /**
+     * Marks pending orders as DELIVERED and uploads empty event files.
+     * Called when the server comes back online (items have already spawned).
+     */
+    private void confirmAndCleanup() {
         try {
             List<ShopOrder> pending = shopService.getPendingOrders();
             if (pending.isEmpty()) {
@@ -123,7 +88,7 @@ public class ShopDeliveryScheduler {
             }
 
             shopService.confirmDelivery();
-            log.info("[ShopDelivery] Confirmed delivery of {} orders.", pending.size());
+            log.info("[ShopDelivery] Confirmed {} orders and cleared event files.", pending.size());
         } catch (Exception e) {
             log.error("[ShopDelivery] Failed to confirm deliveries: {}", e.getMessage());
         }

@@ -79,12 +79,11 @@ public class RestartCommand extends AbstractServerCommand {
                 GameServerDto server = servers.get(0);
                 nitradoApiClient.serverAction(server.id(), getAction());
 
-                // After restart, mark pending orders as delivered and clear event files
+                // Mark pending orders as delivered in DB (files stay on server until it boots)
                 String deliveryMsg = "";
                 List<ShopOrder> pending = shopService.getPendingOrders();
                 if (!pending.isEmpty()) {
-                    shopService.confirmDelivery();
-                    deliveryMsg = "\n📦 " + pending.size() + " pedido(s) entregados (aparecerán al iniciar).";
+                    deliveryMsg = "\n📦 " + pending.size() + " pedido(s) se entregarán al iniciar el servidor.";
                 }
 
                 event.getHook().editOriginal("✅ " + getSuccessMessage(server.name()) + deliveryMsg).queue();
