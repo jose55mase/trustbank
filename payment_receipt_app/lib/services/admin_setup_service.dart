@@ -11,7 +11,8 @@ class AdminSetupService {
       // Crear admin por defecto con estructura backend
       final adminUser = {
         'id': 999,
-        'fistName': 'Administrador', // Backend uses 'fistName'
+        'fistName': 'Administrador', // Backend field name
+        'firstName': 'Administrador', // Alias field name
         'email': 'admin@trustbank.com',
         'username': 'admin',
         'password': 'admin123',

@@ -77,7 +77,7 @@ class ReceiptBloc extends Bloc<ReceiptEvent, ReceiptState> {
       status: 'Completado',
       
       // Client information
-      senderName: user?['fistName'] ?? user?['name'] ?? 'Usuario TrustBank',
+      senderName: user?['firstName'] ?? user?['fistName'] ?? user?['name'] ?? 'Usuario TrustBank',
       senderAccount: '****1234',
       senderEmail: user?['email'] ?? 'usuario@trustbank.com',
       senderPhone: user?['phone'] ?? '+1 (555) 123-4567',

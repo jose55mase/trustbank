@@ -56,7 +56,7 @@ class UserAccount {
       id: json['id'],
       username: json['username'],
       email: json['email'],
-      firstName: json['fistName'], // Note: backend uses 'fistName'
+      firstName: json['firstName'] ?? json['fistName'], // Support both field names
       lastName: json['lastName'],
       phone: json['phone'],
       address: json['address'],
@@ -85,7 +85,8 @@ class UserAccount {
       'id': id,
       'username': username,
       'email': email,
-      'fistName': firstName,
+      'fistName': firstName, // Backend field name
+      'firstName': firstName, // Alias field name
       'lastName': lastName,
       'phone': phone,
       'address': address,

@@ -38,7 +38,7 @@ class AdminUser {
   factory AdminUser.fromJson(Map<String, dynamic> json) {
     return AdminUser(
       id: json['id'] ?? 0,
-      name: json['name'] ?? json['fistName'] ?? json['firstName'] ?? json['username'] ?? 'Usuario',
+      name: json['firstName'] ?? json['fistName'] ?? json['name'] ?? json['username'] ?? 'Usuario',
       email: json['email'] ?? '',
       phone: json['phone'],
       address: json['address'],
@@ -91,7 +91,8 @@ class AdminUser {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'fistName': name, // Backend uses 'fistName'
+      'fistName': name, // Backend field name
+      'firstName': name, // Alias field name
       'email': email,
       'phone': phone,
       'address': address,

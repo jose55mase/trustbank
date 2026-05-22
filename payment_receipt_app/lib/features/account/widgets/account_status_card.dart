@@ -45,7 +45,7 @@ class AccountStatusCard extends StatelessWidget {
           const SizedBox(height: TBSpacing.sm),
           Text(
             userData != null 
-                ? '${userData!['fistName'] ?? userData!['firstName'] ?? ''} ${userData!['lastName'] ?? ''}'
+                ? '${userData!['firstName'] ?? userData!['fistName'] ?? ''} ${userData!['lastName'] ?? ''}'
                 : account.email ?? 'Usuario',
             style: TBTypography.headlineMedium.copyWith(color: TBColors.white),
           ),

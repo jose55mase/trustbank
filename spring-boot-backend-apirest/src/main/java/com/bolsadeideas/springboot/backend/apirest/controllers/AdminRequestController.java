@@ -1,18 +1,20 @@
 package com.bolsadeideas.springboot.backend.apirest.controllers;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.AdminRequestEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.TransactionEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IAdminRequestService;
+import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.ITransactionService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUserService;
 import com.bolsadeideas.springboot.backend.apirest.utils.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 @RestController
 @RequestMapping("/api/admin-requests")
 public class AdminRequestController {
@@ -22,6 +24,9 @@ public class AdminRequestController {
     
     @Autowired
     private IUserService userService;
+    
+    @Autowired
+    private ITransactionService transactionService;
 
     @PostMapping("/create")
     public RestResponse createRequest(@RequestBody AdminRequestEntity request) {
@@ -96,38 +101,68 @@ public class AdminRequestController {
                 Integer currentBalance = user.getMoneyclean() != null ? user.getMoneyclean() : 0;
                 System.out.println("Usuario encontrado - ID: " + user.getId() + ", Saldo actual: " + currentBalance);
                 
+                String transactionType = "INCOME";
+                String description = "";
+                
                 switch (request.getRequestType()) {
                     case "RECHARGE":
                     case "BALANCE_RECHARGE":
-                        // Agregar dinero al saldo
                         user.setMoneyclean(currentBalance + request.getAmount().intValue());
+                        transactionType = "INCOME";
+                        description = "Recarga de saldo aprobada";
                         break;
                         
                     case "CREDIT":
-                        // Agregar dinero del crédito al saldo
                         user.setMoneyclean(currentBalance + request.getAmount().intValue());
-                        System.out.println("Crédito aprobado: Usuario " + user.getId() + " - Saldo anterior: " + currentBalance + " - Monto crédito: " + request.getAmount() + " - Nuevo saldo: " + (currentBalance + request.getAmount().intValue()));
+                        transactionType = "INCOME";
+                        description = "Crédito aprobado";
                         break;
                         
                     case "SEND_MONEY":
-                        // Restar dinero del saldo
                         user.setMoneyclean(currentBalance - request.getAmount().intValue());
+                        transactionType = "EXPENSE";
+                        description = "Envío de dinero aprobado";
                         break;
                         
                     default:
-                        // Para otros tipos de solicitud, no modificar saldo
                         System.out.println("Tipo de solicitud no reconocido para actualización de saldo: " + request.getRequestType());
                         return;
                 }
                 
                 userService.save(user);
                 System.out.println("Saldo actualizado exitosamente para usuario " + user.getId() + ": " + user.getMoneyclean());
+                
+                // Crear registro de transacción para que aparezca en movimientos
+                createTransaction(request, user, transactionType, description);
+                
             } else {
                 System.err.println("Usuario no encontrado con ID: " + request.getUserId());
             }
         } catch (Exception e) {
-            // Log error pero no fallar la transacción principal
             System.err.println("Error actualizando saldo del usuario: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private void createTransaction(AdminRequestEntity request, UserEntity user, String type, String description) {
+        try {
+            TransactionEntity transaction = new TransactionEntity();
+            transaction.setUserId(user.getId());
+            transaction.setAmount(request.getAmount().longValue());
+            transaction.setType(type);
+            transaction.setStatus("COMPLETED");
+            transaction.setDescription(description + " - " + (request.getDetails() != null ? request.getDetails() : ""));
+            transaction.setBanck("TrustBank");
+            transaction.setNumber(System.currentTimeMillis());
+            
+            // Fecha actual en formato ISO
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+            transaction.setDate(sdf.format(new Date()));
+            
+            transactionService.save(transaction);
+            System.out.println("Transacción creada para usuario " + user.getId() + ": " + type + " $" + request.getAmount());
+        } catch (Exception e) {
+            System.err.println("Error creando transacción: " + e.getMessage());
             e.printStackTrace();
         }
     }

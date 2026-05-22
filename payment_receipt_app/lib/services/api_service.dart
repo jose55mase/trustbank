@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://guardianstrustbank.com:8081/api';
-  static String credentials = base64Encode(utf8.encode('angularapp:12345'));
+  static const String baseUrl = AppConfig.apiBaseUrl;
+  static String credentials = base64Encode(utf8.encode('${AppConfig.oauthClientId}:${AppConfig.oauthClientSecret}'));
   
   static Future<Map<String, String>> get headers async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,7 +26,7 @@ class ApiService {
       final body = 'grant_type=password&username=${Uri.encodeComponent(email)}&password=${Uri.encodeComponent(password)}';
 
       final response = await http.post(
-        Uri.parse('https://guardianstrustbank.com:8081/oauth/token'),
+        Uri.parse(AppConfig.oauthTokenUrl),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': 'Basic $credentials',

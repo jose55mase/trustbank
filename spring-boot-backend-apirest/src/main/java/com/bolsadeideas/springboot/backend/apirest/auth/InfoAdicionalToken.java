@@ -30,6 +30,7 @@ public class InfoAdicionalToken implements  TokenEnhancer {
         info.put("lastName", userEntity.getLastName());
         info.put("moneyclean", userEntity.getMoneyclean());
         info.put("fistName", userEntity.getFistName());
+        info.put("firstName", userEntity.getFistName());
 
 		((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(info);
 		

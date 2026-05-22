@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'design_system/colors/tb_colors.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/home/screens/home_screen.dart';
@@ -7,6 +8,9 @@ import 'services/auth_service.dart';
 import 'core/utils/error_handler.dart';
 
 void main() {
+  // Desactivar descarga de fuentes por HTTP (usar fuentes del sistema como fallback)
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   if (kIsWeb) {
     FlutterError.onError = ErrorHandler.handleFlutterError;
   }

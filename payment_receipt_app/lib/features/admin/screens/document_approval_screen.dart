@@ -109,7 +109,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                 CircleAvatar(
                   backgroundColor: TBColors.primary,
                   child: Text(
-                    (user['fistName'] ?? 'U').toString().substring(0, 1).toUpperCase(),
+                    (user['firstName'] ?? user['fistName'] ?? 'U').toString().substring(0, 1).toUpperCase(),
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -119,7 +119,7 @@ class _DocumentApprovalScreenState extends State<DocumentApprovalScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
+                        '${user['firstName'] ?? user['fistName'] ?? ''} ${user['lastName'] ?? ''}',
                         style: TBTypography.titleMedium,
                       ),
                       Text(

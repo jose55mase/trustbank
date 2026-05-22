@@ -122,6 +122,15 @@ public class UserEntity implements Serializable {
         this.fistName = fistName;
     }
 
+    // Alias para corregir el typo - el JSON ahora incluye 'firstName' además de 'fistName'
+    public String getFirstName() {
+        return fistName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.fistName = firstName;
+    }
+
     public String getLastName() {
         return lastName;
     }

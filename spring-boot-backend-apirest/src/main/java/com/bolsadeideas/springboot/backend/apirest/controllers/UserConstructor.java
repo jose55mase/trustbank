@@ -210,7 +210,7 @@ public class UserConstructor {
     }
     
     // Nuevos endpoints para gestión de usuarios
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/all")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         try {
@@ -221,7 +221,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         Map<String, Object> response = new HashMap<>();
@@ -230,7 +230,7 @@ public class UserConstructor {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
     
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/{id}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long id) {
         try {
@@ -245,7 +245,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/byStatus/{status}")
     public ResponseEntity<List<UserEntity>> getUsersByStatus(@PathVariable String status) {
         try {
@@ -256,7 +256,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/search")
     public ResponseEntity<List<UserEntity>> searchUsers(@RequestParam String q) {
         try {
@@ -267,7 +267,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Long>> getUserStats() {
         try {
@@ -278,7 +278,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @PutMapping("/updateStatus/{id}")
     public ResponseEntity<UserEntity> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
@@ -294,7 +294,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @PutMapping("/updateRole/{id}")
     public ResponseEntity<UserEntity> updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
         try {
@@ -310,7 +310,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @GetMapping("/roles")
     public ResponseEntity<List<RolEntity>> getAllRoles() {
         try {
@@ -321,7 +321,7 @@ public class UserConstructor {
         }
     }
     
-    @CrossOrigin(origins = "*")
+
     @PutMapping("/changePassword")
     public ResponseEntity<Map<String, Object>> changePassword(@RequestBody Map<String, String> request) {
         Map<String, Object> response = new HashMap<>();

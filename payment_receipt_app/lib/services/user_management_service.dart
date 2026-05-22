@@ -130,7 +130,8 @@ class UserManagementService {
   }) async {
     try {
       final userData = {
-        'fistName': name, // Backend uses 'fistName' (typo in backend)
+        'fistName': name, // Backend field name
+        'firstName': name, // Alias field name
         'email': email,
         'password': password,
         'accountStatus': 'ACTIVE',

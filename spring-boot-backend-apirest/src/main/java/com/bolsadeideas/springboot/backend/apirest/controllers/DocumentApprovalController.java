@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/admin/documents")
-@CrossOrigin(origins = "*")
 public class DocumentApprovalController {
 
     @Autowired

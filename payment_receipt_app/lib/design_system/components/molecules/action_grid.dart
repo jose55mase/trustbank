@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../colors/tb_colors.dart';
 import '../../typography/tb_typography.dart';
 import '../../spacing/tb_spacing.dart';
+import '../../utils/tb_responsive.dart';
 
 class ActionItem {
   final IconData icon;
@@ -25,19 +26,24 @@ class ActionGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final columns = TBResponsive.actionGridColumns(context);
+    final aspectRatio = TBResponsive.actionGridAspectRatio(context);
+    final containerSize = TBResponsive.iconContainerSize(context);
+    final iconSz = TBResponsive.iconSize(context);
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
         crossAxisSpacing: TBSpacing.md,
         mainAxisSpacing: TBSpacing.md,
-        childAspectRatio: 1.5,
+        childAspectRatio: aspectRatio,
       ),
       itemCount: actions.length,
       itemBuilder: (context, index) {
         final action = actions[index];
-        final isAccent = index % 3 == 1; // Every third item uses accent color
+        final isAccent = index % 3 == 1;
         final bgColor = isAccent ? TBColors.accent.withOpacity(0.1) : TBColors.primary.withOpacity(0.1);
         final iconColor = isAccent ? TBColors.accentDark : TBColors.primary;
         
@@ -59,8 +65,8 @@ class ActionGrid extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: containerSize,
+                  height: containerSize,
                   decoration: BoxDecoration(
                     color: bgColor,
                     borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
@@ -68,7 +74,7 @@ class ActionGrid extends StatelessWidget {
                   child: Icon(
                     action.icon,
                     color: iconColor,
-                    size: 24,
+                    size: iconSz,
                   ),
                 ),
                 const SizedBox(height: TBSpacing.sm),

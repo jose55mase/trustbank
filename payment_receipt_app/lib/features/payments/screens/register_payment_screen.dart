@@ -8,7 +8,6 @@ import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 import '../../../services/payment_service.dart';
 import '../../../services/auth_service.dart';
-import '../../../utils/currency_formatter.dart';
 import '../../../utils/currency_input_formatter.dart';
 
 class RegisterPaymentScreen extends StatefulWidget {
@@ -48,7 +47,7 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: TBColors.primary,
               onPrimary: TBColors.white,
               surface: TBColors.white,
@@ -60,14 +59,14 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
       },
     );
 
-    if (picked != null) {
+    if (picked != null && mounted) {
       final TimeOfDay? time = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(_selectedDate),
         builder: (context, child) {
           return Theme(
             data: Theme.of(context).copyWith(
-              colorScheme: ColorScheme.light(
+              colorScheme: const ColorScheme.light(
                 primary: TBColors.primary,
                 onPrimary: TBColors.white,
                 surface: TBColors.white,
@@ -79,7 +78,7 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
         },
       );
 
-      if (time != null) {
+      if (time != null && mounted) {
         setState(() {
           _selectedDate = DateTime(
             picked.year,
@@ -152,7 +151,7 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                       // Monto
                       TBInput(
                         label: 'Monto',
-                        hint: '\\$0.00',
+                        hint: '\$0.00',
                         controller: _amountController,
                         keyboardType: TextInputType.number,
                         prefixIcon: const Icon(Icons.attach_money),
@@ -167,7 +166,6 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                         hint: 'Descripción del pago',
                         controller: _descriptionController,
                         prefixIcon: const Icon(Icons.description_outlined),
-                        maxLines: 2,
                       ),
                       
                       const SizedBox(height: TBSpacing.lg),
@@ -230,11 +228,11 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                       ),
                       
                       // Campo condicional para monto restante
-                      if (_isPartialPayment) ..[
+                      if (_isPartialPayment) ...[
                         const SizedBox(height: TBSpacing.lg),
                         TBInput(
                           label: 'Monto restante para completar cuota',
-                          hint: '\\$0.00',
+                          hint: '\$0.00',
                           controller: _remainingAmountController,
                           keyboardType: TextInputType.number,
                           prefixIcon: const Icon(Icons.money_off),
@@ -285,14 +283,14 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.calendar_today, color: TBColors.grey600),
+                              const Icon(Icons.calendar_today, color: TBColors.grey600),
                               const SizedBox(width: TBSpacing.sm),
                               Text(
                                 _formatDateTime(_selectedDate),
                                 style: TBTypography.bodyMedium,
                               ),
                               const Spacer(),
-                              Icon(Icons.arrow_drop_down, color: TBColors.grey600),
+                              const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
                             ],
                           ),
                         ),
@@ -310,7 +308,7 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: TBColors.primary, size: 20),
+                            const Icon(Icons.info_outline, color: TBColors.primary, size: 20),
                             const SizedBox(width: TBSpacing.sm),
                             Expanded(
                               child: Text(
@@ -372,12 +370,16 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                     throw Exception('Usuario no encontrado');
                   }
                   
+                  if (!mounted) return;
+                  
                   await TBLoadingOverlay.showWithDelay(
                     context,
                     _registerPayment(userId, amount, description),
                     message: 'Registrando pago...',
                     minDelayMs: 1500,
                   );
+                  
+                  if (!mounted) return;
                   
                   TBDialogHelper.showSuccess(
                     context,
@@ -389,6 +391,7 @@ class _RegisterPaymentScreenState extends State<RegisterPaymentScreen> {
                     },
                   );
                 } catch (e) {
+                  if (!mounted) return;
                   TBDialogHelper.showError(
                     context,
                     title: 'Error al registrar',

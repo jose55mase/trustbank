@@ -13,6 +13,7 @@ class RegisterService {
     try {
       final userData = {
         'fistName': firstName,
+        'firstName': firstName,
         'lastName': lastName,
         'username': username,
         'email': email,

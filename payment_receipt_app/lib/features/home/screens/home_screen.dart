@@ -26,6 +26,7 @@ import '../bloc/home_state.dart';
 import '../widgets/loading_home.dart';
 import '../../../utils/currency_formatter.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
+import '../../../design_system/utils/tb_responsive.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -71,67 +72,84 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildActionItem(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: TBColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-            ),
-            child: Icon(icon, color: TBColors.primary, size: 20),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TBTypography.labelMedium.copyWith(fontSize: 10),
-            textAlign: TextAlign.center,
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final containerSize = TBResponsive.iconContainerSize(context);
+          final iconSz = TBResponsive.iconSize(context);
+          final fontSize = TBResponsive.value<double>(context, mobile: 10, tablet: 12, desktop: 13);
+          
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: containerSize,
+                height: containerSize,
+                decoration: BoxDecoration(
+                  color: TBColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                ),
+                child: Icon(icon, color: TBColors.primary, size: iconSz),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: TBTypography.labelMedium.copyWith(fontSize: fontSize),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
   Widget _buildTransactionItem(String title, String subtitle, String amount, IconData icon, bool isIncome) {
-    return Container(
-      padding: const EdgeInsets.all(TBSpacing.sm),
-      decoration: BoxDecoration(
-        color: TBColors.surface,
-        borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-        border: Border.all(color: TBColors.grey300.withOpacity(0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isIncome ? TBColors.success.withOpacity(0.1) : TBColors.grey100,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: isIncome ? TBColors.success : TBColors.grey600, size: 16),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final containerSize = TBResponsive.transactionIconContainerSize(context);
+        final iconSz = TBResponsive.transactionIconSize(context);
+        
+        return Container(
+          padding: const EdgeInsets.all(TBSpacing.sm),
+          decoration: BoxDecoration(
+            color: TBColors.surface,
+            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            border: Border.all(color: TBColors.grey300.withOpacity(0.5)),
           ),
-          const SizedBox(width: TBSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
-                Text(subtitle, style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
-              ],
-            ),
+          child: Row(
+            children: [
+              Container(
+                width: containerSize,
+                height: containerSize,
+                decoration: BoxDecoration(
+                  color: isIncome ? TBColors.success.withOpacity(0.1) : TBColors.grey100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: isIncome ? TBColors.success : TBColors.grey600, size: iconSz),
+              ),
+              const SizedBox(width: TBSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                    Text(subtitle, style: TBTypography.labelMedium.copyWith(color: TBColors.grey600)),
+                  ],
+                ),
+              ),
+              Text(
+                '${isIncome ? '+' : '-'}$amount',
+                style: TBTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: isIncome ? TBColors.success : TBColors.error,
+                ),
+              ),
+            ],
           ),
-          Text(
-            '${isIncome ? '+' : '-'}$amount',
-            style: TBTypography.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-              color: isIncome ? TBColors.success : TBColors.error,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -506,31 +524,17 @@ class _HomeScreenState extends State<HomeScreen> {
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
+              crossAxisCount: TBResponsive.actionGridColumns(context),
               crossAxisSpacing: TBSpacing.xs,
               mainAxisSpacing: TBSpacing.sm,
-              childAspectRatio: 0.8,
+              childAspectRatio: TBResponsive.actionGridAspectRatio(context),
               children: [
                 _buildActionItem(Icons.send, 'Enviar', _navigateToSend),
                 _buildActionItem(Icons.add, 'Recargar', _navigateToRecharge),
                 _buildActionItem(Icons.payment, 'Registrar\nPago', _navigateToPayments),
                 _buildActionItem(Icons.credit_card, 'Créditos', _navigateToCredits),
-              ],
-            ),
-            const SizedBox(height: TBSpacing.sm),
-            // Segunda fila de acciones
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              crossAxisSpacing: TBSpacing.xs,
-              mainAxisSpacing: TBSpacing.sm,
-              childAspectRatio: 0.8,
-              children: [
                 _buildActionItem(Icons.qr_code, 'QR', _navigateToQR),
                 _buildActionItem(Icons.receipt_long, 'Recibos', _navigateToReceipts),
-                Container(), // Espacio vacío
-                Container(), // Espacio vacío
               ],
             ),
             const SizedBox(height: TBSpacing.lg),
