@@ -78,7 +78,7 @@ public class UserEntity implements Serializable {
     @Column(length = 10)
     private Integer administratorManager;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<RolEntity> rols;
 
 
