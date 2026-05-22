@@ -6,11 +6,7 @@ part 'users_event.dart';
 part 'users_state.dart';
 
 class UsersBloc extends Bloc<UsersEvent, UsersState> {
-  int _currentPage = 0;
-  final int _pageSize = 20;
   List<AdminUser> _allUsers = [];
-  bool _hasMoreData = true;
-  bool _isLoadingMore = false;
 
   UsersBloc() : super(UsersInitial()) {
     on<LoadUsers>(_onLoadUsers);
@@ -23,21 +19,14 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
   void _onLoadUsers(LoadUsers event, Emitter<UsersState> emit) async {
     try {
       emit(UsersLoading());
-      _currentPage = 0;
-      _allUsers.clear();
-      _hasMoreData = true;
+      _allUsers = await UserManagementService.getAllUsers();
       
-      final response = await UserManagementService.getUsersPaginated(
-        page: _currentPage,
-        size: _pageSize,
-      );
-      
-      _allUsers = response['users'];
-      _hasMoreData = response['hasNext'];
+      // Ordenar por fecha de creación descendente
+      _allUsers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       
       emit(UsersLoaded(
         users: _allUsers,
-        hasMoreData: _hasMoreData,
+        hasMoreData: false,
         isLoadingMore: false,
       ));
     } catch (e) {
@@ -45,36 +34,8 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
     }
   }
 
-  void _onLoadMoreUsers(LoadMoreUsers event, Emitter<UsersState> emit) async {
-    if (_isLoadingMore || !_hasMoreData) return;
-    
-    try {
-      _isLoadingMore = true;
-      emit(UsersLoaded(
-        users: _allUsers,
-        hasMoreData: _hasMoreData,
-        isLoadingMore: true,
-      ));
-      
-      _currentPage++;
-      final response = await UserManagementService.getUsersPaginated(
-        page: _currentPage,
-        size: _pageSize,
-      );
-      
-      _allUsers.addAll(response['users']);
-      _hasMoreData = response['hasNext'];
-      _isLoadingMore = false;
-      
-      emit(UsersLoaded(
-        users: _allUsers,
-        hasMoreData: _hasMoreData,
-        isLoadingMore: false,
-      ));
-    } catch (e) {
-      _isLoadingMore = false;
-      emit(UsersError(e.toString()));
-    }
+  void _onLoadMoreUsers(LoadMoreUsers event, Emitter<UsersState> emit) {
+    // No pagination needed - all users loaded at once
   }
 
   void _onRefreshUsers(RefreshUsers event, Emitter<UsersState> emit) async {
@@ -85,7 +46,7 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
     try {
       final statusString = event.status.name.toUpperCase();
       await UserManagementService.updateUserStatus(event.userId, statusString);
-      add(LoadUsers()); // Recargar usuarios
+      add(LoadUsers());
     } catch (e) {
       emit(UsersError(e.toString()));
     }
@@ -93,17 +54,35 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
 
   void _onFilterUsers(FilterUsers event, Emitter<UsersState> emit) async {
     try {
-      emit(UsersLoading());
-      final statusString = event.status?.name.toUpperCase();
-      final users = await UserManagementService.filterUsers(
-        status: statusString,
-        searchQuery: event.searchQuery,
-      );
-      
-      // Ordenar por fecha de creación descendente
-      users.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      
-      emit(UsersLoaded(users: users));
+      // Si no tenemos usuarios cargados, cargarlos primero
+      if (_allUsers.isEmpty) {
+        _allUsers = await UserManagementService.getAllUsers();
+        _allUsers.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      }
+
+      List<AdminUser> filtered = List.from(_allUsers);
+
+      // Filtrar por estado
+      if (event.status != null) {
+        final statusString = event.status!.name.toUpperCase();
+        filtered = filtered.where((user) =>
+            user.accountStatus.toUpperCase() == statusString).toList();
+      }
+
+      // Filtrar por búsqueda
+      if (event.searchQuery != null && event.searchQuery!.isNotEmpty) {
+        final query = event.searchQuery!.toLowerCase();
+        filtered = filtered.where((user) =>
+            user.name.toLowerCase().contains(query) ||
+            user.email.toLowerCase().contains(query) ||
+            (user.phone ?? '').contains(query)).toList();
+      }
+
+      emit(UsersLoaded(
+        users: filtered,
+        hasMoreData: false,
+        isLoadingMore: false,
+      ));
     } catch (e) {
       emit(UsersError(e.toString()));
     }

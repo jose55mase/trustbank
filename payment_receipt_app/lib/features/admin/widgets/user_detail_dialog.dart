@@ -7,6 +7,7 @@ import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../models/user_model.dart';
 import '../bloc/users_bloc.dart';
+import '../screens/adjust_balance_screen.dart';
 
 class UserDetailDialog extends StatelessWidget {
   final AdminUser user;
@@ -90,6 +91,19 @@ class UserDetailDialog extends StatelessWidget {
             const SizedBox(height: TBSpacing.lg),
             
             // Acciones
+            TBButton(
+              text: 'Ajustar Saldo',
+              fullWidth: true,
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AdjustBalanceScreen(user: user.toJson()),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: TBSpacing.sm),
             Row(
               children: [
                 Expanded(

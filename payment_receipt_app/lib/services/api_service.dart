@@ -832,4 +832,29 @@ class ApiService {
       throw Exception('Request failed with status ${response.statusCode}');
     }
   }
+
+  // Admin: Ajustar saldo de usuario
+  static Future<Map<String, dynamic>> adjustUserBalance({
+    required int userId,
+    required double amount,
+    required String operation, // 'ADD' or 'SUBTRACT'
+    String reason = 'Ajuste administrativo',
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/user/adjustBalance/$userId'),
+      headers: await headers,
+      body: json.encode({
+        'amount': amount,
+        'operation': operation,
+        'reason': reason,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['message'] ?? 'Error al ajustar saldo');
+    }
+  }
 }

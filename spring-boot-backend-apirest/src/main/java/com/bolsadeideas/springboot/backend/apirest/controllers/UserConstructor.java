@@ -359,4 +359,58 @@ public class UserConstructor {
         }
     }
 
+    @PutMapping("/adjustBalance/{id}")
+    public ResponseEntity<Map<String, Object>> adjustBalance(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Double amount = Double.valueOf(request.get("amount").toString());
+            String operation = request.get("operation").toString(); // ADD or SUBTRACT
+            String reason = request.get("reason") != null ? request.get("reason").toString() : "Ajuste administrativo";
+
+            UserEntity user = this.usuarioService.findByid(id);
+            if (user == null) {
+                response.put("success", false);
+                response.put("message", "Usuario no encontrado");
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+            }
+
+            Integer currentBalance = user.getMoneyclean() != null ? user.getMoneyclean() : 0;
+            Integer newBalance;
+
+            if ("ADD".equalsIgnoreCase(operation)) {
+                newBalance = currentBalance + amount.intValue();
+            } else if ("SUBTRACT".equalsIgnoreCase(operation)) {
+                if (currentBalance < amount.intValue()) {
+                    response.put("success", false);
+                    response.put("message", "Saldo insuficiente. Saldo actual: $" + currentBalance);
+                    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+                }
+                newBalance = currentBalance - amount.intValue();
+            } else {
+                response.put("success", false);
+                response.put("message", "Operación inválida. Use ADD o SUBTRACT");
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            }
+
+            user.setMoneyclean(newBalance);
+            this.usuarioService.save(user);
+
+            response.put("success", true);
+            response.put("message", "Saldo actualizado exitosamente");
+            response.put("previousBalance", currentBalance);
+            response.put("newBalance", newBalance);
+            response.put("operation", operation);
+            response.put("amount", amount.intValue());
+            response.put("user", user);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
