@@ -3,8 +3,8 @@
 /// o un archivo de configuración seguro.
 class AppConfig {
   // API Configuration
-  static const String apiBaseUrl = 'http://localhost:9090/api';
-  static const String oauthTokenUrl = 'http://localhost:9090/oauth/token';
+  static const String apiBaseUrl = 'https://guardianstrustbank.com:8081/api';
+  static const String oauthTokenUrl = 'https://guardianstrustbank.com:8081/oauth/token';
 
   // OAuth2 Client Credentials
   // NOTA: En producción, estas credenciales no deben estar hardcodeadas.
