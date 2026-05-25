@@ -5,14 +5,83 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/components/atoms/tb_button.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
+import '../../../models/supervisor_assignment.dart';
+import '../../../models/user_role.dart';
+import '../../../services/supervisor_assignments_service.dart';
 import '../models/user_model.dart';
 import '../bloc/users_bloc.dart';
 import '../screens/adjust_balance_screen.dart';
+import '../users/widgets/role_assignment_dialog.dart';
 
-class UserDetailDialog extends StatelessWidget {
+class UserDetailDialog extends StatefulWidget {
   final AdminUser user;
 
   const UserDetailDialog({super.key, required this.user});
+
+  @override
+  State<UserDetailDialog> createState() => _UserDetailDialogState();
+}
+
+class _UserDetailDialogState extends State<UserDetailDialog> {
+  SupervisorAssignment? _assignment;
+  bool _isLoadingAssignment = false;
+
+  AdminUser get user => widget.user;
+
+  bool get _isSupervisor => user.hasRole(UserRole.supervisor);
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isSupervisor) {
+      _loadAssignment();
+    }
+  }
+
+  Future<void> _loadAssignment() async {
+    setState(() => _isLoadingAssignment = true);
+    try {
+      final assignments = await SupervisorAssignmentsService.getAll();
+      final match = assignments.where((a) => a.userId == user.id).toList();
+      if (mounted) {
+        setState(() {
+          _assignment = match.isNotEmpty ? match.first : null;
+          _isLoadingAssignment = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingAssignment = false);
+      }
+    }
+  }
+
+  Future<void> _changeAssignmentType() async {
+    final newType = await RoleAssignmentDialog.show(context);
+    if (newType == null) return;
+
+    try {
+      await SupervisorAssignmentsService.update(user.id, newType.id);
+      await _loadAssignment();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Tipo de asignación actualizado a: ${newType.name}',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error actualizando tipo de asignación: $e'),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +156,12 @@ class UserDetailDialog extends StatelessWidget {
               if (user.updatedAt != null)
                 _buildInfoRow('Última actualización', _formatDate(user.updatedAt!)),
             ]),
+
+            // Supervisor assignment type section
+            if (_isSupervisor) ...[
+              const SizedBox(height: TBSpacing.md),
+              _buildSupervisorAssignmentSection(),
+            ],
             
             const SizedBox(height: TBSpacing.lg),
             
@@ -169,6 +244,81 @@ class UserDetailDialog extends StatelessWidget {
               style: TBTypography.bodyMedium,
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSupervisorAssignmentSection() {
+    return Container(
+      padding: const EdgeInsets.all(TBSpacing.sm),
+      decoration: BoxDecoration(
+        color: Colors.purple.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        border: Border.all(color: Colors.purple.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.assignment_ind,
+                size: 18,
+                color: Colors.purple,
+              ),
+              const SizedBox(width: TBSpacing.sm),
+              Text(
+                'Tipo de Asignación',
+                style: TBTypography.titleLarge.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: Colors.purple,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: TBSpacing.sm),
+          if (_isLoadingAssignment)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: TBSpacing.sm),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _assignment?.assignmentTypeName ?? 'Sin asignación',
+                    style: TBTypography.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: _assignment != null
+                          ? Colors.purple
+                          : TBColors.grey600,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: _changeAssignmentType,
+                  icon: const Icon(Icons.edit, size: 16),
+                  label: const Text('Cambiar'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.purple,
+                    textStyle: TBTypography.bodySmall,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: TBSpacing.sm,
+                      vertical: TBSpacing.xs,
+                    ),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

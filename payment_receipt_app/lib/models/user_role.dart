@@ -1,6 +1,7 @@
 enum UserRole {
   user('ROLE_USER'),
   admin('ROLE_ADMIN'),
+  supervisor('ROLE_SUPERVISOR'),
   superAdmin('ROLE_SUPER_ADMIN'),
   moderator('ROLE_MODERATOR');
 
@@ -26,6 +27,7 @@ enum UserRole {
       final roleName = role['name']?.toString() ?? '';
       if (roleName == 'ROLE_SUPER_ADMIN') return UserRole.superAdmin;
       if (roleName == 'ROLE_ADMIN') return UserRole.admin;
+      if (roleName == 'ROLE_SUPERVISOR') return UserRole.supervisor;
       if (roleName == 'ROLE_MODERATOR') return UserRole.moderator;
     }
     
@@ -67,6 +69,10 @@ class RolePermissions {
       Permission.sendMoney,
       Permission.receivePayments,
       Permission.viewAdminPanel,
+      Permission.viewReports,
+    ],
+    UserRole.supervisor: [
+      Permission.viewBalance,
       Permission.viewReports,
     ],
     UserRole.admin: [

@@ -9,6 +9,7 @@ INSERT INTO guardianstrustbank.usersbank (aboutme,administrator_manager,city,cou
 
 INSERT INTO guardianstrustbank.rolsbank (name) VALUES('ROLE_USER');
 INSERT INTO guardianstrustbank.rolsbank (name) VALUES('ROLE_ADMIN');
+INSERT INTO guardianstrustbank.rolsbank (name) VALUES('ROLE_SUPER_ADMIN');
 
 
 INSERT INTO guardianstrustbank.usersbank_rols (user_entity_id, rols_id) VALUES(1, 1);
@@ -16,4 +17,8 @@ INSERT INTO guardianstrustbank.usersbank_rols (user_entity_id, rols_id) VALUES(1
 
 INSERT INTO guardianstrustbank.usersbank_rols (user_entity_id, rols_id) VALUES(2, 2);
 INSERT INTO guardianstrustbank.usersbank_rols (user_entity_id, rols_id) VALUES(3, 2);
+
+/* Super Admin (password: superadmin123) */
+INSERT INTO guardianstrustbank.usersbank (aboutme, city, country, document, documents_aprov, email, fist_name, last_name, moneyclean, password, postal, status, username) VALUES ("", "", "", "99999999", "{\"foto\":false,\"fromt\":false,\"back\":false}", "superadmin@guardianstrustbank.com", "Super", "Admin", 0, "$2b$10$qLfd5/w10qzkrCEW9JgWTO5WF4xS0MaaTJe/1/14QQYtrGtKikMT6", "", 1, "SuperAdmin");
+INSERT INTO guardianstrustbank.usersbank_rols (user_entity_id, rols_id) VALUES(4, 3);
 

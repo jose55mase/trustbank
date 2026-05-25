@@ -51,3 +51,25 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- Las tablas están listas para recibir datos reales de la aplicación
+
+-- Tabla de tipos de asignación (Supervisor Lead Assignments)
+CREATE TABLE IF NOT EXISTS assignment_types (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description VARCHAR(255),
+    active BOOLEAN NOT NULL DEFAULT TRUE,
+    filter_value VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de asignaciones supervisor-tipo
+CREATE TABLE IF NOT EXISTS supervisor_assignments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    assignment_type_id BIGINT NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES usersbank(id) ON DELETE CASCADE,
+    FOREIGN KEY (assignment_type_id) REFERENCES assignment_types(id) ON DELETE RESTRICT,
+    UNIQUE (user_id)
+);

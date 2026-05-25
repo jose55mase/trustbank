@@ -1,10 +1,13 @@
 package com.bolsadeideas.springboot.backend.apirest.controllers;
 
+import com.bolsadeideas.springboot.backend.apirest.models.dao.RolDao;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.RolEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.UsuarioService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IUploadFileService;
 import com.bolsadeideas.springboot.backend.apirest.utils.RestResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -20,14 +23,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
 public class UserConstructor {
 
+    private static final Logger logger = LoggerFactory.getLogger(UserConstructor.class);
+    private static final String DEFAULT_ROLE_NAME = "ROLE_USER";
+
     @Autowired UsuarioService usuarioService;
     @Autowired private IUploadFileService uploadService;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private RolDao rolDao;
 
 
 
@@ -170,10 +178,6 @@ public class UserConstructor {
         userEntity.setDocumentsAprov("{\"foto\":false,\"fromt\":false,\"back\":false}");
         userEntity.setPassword(this.passwordEncoder.encode(userEntity.getPassword()));
         
-        // Asignar rol USER por defecto - obtener desde base de datos
-        // Comentamos la asignación de roles por ahora para evitar el error
-        // Los roles se pueden asignar después o mediante otro endpoint
-        
         // Establecer valores por defecto
         if (userEntity.getStatus() == null) {
             userEntity.setStatus(true);
@@ -181,9 +185,6 @@ public class UserConstructor {
         if (userEntity.getAccountStatus() == null) {
             userEntity.setAccountStatus("ACTIVE");
         }
-        
-        // Asegurar que firstName y lastName se guarden correctamente
-        // Los campos ya vienen en userEntity del @RequestBody, no necesitan asignación adicional
         
         // Inicializar saldo en 0 si no se especifica
         if (userEntity.getMoneyclean() == null) {
@@ -202,6 +203,16 @@ public class UserConstructor {
         if(existingUserByUsername != null){
             return new RestResponse(HttpStatus.CONFLICT.value(),
                     "El nombre de usuario ya está en uso", null);
+        }
+
+        // Asignar rol por defecto (ROLE_USER) desde la base de datos
+        Optional<RolEntity> defaultRole = rolDao.findByName(DEFAULT_ROLE_NAME);
+        if (defaultRole.isPresent()) {
+            List<RolEntity> roles = new ArrayList<>();
+            roles.add(defaultRole.get());
+            userEntity.setRols(roles);
+        } else {
+            logger.warn("Default role '{}' not found in database. User will be created without a role.", DEFAULT_ROLE_NAME);
         }
 
         UserEntity user = this.usuarioService.save(userEntity);

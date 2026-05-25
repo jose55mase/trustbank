@@ -2,13 +2,15 @@ package com.bolsadeideas.springboot.backend.apirest.models.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Entity
 @Table(name = "rolsbank")
 public class RolEntity implements Serializable {
 
-
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,10 +19,13 @@ public class RolEntity implements Serializable {
     @Column(unique = true, length = 20)
     private String name;
 
-    /**
-     *
-     */
-    private static final long serialVersionUID = 1L;
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_modules",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "module_id")
+    )
+    private Set<ModuleEntity> modules = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -36,6 +41,14 @@ public class RolEntity implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Set<ModuleEntity> getModules() {
+        return modules;
+    }
+
+    public void setModules(Set<ModuleEntity> modules) {
+        this.modules = modules;
     }
 
     @Override

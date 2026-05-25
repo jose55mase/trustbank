@@ -9,10 +9,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../design_system/components/molecules/tb_dialog.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
 import '../../home/screens/home_screen.dart';
+import '../../supervisor/screens/supervisor_panel_screen.dart';
 import '../../register/screens/register_screen.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
+import '../../../models/user_role.dart';
 
 
 class LoginScreen extends StatelessWidget {
@@ -40,9 +42,14 @@ class LoginScreen extends StatelessWidget {
             child: BlocConsumer<AuthBloc, AuthState>(
               listener: (context, state) {
                 if (state is AuthAuthenticated) {
+                  // Detect ROLE_SUPERVISOR and navigate to SupervisorPanel
+                  final isSupervisor = state.user.role.toUpperCase() == 'SUPERVISOR' ||
+                      state.user.role.toUpperCase() == 'ROLE_SUPERVISOR';
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (context) => const HomeScreen(),
+                      builder: (context) => isSupervisor
+                          ? const SupervisorPanelScreen()
+                          : const HomeScreen(),
                     ),
                   );
                 } else if (state is AccountSuspended) {
@@ -70,8 +77,13 @@ class LoginScreen extends StatelessWidget {
                               );
                               
                               if (result['success']) {
+                                // Detect ROLE_SUPERVISOR and navigate accordingly
+                                final role = await AuthService.getCurrentUserRole();
+                                final destination = role == UserRole.supervisor
+                                    ? const SupervisorPanelScreen()
+                                    : const HomeScreen();
                                 Navigator.of(context).pushReplacement(
-                                  MaterialPageRoute(builder: (context) => const HomeScreen()),
+                                  MaterialPageRoute(builder: (context) => destination),
                                 );
                               } else {
                                 TBDialogHelper.showError(

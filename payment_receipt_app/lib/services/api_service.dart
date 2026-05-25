@@ -6,8 +6,8 @@ import '../config/app_config.dart';
 import 'auth_service.dart';
 
 class ApiService {
-  static const String baseUrl = AppConfig.apiBaseUrl;
-  static String credentials = base64Encode(utf8.encode('${AppConfig.oauthClientId}:${AppConfig.oauthClientSecret}'));
+  static String get baseUrl => AppConfig.apiBaseUrl;
+  static String get credentials => base64Encode(utf8.encode('${AppConfig.oauthClientId}:${AppConfig.oauthClientSecret}'));
   
   static Future<Map<String, String>> get headers async {
     final prefs = await SharedPreferences.getInstance();

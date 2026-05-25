@@ -17,7 +17,7 @@ import '../../notifications/bloc/notifications_bloc.dart';
 import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../account/screens/account_screen.dart';
 import '../../../services/auth_service.dart';
-import '../../../models/user_role.dart';
+import '../../../services/permission_service.dart';
 
 import '../../admin/screens/role_management_screen.dart';
 import '../bloc/home_bloc.dart';
@@ -43,6 +43,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _homeBloc = HomeBloc();
     _homeBloc.add(LoadUserData());
+    
+    // Cargar permisos de módulos al iniciar (necesario cuando se restaura sesión sin pasar por login)
+    PermissionService().loadPermissions().then((_) {
+      if (mounted) setState(() {});
+    }).catchError((_) {});
     
     // Refrescar datos cada 30 segundos para capturar cambios de saldo
     Timer.periodic(const Duration(seconds: 30), (timer) {
@@ -194,8 +199,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<PopupMenuEntry<String>>> _buildMenuItems() async {
-    final hasAdminAccess = await AuthService.hasPermission(Permission.viewAdminPanel);
-    final hasRoleManagement = await AuthService.hasPermission(Permission.manageRoles);
+    final permissionService = PermissionService();
+    // Only show admin panel if user has admin-level modules (not just basic user modules)
+    final hasAdminAccess = permissionService.hasModuleAccess('USER_MANAGEMENT') ||
+        permissionService.hasModuleAccess('ROLE_MANAGEMENT') ||
+        permissionService.hasModuleAccess('DOCUMENT_APPROVAL') ||
+        permissionService.hasModuleAccess('SUPERVISOR_ASSIGNMENTS');
+    final hasRoleManagement = permissionService.hasModuleAccess('ROLE_MANAGEMENT');
     
     List<PopupMenuEntry<String>> items = [];
     

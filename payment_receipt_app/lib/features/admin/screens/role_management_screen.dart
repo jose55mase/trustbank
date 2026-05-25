@@ -4,7 +4,7 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../models/user_role.dart';
 import '../../../services/api_service.dart';
-import '../../../widgets/role_guard.dart';
+import '../../../widgets/module_guard.dart';
 
 class RoleManagementScreen extends StatefulWidget {
   const RoleManagementScreen({super.key});
@@ -42,10 +42,20 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     }
   }
 
+  /// Extracts the highest-priority role from the user's `rols` array.
+  UserRole _getUserRole(dynamic user) {
+    final rols = user['rols'];
+    if (rols != null && rols is List && rols.isNotEmpty) {
+      return UserRole.fromBackendRoles(rols);
+    }
+    return UserRole.user;
+  }
+
+  /// Loads all supervisor assignments and builds a lookup map by userId.
   @override
   Widget build(BuildContext context) {
-    return RoleGuard(
-      requiredPermission: Permission.manageRoles,
+    return ModuleGuard(
+      requiredModule: 'ROLE_MANAGEMENT',
       fallback: Scaffold(
         appBar: AppBar(title: const Text('Acceso Denegado')),
         body: const Center(
@@ -74,8 +84,8 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
   }
 
   Widget _buildUserCard(dynamic user) {
-    final currentRole = UserRole.fromString(user['role'] ?? 'USER');
-    
+    final currentRole = _getUserRole(user);
+
     return Card(
       margin: const EdgeInsets.only(bottom: TBSpacing.md),
       child: Padding(
@@ -89,7 +99,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                   backgroundColor: TBColors.primary.withOpacity(0.1),
                   child: Text(
                     user['name']?.substring(0, 1).toUpperCase() ?? 'U',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: TBColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -150,6 +160,9 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
       case UserRole.admin:
         color = Colors.orange;
         break;
+      case UserRole.supervisor:
+        color = Colors.purple;
+        break;
       case UserRole.moderator:
         color = Colors.blue;
         break;
@@ -174,6 +187,8 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         return 'Super Admin';
       case UserRole.admin:
         return 'Administrador';
+      case UserRole.supervisor:
+        return 'Supervisor';
       case UserRole.moderator:
         return 'Moderador';
       case UserRole.user:
@@ -182,13 +197,13 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
   }
 
   void _showRoleDialog(dynamic user) {
-    final currentRole = UserRole.fromString(user['role'] ?? 'USER');
+    final currentRole = _getUserRole(user);
     UserRole selectedRole = currentRole;
 
     showDialog(
       context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
           title: Text('Cambiar rol de ${user['name']}'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -199,7 +214,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                 value: role,
                 groupValue: selectedRole,
                 onChanged: (value) {
-                  setState(() {
+                  setDialogState(() {
                     selectedRole = value!;
                   });
                 },
@@ -208,7 +223,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancelar'),
             ),
             ElevatedButton(
@@ -229,6 +244,8 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         return 'Acceso completo al sistema';
       case UserRole.admin:
         return 'Gestión de usuarios y transacciones';
+      case UserRole.supervisor:
+        return 'Visualización y edición de leads asignados';
       case UserRole.moderator:
         return 'Solo visualización de reportes';
       case UserRole.user:
@@ -239,20 +256,25 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
   Future<void> _updateUserRole(dynamic user, UserRole newRole) async {
     try {
       await ApiService.updateUserRole(user['id'], newRole.value);
-      
-      setState(() {
-        user['role'] = newRole.value;
-      });
-      
-      Navigator.pop(context);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rol actualizado correctamente')),
-      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+
+      // Reload users to get fresh role data from backend
+      await _loadUsers();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Rol actualizado correctamente')),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error actualizando rol: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error actualizando rol: $e')),
+        );
+      }
     }
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../services/permission_service.dart';
+
 part 'auth_event.dart';
 part 'auth_state.dart';
 
@@ -38,6 +40,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // Determinar rol según email (en producción vendría de la base de datos)
         final userRole = _getUserRole(event.email);
         
+        // Load user's module permissions from the backend
+        try {
+          await PermissionService().loadPermissions();
+        } catch (_) {
+          // Non-blocking: permissions will be empty but login still succeeds
+        }
+
         emit(AuthAuthenticated(
           user: User(
             id: '1',
@@ -66,6 +75,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     // Simular roles según email (en producción vendría de la base de datos)
     if (email.contains('superadmin')) return 'SUPER_ADMIN';
     if (email.contains('admin')) return 'ADMIN';
+    if (email.contains('supervisor')) return 'SUPERVISOR';
     if (email.contains('moderator')) return 'MODERATOR';
     return 'USER';
   }
@@ -74,6 +84,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
+    PermissionService().clear();
     emit(AuthInitial());
   }
 }
