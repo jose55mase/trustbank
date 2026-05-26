@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../config/app_config.dart';
+import '../core/session/session_manager.dart';
 import 'auth_service.dart';
 
 class ApiService {
@@ -18,6 +19,14 @@ class ApiService {
       'Accept': 'application/json',
       'Authorization': token != null ? 'Bearer $token' : 'Basic $credentials',
     };
+  }
+
+  /// Checks if the response indicates an expired/invalid token.
+  /// If 401, triggers session expiry (logout + redirect to login).
+  static void _checkTokenExpiry(http.Response response) {
+    if (response.statusCode == 401) {
+      SessionManager.handleSessionExpired();
+    }
   }
 
   // Auth endpoints
@@ -64,7 +73,7 @@ class ApiService {
       Uri.parse('$baseUrl/user/getUserByEmail/$email'),
       headers: await headers,
     );
-    // Response logged for debugging
+    _checkTokenExpiry(response);
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -466,6 +475,7 @@ class ApiService {
       Uri.parse('$baseUrl/user/all?sort=createdAt,desc'),
       headers: await headers,
     );
+    _checkTokenExpiry(response);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);

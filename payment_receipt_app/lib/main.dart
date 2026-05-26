@@ -12,6 +12,7 @@ import 'features/admin/assignment_types/screens/assignment_types_management_scre
 import 'services/auth_service.dart';
 import 'models/user_role.dart';
 import 'core/utils/error_handler.dart';
+import 'core/session/session_manager.dart';
 import 'widgets/module_guard.dart';
 import 'models/lead_model.dart';
 import 'features/supervisor/widgets/lead_edit_form.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: SessionManager.navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'TrustBank',
       theme: ThemeData(

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
+import '../core/session/session_manager.dart';
 import '../models/lead_model.dart';
 import '../models/supervisor_assignment.dart';
 import 'api_service.dart';
@@ -22,6 +23,11 @@ class SupervisorService {
         Uri.parse('$_baseUrl/supervisor/leads?page=$page&size=$size'),
         headers: await ApiService.headers,
       );
+
+      if (response.statusCode == 401) {
+        SessionManager.handleSessionExpired();
+        throw Exception('Sesión expirada');
+      }
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

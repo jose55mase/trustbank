@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../config/app_config.dart';
+import '../../../../core/session/session_manager.dart';
 import '../models/import_result.dart';
 import '../models/lead_model.dart';
 import '../models/mapping_result.dart';
@@ -140,6 +141,11 @@ class LeadsService {
       uri,
       headers: await _headers,
     );
+
+    if (response.statusCode == 401) {
+      SessionManager.handleSessionExpired();
+      throw Exception('Sesión expirada');
+    }
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
