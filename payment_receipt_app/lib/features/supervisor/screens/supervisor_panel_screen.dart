@@ -642,7 +642,6 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                           initialDate: _selectedLastCallDate ?? DateTime.now(),
                           firstDate: DateTime(2020),
                           lastDate: DateTime(2100),
-                          locale: const Locale('es', ''),
                         );
                         if (picked != null) {
                           setState(() {
