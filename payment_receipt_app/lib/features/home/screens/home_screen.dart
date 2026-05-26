@@ -531,24 +531,36 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: TBSpacing.lg),
-            // Bitcoin chart card
-            const BitcoinChartCard(),
-            const SizedBox(height: TBSpacing.lg),
-            // Grid de acciones compacto
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: TBResponsive.actionGridColumns(context),
-              crossAxisSpacing: TBSpacing.xs,
-              mainAxisSpacing: TBSpacing.sm,
-              childAspectRatio: TBResponsive.actionGridAspectRatio(context),
+            // Grid de acciones + Bitcoin chart side by side
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildActionItem(Icons.send, 'Enviar', _navigateToSend),
-                _buildActionItem(Icons.add, 'Recargar', _navigateToRecharge),
-                _buildActionItem(Icons.payment, 'Registrar\nPago', _navigateToPayments),
-                _buildActionItem(Icons.credit_card, 'Créditos', _navigateToCredits),
-                _buildActionItem(Icons.qr_code, 'QR', _navigateToQR),
-                _buildActionItem(Icons.receipt_long, 'Recibos', _navigateToReceipts),
+                // Left: Grid de acciones
+                Expanded(
+                  flex: 3,
+                  child: GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 3,
+                    crossAxisSpacing: TBSpacing.xs,
+                    mainAxisSpacing: TBSpacing.sm,
+                    childAspectRatio: 1.0,
+                    children: [
+                      _buildActionItem(Icons.send, 'Enviar', _navigateToSend),
+                      _buildActionItem(Icons.add, 'Recargar', _navigateToRecharge),
+                      _buildActionItem(Icons.payment, 'Registrar\nPago', _navigateToPayments),
+                      _buildActionItem(Icons.credit_card, 'Créditos', _navigateToCredits),
+                      _buildActionItem(Icons.qr_code, 'QR', _navigateToQR),
+                      _buildActionItem(Icons.receipt_long, 'Recibos', _navigateToReceipts),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: TBSpacing.md),
+                // Right: Bitcoin chart
+                const Expanded(
+                  flex: 2,
+                  child: BitcoinChartCard(),
+                ),
               ],
             ),
             const SizedBox(height: TBSpacing.lg),
