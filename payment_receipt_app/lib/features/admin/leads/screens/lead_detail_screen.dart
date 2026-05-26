@@ -440,6 +440,7 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
                   controller: _campanaController,
                   label: 'Campaña',
                   icon: Icons.campaign,
+                  enabled: false,
                 ),
                 _buildTextField(
                   controller: _fechaRegistroController,
@@ -539,17 +540,21 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     int maxLines = 1,
+    bool enabled = true,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
+        enabled: enabled,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: TBColors.primary),
+          prefixIcon: Icon(icon, color: enabled ? TBColors.primary : TBColors.grey400),
           border: const OutlineInputBorder(),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          filled: !enabled,
+          fillColor: !enabled ? TBColors.grey100 : null,
         ),
         validator: validator,
         keyboardType: keyboardType,

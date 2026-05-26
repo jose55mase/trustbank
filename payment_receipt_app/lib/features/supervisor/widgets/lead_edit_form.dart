@@ -243,6 +243,7 @@ class _LeadEditFormState extends State<LeadEditForm> {
                   controller: _campanaController,
                   label: 'Campaña',
                   icon: Icons.campaign_outlined,
+                  readOnly: true,
                 ),
                 const SizedBox(height: TBSpacing.md),
                 _buildTextField(
@@ -315,18 +316,22 @@ class _LeadEditFormState extends State<LeadEditForm> {
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    bool readOnly = false,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: TBTypography.bodyMedium,
+      readOnly: readOnly,
+      style: TBTypography.bodyMedium.copyWith(
+        color: readOnly ? TBColors.grey600 : null,
+      ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey600),
-        prefixIcon: Icon(icon, color: TBColors.grey500, size: 20),
+        prefixIcon: Icon(icon, color: readOnly ? TBColors.grey400 : TBColors.grey500, size: 20),
         filled: true,
-        fillColor: TBColors.surface,
+        fillColor: readOnly ? TBColors.grey100 : TBColors.surface,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
           borderSide: const BorderSide(color: TBColors.grey300),
