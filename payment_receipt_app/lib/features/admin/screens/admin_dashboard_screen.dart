@@ -16,6 +16,7 @@ import 'users_management_screen.dart';
 import 'document_approval_screen.dart';
 import 'role_management_screen.dart';
 import '../leads/screens/leads_list_screen.dart';
+import '../assignment_types/screens/assignment_types_management_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -325,7 +326,15 @@ class _AdminDashboardBody extends StatelessWidget {
           ),
         );
       case 'SUPERVISOR_ASSIGNMENTS':
-        return null; // Deprecated — replaced by direct lead-advisor assignment
+        return _ModuleActionConfig(
+          icon: Icons.campaign_rounded,
+          label: 'Campañas',
+          color: TBColors.primaryDark,
+          onTap: (context) => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AssignmentTypesManagementScreen()),
+          ),
+        );
       default:
         return null;
     }

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
+import '../../../models/supervisor_assignment.dart';
 import '../../../models/user_role.dart';
 import '../../../services/api_service.dart';
+import '../../../services/supervisor_assignments_service.dart';
 import '../../../widgets/module_guard.dart';
+import '../users/widgets/role_assignment_dialog.dart';
 
 class RoleManagementScreen extends StatefulWidget {
   const RoleManagementScreen({super.key});
@@ -16,6 +19,9 @@ class RoleManagementScreen extends StatefulWidget {
 class _RoleManagementScreenState extends State<RoleManagementScreen> {
   List<dynamic> users = [];
   bool isLoading = true;
+
+  /// Map of userId → SupervisorAssignment for quick lookup.
+  Map<int, SupervisorAssignment> _supervisorAssignments = {};
 
   @override
   void initState() {
@@ -30,6 +36,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         users = response;
         isLoading = false;
       });
+      _loadSupervisorAssignments();
     } catch (e) {
       setState(() {
         isLoading = false;
@@ -40,6 +47,19 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         );
       }
     }
+  }
+
+  Future<void> _loadSupervisorAssignments() async {
+    try {
+      final assignments = await SupervisorAssignmentsService.getAll();
+      if (mounted) {
+        setState(() {
+          _supervisorAssignments = {
+            for (final a in assignments) a.userId: a,
+          };
+        });
+      }
+    } catch (_) {}
   }
 
   /// Extracts the highest-priority role from the user's `rols` array.
@@ -85,6 +105,10 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
 
   Widget _buildUserCard(dynamic user) {
     final currentRole = _getUserRole(user);
+    final userId = user['id'] as int?;
+    final isSupervisor = currentRole == UserRole.supervisor;
+    final assignment =
+        (isSupervisor && userId != null) ? _supervisorAssignments[userId] : null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: TBSpacing.md),
@@ -126,6 +150,10 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                 _buildRoleChip(currentRole),
               ],
             ),
+            if (isSupervisor) ...[
+              const SizedBox(height: TBSpacing.sm),
+              _buildCampaignInfo(user, assignment),
+            ],
             const SizedBox(height: TBSpacing.md),
             Row(
               children: [
@@ -149,6 +177,82 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildCampaignInfo(dynamic user, SupervisorAssignment? assignment) {
+    return Container(
+      padding: const EdgeInsets.all(TBSpacing.sm),
+      decoration: BoxDecoration(
+        color: Colors.purple.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        border: Border.all(color: Colors.purple.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.campaign, size: 18, color: Colors.purple),
+          const SizedBox(width: TBSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Campaña Asignada',
+                  style: TBTypography.bodySmall.copyWith(
+                    color: TBColors.grey600,
+                    fontSize: 11,
+                  ),
+                ),
+                Text(
+                  assignment?.assignmentTypeName ?? 'Sin campaña',
+                  style: TBTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: assignment != null ? Colors.purple : TBColors.grey600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () => _changeCampaign(user),
+            icon: const Icon(Icons.edit, size: 16),
+            label: const Text('Cambiar'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.purple,
+              textStyle: TBTypography.bodySmall,
+              padding: const EdgeInsets.symmetric(
+                horizontal: TBSpacing.sm,
+                vertical: TBSpacing.xs,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _changeCampaign(dynamic user) async {
+    final userId = user['id'] as int?;
+    if (userId == null) return;
+
+    final newCampaign = await RoleAssignmentDialog.show(context);
+    if (newCampaign == null) return;
+
+    try {
+      await SupervisorAssignmentsService.update(userId, newCampaign.id);
+      await _loadSupervisorAssignments();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Campaña actualizada a: ${newCampaign.name}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error actualizando campaña: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildRoleChip(UserRole role) {

@@ -8,6 +8,7 @@ import 'features/supervisor/screens/supervisor_panel_screen.dart';
 import 'features/admin/leads/screens/leads_list_screen.dart';
 import 'features/admin/leads/screens/leads_upload_screen.dart';
 import 'features/admin/leads/screens/lead_detail_screen.dart';
+import 'features/admin/assignment_types/screens/assignment_types_management_screen.dart';
 import 'services/auth_service.dart';
 import 'models/user_role.dart';
 import 'core/utils/error_handler.dart';
@@ -80,6 +81,10 @@ class MyApp extends StatelessWidget {
         '/admin/leads/upload': (context) => const ModuleGuard(
           requiredModule: 'LEADS',
           child: LeadsUploadScreen(),
+        ),
+        '/admin/campaigns': (context) => const ModuleGuard(
+          requiredModule: 'SUPERVISOR_ASSIGNMENTS',
+          child: AssignmentTypesManagementScreen(),
         ),
       },
       onGenerateRoute: (settings) {
