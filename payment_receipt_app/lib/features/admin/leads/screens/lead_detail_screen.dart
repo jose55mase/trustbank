@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../constants/countries.dart';
 import '../../../../design_system/colors/tb_colors.dart';
 import '../../../../design_system/typography/tb_typography.dart';
 import '../bloc/leads_bloc.dart';
@@ -420,11 +421,7 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
                   label: 'Estado de Llamada',
                   icon: Icons.phone_callback,
                 ),
-                _buildTextField(
-                  controller: _paisController,
-                  label: 'País',
-                  icon: Icons.flag,
-                ),
+                _buildCountryDropdown(),
                 _buildTextField(
                   controller: _telefonoController,
                   label: 'Teléfono',
@@ -495,6 +492,42 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCountryDropdown() {
+    // Include current value even if not in standard list
+    final currentValue = _paisController.text.trim();
+    final countries = List<String>.from(Countries.latinAmerica);
+    if (currentValue.isNotEmpty && !countries.contains(currentValue)) {
+      countries.insert(0, currentValue);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: DropdownButtonFormField<String>(
+        value: currentValue.isNotEmpty ? currentValue : null,
+        decoration: const InputDecoration(
+          labelText: 'País',
+          prefixIcon: Icon(Icons.flag, color: TBColors.primary),
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        ),
+        menuMaxHeight: 300,
+        items: [
+          const DropdownMenuItem<String>(
+            value: '',
+            child: Text('Seleccionar país'),
+          ),
+          ...countries.map((country) => DropdownMenuItem<String>(
+                value: country,
+                child: Text(country),
+              )),
+        ],
+        onChanged: (value) {
+          _paisController.text = value ?? '';
+        },
       ),
     );
   }
