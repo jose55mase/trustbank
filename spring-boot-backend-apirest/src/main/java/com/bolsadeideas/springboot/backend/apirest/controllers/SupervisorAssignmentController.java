@@ -141,7 +141,7 @@ public class SupervisorAssignmentController {
 
     /**
      * GET /api/supervisor-assignments/me
-     * Obtiene la asignación del supervisor autenticado.
+     * Obtiene la asignación del asesor autenticado.
      */
     @Secured("ROLE_SUPERVISOR")
     @GetMapping("/me")
@@ -161,9 +161,8 @@ public class SupervisorAssignmentController {
             SupervisorAssignmentResponse assignment = supervisorAssignmentService.findByUserId(user.getId());
             return new ResponseEntity<>(assignment, HttpStatus.OK);
         } catch (NoAssignmentConfiguredException e) {
-            response.put("error", "NO_ASSIGNMENT_CONFIGURED");
-            response.put("message", e.getMessage());
-            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+            // El asesor no tiene campaña asignada — retornar 200 con null
+            return new ResponseEntity<>(null, HttpStatus.OK);
         } catch (Exception e) {
             response.put("error", "Error interno del servidor");
             return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);

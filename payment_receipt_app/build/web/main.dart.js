@@ -121833,11 +121833,11 @@ if(b instanceof A.ow){s=a.Z(t.J)
 s.toString
 s.f.df(A.eQ(r,r,r,B.aC,B.c0,B.a7,r,A.q(b.a,r,r,r,r,r,r,r),r,B.bd,r,r,r,r,r,r,r,r,r))}},
 Dh(a){var s=null,r=t.p
-return A.Y(s,A.kv(!1,A.af(A.a([A.d3(s,s,s,s,B.qr,s,new A.aGV(a),s,s,s,"Regresar"),B.ao,A.aE(A.a0(A.a([A.q("Tipos de Asignaci\xf3n",s,s,s,A.z().$3$fontSize$fontWeight$height(20,B.L,1.4).R(B.F),s,s,s),B.bo,A.q("Administra los tipos de asignaci\xf3n de supervisores",s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(A.r(204,255,255,255)),s,s,s)],r),B.V,B.v,B.u),1),this.ahI(a)],r),B.A,B.v,B.u,s),B.b7,!0),B.y,s,s,B.p3,s,s,s,B.pW,s,s,1/0)},
+return A.Y(s,A.kv(!1,A.af(A.a([A.d3(s,s,s,s,B.qr,s,new A.aGV(a),s,s,s,"Regresar"),B.ao,A.aE(A.a0(A.a([A.q("Campa\xf1as",s,s,s,A.z().$3$fontSize$fontWeight$height(20,B.L,1.4).R(B.F),s,s,s),B.bo,A.q("Administra las campa\xf1as de asesores",s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(A.r(204,255,255,255)),s,s,s)],r),B.V,B.v,B.u),1),this.ahI(a)],r),B.A,B.v,B.u,s),B.b7,!0),B.y,s,s,B.p3,s,s,s,B.pW,s,s,1/0)},
 ahI(a){var s=null
 return A.eC(B.an,!0,A.X(8),A.fs(!1,A.X(8),!0,B.aTc,s,!0,s,s,s,s,s,s,s,s,s,s,s,new A.aGT(this,a),s,s,s,s,s,s,s),B.y,B.iV,0,s,s,s,s,s,B.c_)},
 ahR(a,b){var s=null
-return A.cv(A.a0(A.a([A.Y(s,B.lG,B.y,s,s,new A.a2(A.r(20,244,67,54),s,s,s,s,s,B.ck),s,s,s,B.b0,s,s,s),B.af,A.q("Error al cargar tipos de asignaci\xf3n",s,s,s,A.z().$3$fontSize$fontWeight$height(16,B.L,1.5),s,s,s),B.ar,A.q(b,s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(B.U),B.ba,s,s),B.af,A.oT(B.jl,B.iv,new A.aGU(a),A.ej(s,s,B.Q,s,s,s,s,s,s,B.F,s,s,s,s,new A.bX(A.X(8),B.T),s,s,s,s))],t.p),B.A,B.aT,B.u),s,s)},
+return A.cv(A.a0(A.a([A.Y(s,B.lG,B.y,s,s,new A.a2(A.r(20,244,67,54),s,s,s,s,s,B.ck),s,s,s,B.b0,s,s,s),B.af,A.q("Error al cargar campa\xf1as",s,s,s,A.z().$3$fontSize$fontWeight$height(16,B.L,1.5),s,s,s),B.ar,A.q(b,s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(B.U),B.ba,s,s),B.af,A.oT(B.jl,B.iv,new A.aGU(a),A.ej(s,s,B.Q,s,s,s,s,s,s,B.F,s,s,s,s,new A.bX(A.X(8),B.T),s,s,s,s))],t.p),B.A,B.aT,B.u),s,s)},
 aAv(a){var s=null
 A.eq(s,s,!0,s,new A.aGX(a),a,s,!0,t.z)}}
 A.aGY.prototype={
@@ -121858,7 +121858,7 @@ $0(){return J.cu(A.cO(this.a,!1,t.lJ),new A.m5())},
 $S:0}
 A.aGX.prototype={
 $1(a){var s=null
-return A.ba0("Crear",s,s,s,s,new A.aGW(this.a),"Crear Nuevo Tipo de Asignaci\xf3n")},
+return A.ba0("Crear",s,s,s,s,new A.aGW(this.a),"Crear Nueva Campa\xf1a")},
 $S:251}
 A.aGW.prototype={
 $4(a,b,c,d){var s=this.a
@@ -121869,11 +121869,11 @@ s.f.df(B.aZa)},
 $S:252}
 A.a41.prototype={
 F(a){var s=null,r=this.c,q=J.a6(r)
-if(q.gaf(r))return A.cv(A.a0(A.a([A.Y(s,B.a_O,B.y,s,s,new A.a2(A.r(20,108,99,255),s,s,s,s,s,B.ck),s,s,s,B.b0,s,s,s),B.af,A.q("No hay tipos de asignaci\xf3n",s,s,s,A.z().$3$fontSize$fontWeight$height(16,B.L,1.5),s,s,s),B.ar,A.q("Crea un tipo de asignaci\xf3n para comenzar a asignar supervisores",s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(B.U),B.ba,s,s)],t.p),B.A,B.aT,B.u),s,s)
+if(q.gaf(r))return A.cv(A.a0(A.a([A.Y(s,B.a_O,B.y,s,s,new A.a2(A.r(20,108,99,255),s,s,s,s,s,B.ck),s,s,s,B.b0,s,s,s),B.af,A.q("No hay tipos de asignaci\xf3n",s,s,s,A.z().$3$fontSize$fontWeight$height(16,B.L,1.5),s,s,s),B.ar,A.q("Crea una campa\xf1a para comenzar a asignar asesores",s,s,s,A.z().$3$fontSize$fontWeight$height(14,B.E,1.5).R(B.U),B.ba,s,s)],t.p),B.A,B.aT,B.u),s,s)
 return A.BD(s,new A.aGS(this),q.gq(r),B.a1)},
 ahP(a,b){var s=null
 return A.d3(B.Q,s,s,s,B.a_M,s,new A.aGM(this,a,b),s,s,s,"Editar tipo")},
-ahK(a,b){var s=null,r=b.f===0,q=r?B.aC:B.cm,p=r?"Eliminar tipo":"No se puede eliminar (tiene supervisores asignados)"
+ahK(a,b){var s=null,r=b.f===0,q=r?B.aC:B.cm,p=r?"Eliminar tipo":"No se puede eliminar (tiene asesores asignados)"
 return A.d3(q,s,s,s,B.a0n,s,r?new A.aGL(this,a,b):s,s,s,s,p)},
 aAC(a,b){var s=null
 A.eq(s,s,!0,s,new A.aGR(b,a),a,s,!0,t.z)},
@@ -121894,7 +121894,7 @@ if(i.length!==0)B.n.P(r,A.a([B.bo,A.q(i,2,B.bg,n,A.z().$3$fontSize$fontWeight$he
 r.push(B.bo)
 i=l.f
 g=""+i
-i=i===1?"supervisor":"supervisores"
+i=i===1?"asesor":"asesores"
 r.push(A.q(g+" "+i,n,n,n,A.z().$3$fontSize$fontWeight$height(12,B.E,1.4).R(B.bt),n,n,n))
 r=A.aE(A.a0(r,B.V,B.v,B.u),1)
 i=A.r(31,0,212,170)
@@ -124165,7 +124165,7 @@ s.toString
 A.eq(r,r,!0,r,new A.aTi(q,this,a,p),s,r,!0,t.z)},
 ann(a){switch(a.a){case 3:return"Acceso completo al sistema"
 case 1:return"Gesti\xf3n de usuarios y transacciones"
-case 2:return"Visualizaci\xf3n y edici\xf3n de leads asignados"
+case 2:return"Asesor: visualizaci\xf3n y edici\xf3n de leads asignados"
 case 4:return"Solo visualizaci\xf3n de reportes"
 case 0:return"Usuario b\xe1sico"}},
 rt(a,b){return this.aCZ(a,b)},

@@ -124,14 +124,14 @@ class _AssignmentTypesManagementView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Tipos de Asignación',
+                    'Campañas',
                     style: TBTypography.headlineMedium.copyWith(
                       color: TBColors.white,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Administra los tipos de asignación de supervisores',
+                    'Administra las campañas de asesores',
                     style: TBTypography.bodyMedium.copyWith(
                       color: TBColors.white.withOpacity(0.8),
                     ),
@@ -194,7 +194,7 @@ class _AssignmentTypesManagementView extends StatelessWidget {
           ),
           const SizedBox(height: TBSpacing.lg),
           Text(
-            'Error al cargar tipos de asignación',
+            'Error al cargar campañas',
             style: TBTypography.titleLarge,
           ),
           const SizedBox(height: TBSpacing.sm),
@@ -226,7 +226,7 @@ class _AssignmentTypesManagementView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => _AssignmentTypeFormDialog(
-        title: 'Crear Nuevo Tipo de Asignación',
+        title: 'Crear Nueva Campaña',
         confirmLabel: 'Crear',
         onConfirm: (name, description, active, filterValue) {
           context.read<AssignmentTypesBloc>().add(
@@ -239,7 +239,7 @@ class _AssignmentTypesManagementView extends StatelessWidget {
               );
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Tipo de asignación creado exitosamente'),
+              content: Text('Campaña creada exitosamente'),
               backgroundColor: TBColors.success,
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 3),
@@ -293,12 +293,12 @@ class _AssignmentTypesContent extends StatelessWidget {
           ),
           const SizedBox(height: TBSpacing.lg),
           Text(
-            'No hay tipos de asignación',
+            'No hay campañas',
             style: TBTypography.titleLarge,
           ),
           const SizedBox(height: TBSpacing.sm),
           Text(
-            'Crea un tipo de asignación para comenzar a asignar supervisores',
+            'Crea una campaña para comenzar a asignar asesores',
             style: TBTypography.bodyMedium.copyWith(color: TBColors.grey600),
             textAlign: TextAlign.center,
           ),
@@ -372,7 +372,7 @@ class _AssignmentTypesContent extends StatelessWidget {
                   ],
                   const SizedBox(height: 4),
                   Text(
-                    '${type.supervisorCount} ${type.supervisorCount == 1 ? 'supervisor' : 'supervisores'}',
+                    '${type.supervisorCount} ${type.supervisorCount == 1 ? 'asesor' : 'asesores'}',
                     style: TBTypography.bodySmall.copyWith(
                       color: TBColors.grey500,
                     ),
@@ -443,7 +443,7 @@ class _AssignmentTypesContent extends StatelessWidget {
       color: canDelete ? TBColors.error : TBColors.grey400,
       tooltip: canDelete
           ? 'Eliminar tipo'
-          : 'No se puede eliminar (tiene supervisores asignados)',
+          : 'No se puede eliminar (tiene asesores asignados)',
       onPressed: canDelete ? () => _showDeleteConfirmation(context, type) : null,
     );
   }

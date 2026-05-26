@@ -349,7 +349,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
       case UserRole.admin:
         return 'Gestión de usuarios y transacciones';
       case UserRole.supervisor:
-        return 'Visualización y edición de leads asignados';
+        return 'Asesor: visualización y edición de leads asignados';
       case UserRole.moderator:
         return 'Solo visualización de reportes';
       case UserRole.user:
