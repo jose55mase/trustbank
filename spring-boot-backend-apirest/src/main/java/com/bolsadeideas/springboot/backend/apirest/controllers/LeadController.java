@@ -193,6 +193,7 @@ public class LeadController {
      * Soporta filtros opcionales:
      * - unassigned=true: retorna solo leads sin asesor asignado
      * - advisorId={id}: retorna solo leads asignados al asesor especificado
+     * - pais={pais}: retorna solo leads del país especificado
      */
     @Secured("ROLE_ADMIN")
     @GetMapping
@@ -202,7 +203,8 @@ public class LeadController {
             @RequestParam(defaultValue = "id") String sort,
             @RequestParam(defaultValue = "asc") String direction,
             @RequestParam(required = false) Boolean unassigned,
-            @RequestParam(required = false) Long advisorId) {
+            @RequestParam(required = false) Long advisorId,
+            @RequestParam(required = false) String pais) {
 
         try {
             Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
@@ -211,7 +213,16 @@ public class LeadController {
 
             Page<LeadEntity> leads;
 
-            if (Boolean.TRUE.equals(unassigned)) {
+            if (pais != null && !pais.trim().isEmpty()) {
+                // Filtrar por país, combinado con otros filtros
+                if (Boolean.TRUE.equals(unassigned)) {
+                    leads = leadDao.findByPaisAndAdvisorIsNull(pais, pageable);
+                } else if (advisorId != null) {
+                    leads = leadDao.findByPaisAndAdvisorId(pais, advisorId, pageable);
+                } else {
+                    leads = leadDao.findByPais(pais, pageable);
+                }
+            } else if (Boolean.TRUE.equals(unassigned)) {
                 // Filtrar solo leads sin asesor asignado
                 leads = leadDao.findByAdvisorIsNull(pageable);
             } else if (advisorId != null) {

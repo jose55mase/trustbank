@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../constants/countries.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/typography/tb_typography.dart';
@@ -29,10 +30,12 @@ class _LeadEditFormState extends State<LeadEditForm> {
   late final TextEditingController _apellidoController;
   late final TextEditingController _telefonoController;
   late final TextEditingController _emailController;
-  late final TextEditingController _paisController;
   late final TextEditingController _campanaController;
   late final TextEditingController _lastCallStatusController;
   late final TextEditingController _comentariosController;
+
+  /// Selected country value for the dropdown
+  String? _selectedPais;
 
   bool _isSaving = false;
 
@@ -45,12 +48,22 @@ class _LeadEditFormState extends State<LeadEditForm> {
     _telefonoController =
         TextEditingController(text: widget.lead.telefono ?? '');
     _emailController = TextEditingController(text: widget.lead.email ?? '');
-    _paisController = TextEditingController(text: widget.lead.pais ?? '');
     _campanaController = TextEditingController(text: widget.lead.campana ?? '');
     _lastCallStatusController =
         TextEditingController(text: widget.lead.lastCallStatus ?? '');
     _comentariosController =
         TextEditingController(text: widget.lead.comentarios ?? '');
+
+    // Initialize country: use existing value if it's in the list, otherwise keep as-is
+    final leadPais = widget.lead.pais ?? '';
+    if (leadPais.isNotEmpty && Countries.latinAmerica.contains(leadPais)) {
+      _selectedPais = leadPais;
+    } else if (leadPais.isNotEmpty) {
+      // Country not in list — keep the value but it won't be pre-selected
+      _selectedPais = leadPais;
+    } else {
+      _selectedPais = null;
+    }
   }
 
   @override
@@ -59,7 +72,6 @@ class _LeadEditFormState extends State<LeadEditForm> {
     _apellidoController.dispose();
     _telefonoController.dispose();
     _emailController.dispose();
-    _paisController.dispose();
     _campanaController.dispose();
     _lastCallStatusController.dispose();
     _comentariosController.dispose();
@@ -95,7 +107,7 @@ class _LeadEditFormState extends State<LeadEditForm> {
       modified['email'] = currentEmail;
     }
 
-    final currentPais = _paisController.text;
+    final currentPais = _selectedPais ?? '';
     final originalPais = widget.lead.pais ?? '';
     if (currentPais != originalPais) {
       modified['pais'] = currentPais;
@@ -225,11 +237,7 @@ class _LeadEditFormState extends State<LeadEditForm> {
                   keyboardType: TextInputType.emailAddress,
                 ),
                 const SizedBox(height: TBSpacing.md),
-                _buildTextField(
-                  controller: _paisController,
-                  label: 'País',
-                  icon: Icons.public_outlined,
-                ),
+                _buildCountryDropdown(),
                 const SizedBox(height: TBSpacing.md),
                 _buildTextField(
                   controller: _campanaController,
@@ -336,6 +344,72 @@ class _LeadEditFormState extends State<LeadEditForm> {
           vertical: TBSpacing.md,
         ),
       ),
+    );
+  }
+
+  Widget _buildCountryDropdown() {
+    // Build the list of dropdown items including the current value if not in the standard list
+    final items = <DropdownMenuItem<String>>[
+      const DropdownMenuItem(
+        value: '',
+        child: Text('Seleccionar país'),
+      ),
+    ];
+
+    // If the lead has a country not in the standard list, add it as an option
+    final currentPais = _selectedPais ?? '';
+    if (currentPais.isNotEmpty && !Countries.latinAmerica.contains(currentPais)) {
+      items.add(DropdownMenuItem(
+        value: currentPais,
+        child: Text(currentPais),
+      ));
+    }
+
+    for (final country in Countries.latinAmerica) {
+      items.add(DropdownMenuItem(
+        value: country,
+        child: Text(country),
+      ));
+    }
+
+    return DropdownButtonFormField<String>(
+      value: (currentPais.isNotEmpty &&
+              items.any((item) => item.value == currentPais))
+          ? currentPais
+          : '',
+      items: items,
+      onChanged: (value) {
+        setState(() {
+          _selectedPais = (value == null || value.isEmpty) ? null : value;
+        });
+      },
+      style: TBTypography.bodyMedium,
+      decoration: InputDecoration(
+        labelText: 'País',
+        labelStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey600),
+        prefixIcon:
+            const Icon(Icons.public_outlined, color: TBColors.grey500, size: 20),
+        filled: true,
+        fillColor: TBColors.surface,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+          borderSide: const BorderSide(color: TBColors.grey300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+          borderSide: const BorderSide(color: TBColors.grey300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+          borderSide: const BorderSide(color: TBColors.primary, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: TBSpacing.md,
+          vertical: TBSpacing.md,
+        ),
+      ),
+      isExpanded: true,
+      menuMaxHeight: 300,
     );
   }
 

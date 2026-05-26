@@ -93,6 +93,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
         direction: event.direction ?? 'desc',
         unassigned: event.unassigned,
         advisorId: event.advisorId,
+        pais: event.pais,
       );
       emit(LeadsLoaded(
         leads: result['leads'] as List<LeadModel>,

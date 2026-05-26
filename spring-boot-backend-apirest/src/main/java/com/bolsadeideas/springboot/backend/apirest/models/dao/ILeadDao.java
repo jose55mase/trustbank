@@ -58,6 +58,14 @@ public interface ILeadDao extends JpaRepository<LeadEntity, Long> {
            "LOWER(l.email) LIKE LOWER(CONCAT('%', :term, '%')))")
     Page<LeadEntity> searchByCampanaAndTerm(@Param("campana") String campana, @Param("term") String term, Pageable pageable);
 
+    // --- Métodos para filtrado por país ---
+
+    Page<LeadEntity> findByPais(String pais, Pageable pageable);
+
+    Page<LeadEntity> findByPaisAndAdvisorId(String pais, Long advisorId, Pageable pageable);
+
+    Page<LeadEntity> findByPaisAndAdvisorIsNull(String pais, Pageable pageable);
+
     // --- Métodos para asignación directa de leads a asesores ---
 
     Page<LeadEntity> findByAdvisorId(Long advisorId, Pageable pageable);

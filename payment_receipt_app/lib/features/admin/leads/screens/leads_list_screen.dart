@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../constants/countries.dart';
 import '../../../../design_system/colors/tb_colors.dart';
 import '../../../../design_system/typography/tb_typography.dart';
 import '../../../../design_system/spacing/tb_spacing.dart';
@@ -46,6 +47,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
   // ─── FILTER STATE ────────────────────────────────────────────────────
   /// Current filter value: 'all', 'unassigned', or advisor ID as string (e.g., '5')
   String _filterValue = 'all';
+  /// Current country filter: null means all countries
+  String? _countryFilter;
   /// Loaded advisor list for the filter dropdown
   List<AdvisorSummary> _advisors = [];
   bool _isUnassigning = false;
@@ -112,6 +115,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
         advisorId: _filterValue != 'all' && _filterValue != 'unassigned'
             ? int.tryParse(_filterValue)
             : null,
+        pais: _countryFilter,
       ));
     }
   }
@@ -585,7 +589,10 @@ class _LeadsListViewState extends State<_LeadsListView> {
             isLoading: _isUnassigning,
           ),
           const Spacer(),
-          // Filter dropdown
+          // Country filter dropdown
+          _buildCountryFilterDropdown(),
+          const SizedBox(width: TBSpacing.md),
+          // Advisor filter dropdown
           _buildFilterDropdown(),
         ],
       ),
@@ -660,6 +667,61 @@ class _LeadsListViewState extends State<_LeadsListView> {
         ),
       ],
     );
+  }
+
+  Widget _buildCountryFilterDropdown() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.public, size: 18, color: TBColors.grey600),
+        const SizedBox(width: 6),
+        DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _countryFilter ?? '',
+            isDense: true,
+            style: TBTypography.bodyMedium.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: TBColors.grey700,
+            ),
+            icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
+            items: _buildCountryFilterItems(),
+            onChanged: _onCountryFilterChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<DropdownMenuItem<String>> _buildCountryFilterItems() {
+    final items = <DropdownMenuItem<String>>[
+      const DropdownMenuItem(
+        value: '',
+        child: Text('Todos los países'),
+      ),
+    ];
+
+    for (final country in Countries.latinAmerica) {
+      items.add(DropdownMenuItem(
+        value: country,
+        child: Text(
+          country,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ));
+    }
+
+    return items;
+  }
+
+  void _onCountryFilterChanged(String? value) {
+    if (value == null) return;
+    setState(() {
+      _countryFilter = value.isEmpty ? null : value;
+      _currentPage = 0;
+      _selectedLeadIds.clear();
+    });
+    _loadLeads();
   }
 
   List<DropdownMenuItem<String>> _buildFilterItems() {

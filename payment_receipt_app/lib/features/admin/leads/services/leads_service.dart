@@ -107,7 +107,7 @@ class LeadsService {
 
   /// Obtiene la lista de leads paginada y ordenada.
   /// Endpoint: GET /api/leads?page={page}&size={size}&sort={sort}&direction={direction}
-  /// Soporta filtros opcionales: unassigned=true o advisorId={id}
+  /// Soporta filtros opcionales: unassigned=true, advisorId={id}, pais={pais}
   static Future<Map<String, dynamic>> getLeads({
     int page = 0,
     int size = 20,
@@ -115,6 +115,7 @@ class LeadsService {
     String direction = 'desc',
     bool? unassigned,
     int? advisorId,
+    String? pais,
   }) async {
     final queryParams = <String, String>{
       'page': page.toString(),
@@ -127,6 +128,10 @@ class LeadsService {
       queryParams['unassigned'] = 'true';
     } else if (advisorId != null) {
       queryParams['advisorId'] = advisorId.toString();
+    }
+
+    if (pais != null && pais.isNotEmpty) {
+      queryParams['pais'] = pais;
     }
 
     final uri = Uri.parse('$_baseUrl/leads').replace(queryParameters: queryParams);
