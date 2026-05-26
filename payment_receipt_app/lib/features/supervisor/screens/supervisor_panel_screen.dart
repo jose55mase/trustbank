@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../constants/countries.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
 import '../../../design_system/typography/tb_typography.dart';
@@ -16,8 +17,8 @@ import '../bloc/supervisor_bloc.dart';
 /// - Campo de búsqueda para filtrar dentro de los leads asignados
 /// - Tabla de leads con paginación (nombre, apellido, teléfono, email, país,
 ///   campaña, estado de última llamada, comentarios)
+/// - Panel lateral derecho de edición al hacer clic en un lead
 /// - Mensaje amigable cuando no hay leads asignados
-/// - Navegación al formulario de edición al hacer clic en un lead
 class SupervisorPanelScreen extends StatelessWidget {
   const SupervisorPanelScreen({super.key});
 
@@ -43,9 +44,40 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   int _totalLeadCount = 0;
   static const int _pageSize = 20;
 
+  // ─── DETAIL PANEL STATE ──────────────────────────────────────────────
+  LeadModel? _selectedLead;
+  final _panelFormKey = GlobalKey<FormState>();
+  late TextEditingController _nombreController;
+  late TextEditingController _apellidoController;
+  late TextEditingController _telefonoController;
+  late TextEditingController _emailController;
+  late TextEditingController _campanaController;
+  late TextEditingController _statusController;
+  late TextEditingController _comentariosController;
+  String? _selectedPais;
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreController = TextEditingController();
+    _apellidoController = TextEditingController();
+    _telefonoController = TextEditingController();
+    _emailController = TextEditingController();
+    _campanaController = TextEditingController();
+    _statusController = TextEditingController();
+    _comentariosController = TextEditingController();
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _telefonoController.dispose();
+    _emailController.dispose();
+    _campanaController.dispose();
+    _statusController.dispose();
+    _comentariosController.dispose();
     super.dispose();
   }
 
@@ -78,12 +110,46 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     }
   }
 
+  // ─── DETAIL PANEL METHODS ────────────────────────────────────────────
+
   void _onLeadTap(LeadModel lead) {
-    // Navigate to lead edit form (implemented in task 13.2)
-    Navigator.of(context).pushNamed(
-      '/supervisor/lead/edit',
-      arguments: lead,
-    );
+    setState(() {
+      _selectedLead = lead;
+      _nombreController.text = lead.nombre ?? '';
+      _apellidoController.text = lead.apellido ?? '';
+      _telefonoController.text = lead.telefono ?? '';
+      _emailController.text = lead.email ?? '';
+      _campanaController.text = lead.campana ?? '';
+      _statusController.text = lead.lastCallStatus ?? '';
+      _comentariosController.text = lead.comentarios ?? '';
+      _selectedPais =
+          lead.pais != null && lead.pais!.isNotEmpty ? lead.pais : null;
+    });
+  }
+
+  void _closeDetailPanel() {
+    setState(() {
+      _selectedLead = null;
+    });
+  }
+
+  void _saveLeadFromPanel() {
+    if (_selectedLead == null) return;
+    if (!(_panelFormKey.currentState?.validate() ?? false)) return;
+
+    final fields = <String, dynamic>{
+      'nombre': _nombreController.text.trim(),
+      'apellido': _apellidoController.text.trim(),
+      'telefono': _telefonoController.text.trim(),
+      'email': _emailController.text.trim(),
+      'pais': _selectedPais ?? '',
+      'lastCallStatus': _statusController.text.trim(),
+      'comentarios': _comentariosController.text.trim(),
+    };
+
+    context.read<SupervisorBloc>().add(
+          UpdateLead(leadId: _selectedLead!.id, fields: fields),
+        );
   }
 
   @override
@@ -104,7 +170,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                   );
                 }
                 if (state is SupervisorLeadsLoaded) {
-                  return _buildLeadsContent(state);
+                  return _buildMainContent(state);
                 }
                 if (state is SupervisorError) {
                   return _buildErrorState(state.message);
@@ -138,6 +204,53 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
         _totalLeadCount = state.totalItems;
       });
     }
+    if (state is SupervisorLeadUpdated) {
+      _closeDetailPanel();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Lead actualizado correctamente'),
+            ],
+          ),
+          backgroundColor: TBColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      // Reload leads to reflect changes
+      final term = _searchController.text.trim();
+      if (term.isEmpty) {
+        context
+            .read<SupervisorBloc>()
+            .add(LoadSupervisorLeads(page: _currentPage, size: _pageSize));
+      } else {
+        context.read<SupervisorBloc>().add(
+              SearchSupervisorLeads(
+                  term: term, page: _currentPage, size: _pageSize),
+            );
+      }
+    }
+  }
+
+  // ─── MAIN CONTENT (TABLE + PANEL) ───────────────────────────────────
+
+  Widget _buildMainContent(SupervisorLeadsLoaded state) {
+    if (state.leads.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Row(
+      children: [
+        // Left: Table content
+        Expanded(child: _buildLeadsContent(state)),
+        // Right: Detail/Edit panel
+        if (_selectedLead != null) _buildDetailPanel(),
+      ],
+    );
   }
 
   // ─── HEADER ──────────────────────────────────────────────────────────────
@@ -171,14 +284,13 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                   tooltip: 'Cerrar sesión',
                   onPressed: () async {
                     await AuthService.logout();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    }
+                    if (!mounted) return;
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
+                      (route) => false,
+                    );
                   },
                 ),
               ],
@@ -236,15 +348,12 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   // ─── LEADS CONTENT ──────────────────────────────────────────────────────
 
   Widget _buildLeadsContent(SupervisorLeadsLoaded state) {
-    if (state.leads.isEmpty) {
-      return _buildEmptyState();
-    }
-
     return Column(
       children: [
         // Results info
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding),
+          padding:
+              const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding),
           child: Row(
             children: [
               Text(
@@ -315,6 +424,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
 
   DataRow _buildLeadRow(LeadModel lead) {
     return DataRow(
+      selected: _selectedLead?.id == lead.id,
       onSelectChanged: (_) => _onLeadTap(lead),
       cells: [
         DataCell(Text(lead.nombre ?? '-')),
@@ -388,6 +498,183 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     );
   }
 
+  // ─── DETAIL/EDIT PANEL ──────────────────────────────────────────────
+
+  Widget _buildDetailPanel() {
+    return Container(
+      width: 400,
+      decoration: const BoxDecoration(
+        color: TBColors.surface,
+        border: Border(left: BorderSide(color: TBColors.grey300)),
+      ),
+      child: Column(
+        children: [
+          // Panel header
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: TBSpacing.md, vertical: TBSpacing.md),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: TBColors.grey300)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${_selectedLead!.nombre ?? ''} ${_selectedLead!.apellido ?? ''}'
+                        .trim(),
+                    style: TBTypography.titleLarge.copyWith(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: _closeDetailPanel,
+                  tooltip: 'Cerrar',
+                  color: TBColors.grey600,
+                ),
+              ],
+            ),
+          ),
+          // Scrollable form
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(TBSpacing.md),
+              child: Form(
+                key: _panelFormKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildPanelTextField(
+                      controller: _nombreController,
+                      label: 'Nombre',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _apellidoController,
+                      label: 'Apellido',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _telefonoController,
+                      label: 'Teléfono',
+                      icon: Icons.phone_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.email_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // País dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedPais != null &&
+                              Countries.latinAmerica.contains(_selectedPais)
+                          ? _selectedPais
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: 'País',
+                        prefixIcon:
+                            const Icon(Icons.public_outlined, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(TBSpacing.radiusMd),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 14),
+                      ),
+                      items: Countries.latinAmerica.map((country) {
+                        return DropdownMenuItem(
+                          value: country,
+                          child:
+                              Text(country, style: TBTypography.bodyMedium),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedPais = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // Campaña (read-only)
+                    _buildPanelTextField(
+                      controller: _campanaController,
+                      label: 'Campaña',
+                      icon: Icons.campaign_outlined,
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _statusController,
+                      label: 'Última Llamada',
+                      icon: Icons.phone_callback_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _comentariosController,
+                      label: 'Comentarios',
+                      icon: Icons.comment_outlined,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: TBSpacing.xl),
+                    // Guardar button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _saveLeadFromPanel,
+                        icon: const Icon(Icons.save_outlined, size: 18),
+                        label: const Text('Guardar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TBColors.primary,
+                          foregroundColor: Colors.white,
+                          padding:
+                              const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(TBSpacing.radiusMd),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPanelTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool readOnly = false,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      maxLines: maxLines,
+      style: TBTypography.bodyMedium,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        ),
+        filled: readOnly,
+        fillColor: readOnly ? TBColors.grey100 : null,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      ),
+    );
+  }
+
   // ─── PAGINATION ─────────────────────────────────────────────────────────
 
   Widget _buildPagination(SupervisorLeadsLoaded state) {
@@ -452,8 +739,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                   '${i + 1}',
                   style: TBTypography.labelMedium.copyWith(
                     color: isActive ? TBColors.white : TBColors.grey600,
-                    fontWeight:
-                        isActive ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
