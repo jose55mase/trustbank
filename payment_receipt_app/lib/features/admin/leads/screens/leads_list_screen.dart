@@ -542,6 +542,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
               ],
             ),
             const Spacer(),
+            _buildHeaderButton(Icons.refresh_rounded, 'Recargar', _loadLeads),
+            const SizedBox(width: TBSpacing.sm),
             _isExporting
                 ? const SizedBox(
                     width: 40, height: 40,

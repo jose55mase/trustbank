@@ -280,6 +280,16 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                   ),
                 ),
                 IconButton(
+                  icon: const Icon(Icons.refresh, color: TBColors.white),
+                  tooltip: 'Recargar',
+                  onPressed: () {
+                    context.read<SupervisorBloc>().add(
+                          LoadSupervisorLeads(
+                              page: _currentPage, size: _pageSize),
+                        );
+                  },
+                ),
+                IconButton(
                   icon: const Icon(Icons.logout, color: TBColors.white),
                   tooltip: 'Cerrar sesión',
                   onPressed: () async {
