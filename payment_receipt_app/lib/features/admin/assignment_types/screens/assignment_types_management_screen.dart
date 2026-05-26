@@ -452,7 +452,7 @@ class _AssignmentTypesContent extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => _AssignmentTypeFormDialog(
-        title: 'Editar Tipo de Asignación',
+        title: 'Editar Campaña',
         confirmLabel: 'Guardar',
         initialName: type.name,
         initialDescription: type.description,
@@ -470,7 +470,7 @@ class _AssignmentTypesContent extends StatelessWidget {
               );
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Tipo de asignación actualizado exitosamente'),
+              content: Text('Campaña actualizada exitosamente'),
               backgroundColor: TBColors.success,
               behavior: SnackBarBehavior.floating,
               duration: Duration(seconds: 3),
@@ -507,7 +507,7 @@ class _AssignmentTypesContent extends StatelessWidget {
           ],
         ),
         content: Text(
-          '¿Estás seguro de que deseas eliminar el tipo de asignación "${type.name}"?\n\nEsta acción no se puede deshacer.',
+          '¿Estás seguro de que deseas eliminar la campaña "${type.name}"?\n\nEsta acción no se puede deshacer.',
           style: TBTypography.bodyMedium,
         ),
         actions: [
@@ -529,7 +529,7 @@ class _AssignmentTypesContent extends StatelessWidget {
                   .add(DeleteAssignmentType(id: type.id));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Tipo de asignación eliminado exitosamente'),
+                  content: Text('Campaña eliminada exitosamente'),
                   backgroundColor: TBColors.success,
                   behavior: SnackBarBehavior.floating,
                   duration: Duration(seconds: 3),
@@ -691,7 +691,7 @@ class _AssignmentTypeFormDialogState extends State<_AssignmentTypeFormDialog> {
                 maxLines: 3,
                 decoration: InputDecoration(
                   labelText: 'Descripción (opcional)',
-                  hintText: 'Describe el tipo de asignación...',
+                  hintText: 'Describe la campaña...',
                   labelStyle: TBTypography.bodyMedium.copyWith(
                     color: TBColors.grey600,
                   ),
@@ -751,7 +751,7 @@ class _AssignmentTypeFormDialogState extends State<_AssignmentTypeFormDialog> {
                   title: Text('Estado activo', style: TBTypography.bodyMedium),
                   subtitle: Text(
                     _active
-                        ? 'El tipo está disponible para asignación'
+                        ? 'La campaña está disponible para asignación'
                         : 'El tipo no aparecerá en las opciones',
                     style: TBTypography.bodySmall.copyWith(
                       color: TBColors.grey600,
