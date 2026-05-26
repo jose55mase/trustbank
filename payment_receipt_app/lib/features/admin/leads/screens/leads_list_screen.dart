@@ -45,26 +45,48 @@ class _LeadsListViewState extends State<_LeadsListView> {
   final Set<int> _selectedLeadIds = {};
 
   // ─── FILTER STATE ────────────────────────────────────────────────────
-  /// Current filter value: 'all', 'unassigned', or advisor ID as string (e.g., '5')
   String _filterValue = 'all';
-  /// Current country filter: null means all countries
   String? _countryFilter;
-  /// Loaded advisor list for the filter dropdown
   List<AdvisorSummary> _advisors = [];
   bool _isUnassigning = false;
 
-  /// Returns the set of selected lead IDs for external access (e.g., assignment actions).
+  // ─── DETAIL PANEL STATE ──────────────────────────────────────────────
+  LeadModel? _selectedLead;
+  final _panelFormKey = GlobalKey<FormState>();
+  late TextEditingController _nombreController;
+  late TextEditingController _apellidoController;
+  late TextEditingController _telefonoController;
+  late TextEditingController _emailController;
+  late TextEditingController _campanaController;
+  late TextEditingController _statusController;
+  late TextEditingController _comentariosController;
+  String? _selectedPais;
+
   Set<int> get selectedLeadIds => _selectedLeadIds;
 
   @override
   void initState() {
     super.initState();
     _loadAdvisorsForFilter();
+    _nombreController = TextEditingController();
+    _apellidoController = TextEditingController();
+    _telefonoController = TextEditingController();
+    _emailController = TextEditingController();
+    _campanaController = TextEditingController();
+    _statusController = TextEditingController();
+    _comentariosController = TextEditingController();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _telefonoController.dispose();
+    _emailController.dispose();
+    _campanaController.dispose();
+    _statusController.dispose();
+    _comentariosController.dispose();
     super.dispose();
   }
 
@@ -77,9 +99,65 @@ class _LeadsListViewState extends State<_LeadsListView> {
           _advisors = advisors;
         });
       }
-    } catch (_) {
-      // Silently fail — filter will just show "Todos" and "Sin asignar"
-    }
+    } catch (_) {}
+  }
+
+  // ─── DETAIL PANEL METHODS ────────────────────────────────────────────
+  void _openDetailPanel(LeadModel lead) {
+    setState(() {
+      _selectedLead = lead;
+      _nombreController.text = lead.nombre;
+      _apellidoController.text = lead.apellido;
+      _telefonoController.text = lead.telefono;
+      _emailController.text = lead.email;
+      _campanaController.text = lead.campana;
+      _statusController.text = lead.lastCallStatus;
+      _comentariosController.text = lead.comentarios;
+      _selectedPais = lead.pais.isNotEmpty ? lead.pais : null;
+    });
+  }
+
+  void _closeDetailPanel() {
+    setState(() {
+      _selectedLead = null;
+    });
+  }
+
+  void _saveLeadFromPanel() {
+    if (_selectedLead == null) return;
+    if (!(_panelFormKey.currentState?.validate() ?? false)) return;
+
+    final updatedLead = _selectedLead!.copyWith(
+      nombre: _nombreController.text.trim(),
+      apellido: _apellidoController.text.trim(),
+      telefono: _telefonoController.text.trim(),
+      email: _emailController.text.trim(),
+      pais: _selectedPais ?? '',
+      lastCallStatus: _statusController.text.trim(),
+      comentarios: _comentariosController.text.trim(),
+    );
+
+    context.read<LeadsBloc>().add(UpdateLead(lead: updatedLead));
+    _closeDetailPanel();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white, size: 20),
+            SizedBox(width: 8),
+            Text('Lead actualizado correctamente'),
+          ],
+        ),
+        backgroundColor: TBColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _deleteLeadFromPanel() {
+    if (_selectedLead == null || _selectedLead!.id == null) return;
+    _confirmDelete(_selectedLead!);
   }
 
   void _onSearchChanged(String value) {
@@ -129,174 +207,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
     Navigator.pushNamed(context, '/admin/leads/upload');
   }
 
-  // ─── MODAL DE DETALLE ───────────────────────────────────────────────
-  void _showLeadDetailModal(BuildContext context, LeadModel lead) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TBSpacing.radiusLg)),
-        elevation: 16,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header con gradiente
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(TBSpacing.lg),
-                decoration: const BoxDecoration(
-                  gradient: TBColors.primaryGradient,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(TBSpacing.radiusLg),
-                    topRight: Radius.circular(TBSpacing.radiusLg),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 32,
-                      backgroundColor: Colors.white24,
-                      child: Text(
-                        '${lead.nombre.isNotEmpty ? lead.nombre[0].toUpperCase() : ''}${lead.apellido.isNotEmpty ? lead.apellido[0].toUpperCase() : ''}',
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(height: TBSpacing.sm),
-                    Text(
-                      '${lead.nombre} ${lead.apellido}',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-                      textAlign: TextAlign.center,
-                    ),
-                    if (lead.lastCallStatus.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          lead.lastCallStatus,
-                          style: const TextStyle(fontSize: 12, color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              // Contenido
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(TBSpacing.lg),
-                  child: Column(
-                    children: [
-                      _buildInfoTile(Icons.phone_outlined, 'Teléfono', lead.telefono),
-                      _buildInfoTile(Icons.email_outlined, 'Email', lead.email),
-                      _buildInfoTile(Icons.public_outlined, 'País', lead.pais),
-                      _buildInfoTile(Icons.campaign_outlined, 'Campaña', lead.campana),
-                      _buildInfoTile(Icons.comment_outlined, 'Comentarios', lead.comentarios),
-                      if (lead.fechaRegistro != null)
-                        _buildInfoTile(
-                          Icons.calendar_today_outlined,
-                          'Fecha de Registro',
-                          '${lead.fechaRegistro!.day.toString().padLeft(2, '0')}/${lead.fechaRegistro!.month.toString().padLeft(2, '0')}/${lead.fechaRegistro!.year}',
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-              // Botones de acción
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: TBSpacing.lg, vertical: TBSpacing.md),
-                decoration: const BoxDecoration(
-                  border: Border(top: BorderSide(color: TBColors.grey300)),
-                ),
-                child: Row(
-                  children: [
-                    // Eliminar
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_outline, size: 18),
-                      label: const Text('Eliminar'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: TBColors.error,
-                        side: const BorderSide(color: TBColors.error),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TBSpacing.radiusMd)),
-                      ),
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-                        _confirmDelete(lead);
-                      },
-                    ),
-                    const Spacer(),
-                    // Editar
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: const Text('Editar'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: TBColors.primary,
-                        side: const BorderSide(color: TBColors.primary),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TBSpacing.radiusMd)),
-                      ),
-                      onPressed: () {
-                        Navigator.of(dialogContext).pop();
-                        Navigator.pushNamed(context, '/admin/leads/detail', arguments: lead.id);
-                      },
-                    ),
-                    const SizedBox(width: TBSpacing.sm),
-                    // Cerrar
-                    ElevatedButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: TBColors.primary,
-                        foregroundColor: TBColors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TBSpacing.radiusMd)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text('Cerrar'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoTile(IconData icon, String label, String value) {
-    if (value.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.only(bottom: TBSpacing.md),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: TBColors.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 18, color: TBColors.primary),
-          ),
-          const SizedBox(width: TBSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label, style: TBTypography.bodyMedium.copyWith(color: TBColors.grey500, fontSize: 12)),
-                const SizedBox(height: 2),
-                Text(value, style: TBTypography.bodyMedium.copyWith(fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _confirmDelete(LeadModel lead) {
     showDialog(
       context: context,
@@ -331,6 +241,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
               Navigator.of(dialogContext).pop();
               if (lead.id != null) {
                 context.read<LeadsBloc>().add(DeleteLead(leadId: lead.id!));
+                _closeDetailPanel();
               }
             },
             style: ElevatedButton.styleFrom(
@@ -383,26 +294,217 @@ class _LeadsListViewState extends State<_LeadsListView> {
             _buildSearchBar(),
             _buildActionToolbar(),
             Expanded(
-              child: BlocBuilder<LeadsBloc, LeadsState>(
-                buildWhen: (previous, current) =>
-                    current is! ExportInProgress && current is! ExportCompleted,
-                builder: (context, state) {
-                  if (state is LeadsLoading) {
-                    return const Center(child: CircularProgressIndicator(color: TBColors.primary));
-                  }
-                  if (state is LeadsError && !_isExporting) {
-                    return _buildErrorState(state.message);
-                  }
-                  if (state is LeadsLoaded) {
-                    if (state.leads.isEmpty) return _buildEmptyState();
-                    return _buildLeadsTable(state);
-                  }
-                  return const SizedBox();
-                },
+              child: Row(
+                children: [
+                  // Left: Table content
+                  Expanded(
+                    child: BlocBuilder<LeadsBloc, LeadsState>(
+                      buildWhen: (previous, current) =>
+                          current is! ExportInProgress && current is! ExportCompleted,
+                      builder: (context, state) {
+                        if (state is LeadsLoading) {
+                          return const Center(child: CircularProgressIndicator(color: TBColors.primary));
+                        }
+                        if (state is LeadsError && !_isExporting) {
+                          return _buildErrorState(state.message);
+                        }
+                        if (state is LeadsLoaded) {
+                          if (state.leads.isEmpty) return _buildEmptyState();
+                          return _buildLeadsTable(state);
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                  // Right: Detail/Edit panel
+                  if (_selectedLead != null) _buildDetailPanel(),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ─── DETAIL/EDIT PANEL ──────────────────────────────────────────────
+  Widget _buildDetailPanel() {
+    return Container(
+      width: 400,
+      decoration: const BoxDecoration(
+        color: TBColors.surface,
+        border: Border(left: BorderSide(color: TBColors.grey300)),
+      ),
+      child: Column(
+        children: [
+          // Panel header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: TBSpacing.md, vertical: TBSpacing.md),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: TBColors.grey300)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '${_selectedLead!.nombre} ${_selectedLead!.apellido}',
+                    style: TBTypography.titleLarge.copyWith(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  onPressed: _closeDetailPanel,
+                  tooltip: 'Cerrar',
+                  color: TBColors.grey600,
+                ),
+              ],
+            ),
+          ),
+          // Scrollable form
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(TBSpacing.md),
+              child: Form(
+                key: _panelFormKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildPanelTextField(
+                      controller: _nombreController,
+                      label: 'Nombre',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _apellidoController,
+                      label: 'Apellido',
+                      icon: Icons.person_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _telefonoController,
+                      label: 'Teléfono',
+                      icon: Icons.phone_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.email_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // País dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedPais != null && Countries.latinAmerica.contains(_selectedPais)
+                          ? _selectedPais
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: 'País',
+                        prefixIcon: const Icon(Icons.public_outlined, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      items: Countries.latinAmerica.map((country) {
+                        return DropdownMenuItem(
+                          value: country,
+                          child: Text(country, style: TBTypography.bodyMedium),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() { _selectedPais = value; });
+                      },
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // Campaña (read-only)
+                    _buildPanelTextField(
+                      controller: _campanaController,
+                      label: 'Campaña',
+                      icon: Icons.campaign_outlined,
+                      readOnly: true,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _statusController,
+                      label: 'Status',
+                      icon: Icons.info_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    _buildPanelTextField(
+                      controller: _comentariosController,
+                      label: 'Comentarios',
+                      icon: Icons.comment_outlined,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: TBSpacing.xl),
+                    // Guardar button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _saveLeadFromPanel,
+                        icon: const Icon(Icons.save_outlined, size: 18),
+                        label: const Text('Guardar'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TBColors.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // Eliminar button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _deleteLeadFromPanel,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Eliminar'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: TBColors.error,
+                          side: const BorderSide(color: TBColors.error),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPanelTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool readOnly = false,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      maxLines: maxLines,
+      style: TBTypography.bodyMedium,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, size: 20),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        ),
+        filled: readOnly,
+        fillColor: readOnly ? TBColors.grey100 : null,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       ),
     );
   }
@@ -419,7 +521,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
         bottom: false,
         child: Row(
           children: [
-            // Botón regresar
             IconButton(
               icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
@@ -441,7 +542,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
               ],
             ),
             const Spacer(),
-            // Exportar
             _isExporting
                 ? const SizedBox(
                     width: 40, height: 40,
@@ -454,7 +554,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
                     context.read<LeadsBloc>().add(ExportLeads());
                   }),
             const SizedBox(width: TBSpacing.sm),
-            // Importar
             _buildHeaderButton(Icons.upload_file_rounded, 'Importar', _navigateToUpload),
           ],
         ),
@@ -572,7 +671,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
       ),
       child: Row(
         children: [
-          // "Asignar a Asesor" button
           _buildActionButton(
             icon: Icons.person_add_outlined,
             label: 'Asignar a Asesor',
@@ -580,7 +678,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
             color: TBColors.primary,
           ),
           const SizedBox(width: TBSpacing.sm),
-          // "Desasignar" button
           _buildActionButton(
             icon: Icons.person_remove_outlined,
             label: 'Desasignar',
@@ -589,10 +686,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
             isLoading: _isUnassigning,
           ),
           const Spacer(),
-          // Country filter dropdown
           _buildCountryFilterDropdown(),
           const SizedBox(width: TBSpacing.md),
-          // Advisor filter dropdown
           _buildFilterDropdown(),
         ],
       ),
@@ -736,7 +831,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
       ),
     ];
 
-    // Add advisor options dynamically
     for (final advisor in _advisors) {
       items.add(DropdownMenuItem(
         value: advisor.advisorId.toString(),
@@ -762,7 +856,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
 
   // ─── ASSIGNMENT ACTIONS ──────────────────────────────────────────────
   Future<void> _onAssignPressed() async {
-    // Count how many selected leads already have an advisor
     final state = context.read<LeadsBloc>().state;
     int alreadyAssignedCount = 0;
     if (state is LeadsLoaded) {
@@ -796,7 +889,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
       ));
       setState(() => _selectedLeadIds.clear());
       _loadLeads();
-      _loadAdvisorsForFilter(); // Refresh advisor counts
+      _loadAdvisorsForFilter();
     }
   }
 
@@ -824,7 +917,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
           _isUnassigning = false;
         });
         _loadLeads();
-        _loadAdvisorsForFilter(); // Refresh advisor counts
+        _loadAdvisorsForFilter();
       }
     } catch (e) {
       if (mounted) {
@@ -953,7 +1046,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
                   return null;
                 }),
                 columns: [
-                  // Checkbox "Select All" column
                   DataColumn(
                     label: Checkbox(
                       value: allSelected,
@@ -1008,7 +1100,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       DataCell(Text(lead.email, style: TBTypography.bodyMedium.copyWith(color: TBColors.primary))),
                       DataCell(Text(lead.campana, style: TBTypography.bodyMedium)),
                     ],
-                    onSelectChanged: (_) => _showLeadDetailModal(context, lead),
+                    onSelectChanged: (_) => _openDetailPanel(lead),
                   );
                 }).toList(),
               ),
@@ -1020,7 +1112,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
     );
   }
 
-  /// Builds the advisor cell showing the advisor name or "Sin asignar" badge.
   Widget _buildAdvisorCell(LeadModel lead) {
     if (lead.advisorName != null && lead.advisorName!.isNotEmpty) {
       return Row(
@@ -1035,7 +1126,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
         ],
       );
     }
-    // Unassigned lead — show orange badge
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -1084,7 +1174,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
 
   int? _getSortColumnIndex() {
     if (_sortColumn == null) return null;
-    // Offset by 1 for the checkbox column at index 0
     const columns = ['nombre', 'apellido', 'advisor', 'lastCallStatus', 'pais', 'telefono', 'email', 'campana'];
     final index = columns.indexOf(_sortColumn!);
     return index >= 0 ? index + 1 : null;
