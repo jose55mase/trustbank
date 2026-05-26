@@ -39,7 +39,7 @@ public class LeadEntity implements Serializable {
     private String lastCallStatus;
 
     @Column(name = "last_call_date")
-    @Temporal(TemporalType.DATE)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date lastCallDate;
 
     @Column(name = "pais")

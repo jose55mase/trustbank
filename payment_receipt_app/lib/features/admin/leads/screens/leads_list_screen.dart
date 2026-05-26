@@ -436,18 +436,31 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       icon: Icons.info_outline,
                     ),
                     const SizedBox(height: TBSpacing.md),
-                    // Última Fecha de Llamada datepicker
+                    // Última Fecha de Llamada datepicker + timepicker
                     GestureDetector(
                       onTap: () async {
-                        final picked = await showDatePicker(
+                        final pickedDate = await showDatePicker(
                           context: context,
                           initialDate: _selectedLastCallDate ?? DateTime.now(),
                           firstDate: DateTime(2020),
                           lastDate: DateTime(2100),
                         );
-                        if (picked != null) {
+                        if (pickedDate != null && mounted) {
+                          final pickedTime = await showTimePicker(
+                            context: context,
+                            initialTime: _selectedLastCallDate != null
+                                ? TimeOfDay.fromDateTime(_selectedLastCallDate!)
+                                : TimeOfDay.now(),
+                          );
                           setState(() {
-                            _selectedLastCallDate = picked;
+                            if (pickedTime != null) {
+                              _selectedLastCallDate = DateTime(
+                                pickedDate.year, pickedDate.month, pickedDate.day,
+                                pickedTime.hour, pickedTime.minute,
+                              );
+                            } else {
+                              _selectedLastCallDate = pickedDate;
+                            }
                           });
                         }
                       },
@@ -465,7 +478,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
                           ),
                           controller: TextEditingController(
                             text: _selectedLastCallDate != null
-                                ? DateFormat('dd/MM/yyyy').format(_selectedLastCallDate!)
+                                ? DateFormat('dd/MM/yyyy HH:mm').format(_selectedLastCallDate!)
                                 : '',
                           ),
                         ),
@@ -1140,7 +1153,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       DataCell(_buildStatusBadge(lead.lastCallStatus)),
                       DataCell(Text(
                         lead.lastCallDate != null
-                            ? DateFormat('dd/MM/yyyy').format(lead.lastCallDate!)
+                            ? DateFormat('dd/MM/yyyy HH:mm').format(lead.lastCallDate!)
                             : '-',
                         style: TBTypography.bodyMedium,
                       )),
