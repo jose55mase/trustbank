@@ -84,4 +84,8 @@ public interface ILeadDao extends JpaRepository<LeadEntity, Long> {
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE leads SET advisor_id = NULL WHERE id IN :leadIds", nativeQuery = true)
     int bulkUnassign(@Param("leadIds") List<Long> leadIds);
+
+    @Modifying(clearAutomatically = true)
+    @Query(value = "UPDATE leads SET campana = :campana WHERE id IN :leadIds", nativeQuery = true)
+    int bulkUpdateCampana(@Param("leadIds") List<Long> leadIds, @Param("campana") String campana);
 }

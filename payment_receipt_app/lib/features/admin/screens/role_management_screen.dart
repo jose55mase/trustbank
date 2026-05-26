@@ -292,7 +292,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
       case UserRole.admin:
         return 'Administrador';
       case UserRole.supervisor:
-        return 'Supervisor';
+        return 'Asesor';
       case UserRole.moderator:
         return 'Moderador';
       case UserRole.user:
@@ -365,12 +365,24 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         Navigator.pop(context);
       }
 
+      // Si el nuevo rol es Asesor, abrir modal para asignar campaña
+      if (newRole == UserRole.supervisor) {
+        final campaign = await RoleAssignmentDialog.show(context);
+        if (campaign != null) {
+          await SupervisorAssignmentsService.update(user['id'], campaign.id);
+        }
+      }
+
       // Reload users to get fresh role data from backend
       await _loadUsers();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Rol actualizado correctamente')),
+          SnackBar(content: Text(
+            newRole == UserRole.supervisor
+                ? 'Rol actualizado a Asesor'
+                : 'Rol actualizado correctamente',
+          )),
         );
       }
     } catch (e) {

@@ -1,9 +1,11 @@
 package com.bolsadeideas.springboot.backend.apirest.models.services;
 
 import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadDao;
+import com.bolsadeideas.springboot.backend.apirest.models.dao.ISupervisorAssignmentDao;
 import com.bolsadeideas.springboot.backend.apirest.models.dao.IUserDao;
 import com.bolsadeideas.springboot.backend.apirest.models.dto.AdvisorSummaryDTO;
 import com.bolsadeideas.springboot.backend.apirest.models.dto.AssignmentResultDTO;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.SupervisorAssignmentEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -30,6 +33,9 @@ public class LeadAssignmentService {
 
     @Autowired
     private IUserDao userDao;
+
+    @Autowired
+    private ISupervisorAssignmentDao supervisorAssignmentDao;
 
     /**
      * Asigna múltiples leads a un asesor.
@@ -58,6 +64,12 @@ public class LeadAssignmentService {
         int assignedCount = 0;
         if (!existingLeadIds.isEmpty()) {
             assignedCount = leadDao.bulkAssign(existingLeadIds, advisorId);
+
+            // Actualizar el campo campana con la campaña del asesor
+            String campaignName = getAdvisorCampaignName(advisorId);
+            if (campaignName != null && !campaignName.isEmpty()) {
+                leadDao.bulkUpdateCampana(existingLeadIds, campaignName);
+            }
         }
 
         logger.info("Bulk assign: advisorId={}, requestedCount={}, successCount={}, failedCount={}",
@@ -189,5 +201,15 @@ public class LeadAssignmentService {
         }
         return user.getRols().stream()
                 .anyMatch(rol -> "ROLE_SUPERVISOR".equals(rol.getName()));
+    }
+
+    /**
+     * Obtiene el nombre de la campaña asignada a un asesor.
+     * Retorna null si el asesor no tiene campaña asignada.
+     */
+    private String getAdvisorCampaignName(Long advisorId) {
+        return supervisorAssignmentDao.findByUserId(advisorId)
+                .map(assignment -> assignment.getAssignmentType().getName())
+                .orElse(null);
     }
 }
