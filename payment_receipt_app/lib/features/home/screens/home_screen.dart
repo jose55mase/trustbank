@@ -23,6 +23,7 @@ import '../../admin/screens/role_management_screen.dart';
 import '../bloc/home_bloc.dart';
 import '../bloc/home_event.dart';
 import '../bloc/home_state.dart';
+import '../widgets/bitcoin_chart_card.dart';
 import '../widgets/loading_home.dart';
 import '../../../utils/currency_formatter.dart';
 import '../../../design_system/components/molecules/tb_loading_overlay.dart';
@@ -529,6 +530,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: TBSpacing.lg),
+            // Bitcoin chart card
+            const BitcoinChartCard(),
             const SizedBox(height: TBSpacing.lg),
             // Grid de acciones compacto
             GridView.count(
