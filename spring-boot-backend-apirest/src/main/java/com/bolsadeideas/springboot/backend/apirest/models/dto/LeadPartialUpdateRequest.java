@@ -1,5 +1,7 @@
 package com.bolsadeideas.springboot.backend.apirest.models.dto;
 
+import java.util.Date;
+
 /**
  * Request DTO para actualización parcial de un lead por parte de un supervisor.
  * Todos los campos son opcionales; solo se actualizan los campos con valor no nulo.
@@ -13,6 +15,7 @@ public class LeadPartialUpdateRequest {
     private String pais;
     private String campana;
     private String lastCallStatus;
+    private Date lastCallDate;
     private String comentarios;
 
     public LeadPartialUpdateRequest() {
@@ -83,6 +86,14 @@ public class LeadPartialUpdateRequest {
 
     public void setLastCallStatus(String lastCallStatus) {
         this.lastCallStatus = lastCallStatus;
+    }
+
+    public Date getLastCallDate() {
+        return lastCallDate;
+    }
+
+    public void setLastCallDate(Date lastCallDate) {
+        this.lastCallDate = lastCallDate;
     }
 
     public String getComentarios() {

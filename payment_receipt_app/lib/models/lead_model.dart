@@ -12,6 +12,7 @@ class LeadModel extends Equatable {
   final String? campana;
   final String? lastCallStatus;
   final String? comentarios;
+  final DateTime? lastCallDate;
   final DateTime? fechaRegistro;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -28,6 +29,7 @@ class LeadModel extends Equatable {
     this.campana,
     this.lastCallStatus,
     this.comentarios,
+    this.lastCallDate,
     this.fechaRegistro,
     this.createdAt,
     this.updatedAt,
@@ -58,6 +60,7 @@ class LeadModel extends Equatable {
       campana: json['campana'] as String?,
       lastCallStatus: json['lastCallStatus'] as String?,
       comentarios: json['comentarios'] as String?,
+      lastCallDate: _parseDate(json['lastCallDate']),
       fechaRegistro: _parseDate(json['fechaRegistro']),
       createdAt: _parseDate(json['createdAt']),
       updatedAt: _parseDate(json['updatedAt']),
@@ -78,6 +81,7 @@ class LeadModel extends Equatable {
     if (campana != null) map['campana'] = campana;
     if (lastCallStatus != null) map['lastCallStatus'] = lastCallStatus;
     if (comentarios != null) map['comentarios'] = comentarios;
+    if (lastCallDate != null) map['lastCallDate'] = lastCallDate!.toIso8601String();
     return map;
   }
 
@@ -101,6 +105,7 @@ class LeadModel extends Equatable {
         campana,
         lastCallStatus,
         comentarios,
+        lastCallDate,
         fechaRegistro,
         createdAt,
         updatedAt,

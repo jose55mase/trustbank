@@ -172,6 +172,7 @@ public class LeadServiceImpl implements ILeadService {
         existingLead.setCampana(lead.getCampana());
         existingLead.setFechaRegistro(lead.getFechaRegistro());
         existingLead.setComentarios(lead.getComentarios());
+        existingLead.setLastCallDate(lead.getLastCallDate());
 
         return leadDao.save(existingLead);
     }

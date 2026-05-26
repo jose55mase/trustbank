@@ -75,6 +75,9 @@ public class SupervisorLeadServiceImpl implements ISupervisorLeadService {
         if (request.getComentarios() != null) {
             lead.setComentarios(request.getComentarios());
         }
+        if (request.getLastCallDate() != null) {
+            lead.setLastCallDate(request.getLastCallDate());
+        }
 
         return leadDao.save(lead);
     }

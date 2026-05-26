@@ -38,6 +38,10 @@ public class LeadEntity implements Serializable {
     @Column(name = "last_call_status")
     private String lastCallStatus;
 
+    @Column(name = "last_call_date")
+    @Temporal(TemporalType.DATE)
+    private Date lastCallDate;
+
     @Column(name = "pais")
     private String pais;
 
@@ -117,6 +121,14 @@ public class LeadEntity implements Serializable {
 
     public void setLastCallStatus(String lastCallStatus) {
         this.lastCallStatus = lastCallStatus;
+    }
+
+    public Date getLastCallDate() {
+        return lastCallDate;
+    }
+
+    public void setLastCallDate(Date lastCallDate) {
+        this.lastCallDate = lastCallDate;
     }
 
     public String getPais() {

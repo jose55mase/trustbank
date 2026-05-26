@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../constants/countries.dart';
 import '../../../design_system/colors/tb_colors.dart';
@@ -55,6 +56,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   late TextEditingController _statusController;
   late TextEditingController _comentariosController;
   String? _selectedPais;
+  DateTime? _selectedLastCallDate;
 
   @override
   void initState() {
@@ -124,6 +126,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       _comentariosController.text = lead.comentarios ?? '';
       _selectedPais =
           lead.pais != null && lead.pais!.isNotEmpty ? lead.pais : null;
+      _selectedLastCallDate = lead.lastCallDate;
     });
   }
 
@@ -145,6 +148,8 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       'pais': _selectedPais ?? '',
       'lastCallStatus': _statusController.text.trim(),
       'comentarios': _comentariosController.text.trim(),
+      if (_selectedLastCallDate != null)
+        'lastCallDate': _selectedLastCallDate!.toIso8601String(),
     };
 
     context.read<SupervisorBloc>().add(
@@ -424,6 +429,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
             DataColumn(label: Text('País')),
             DataColumn(label: Text('Campaña')),
             DataColumn(label: Text('Última Llamada')),
+            DataColumn(label: Text('Últ. Fecha')),
             DataColumn(label: Text('Comentarios')),
           ],
           rows: leads.map((lead) => _buildLeadRow(lead)).toList(),
@@ -452,6 +458,11 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
         DataCell(Text(lead.pais ?? '-')),
         DataCell(Text(lead.campana ?? '-')),
         DataCell(_buildCallStatusBadge(lead.lastCallStatus)),
+        DataCell(Text(
+          lead.lastCallDate != null
+              ? DateFormat('dd/MM/yyyy').format(lead.lastCallDate!)
+              : '-',
+        )),
         DataCell(
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 200),
@@ -621,6 +632,43 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                       controller: _statusController,
                       label: 'Última Llamada',
                       icon: Icons.phone_callback_outlined,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // Última Fecha de Llamada datepicker
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedLastCallDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                          locale: const Locale('es', ''),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedLastCallDate = picked;
+                          });
+                        }
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          readOnly: true,
+                          style: TBTypography.bodyMedium,
+                          decoration: InputDecoration(
+                            labelText: 'Últ. Fecha de Llamada',
+                            prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          ),
+                          controller: TextEditingController(
+                            text: _selectedLastCallDate != null
+                                ? DateFormat('dd/MM/yyyy').format(_selectedLastCallDate!)
+                                : '',
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     _buildPanelTextField(

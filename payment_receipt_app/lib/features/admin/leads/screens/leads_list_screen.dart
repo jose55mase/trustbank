@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../../constants/countries.dart';
 import '../../../../design_system/colors/tb_colors.dart';
 import '../../../../design_system/typography/tb_typography.dart';
@@ -61,6 +62,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   late TextEditingController _statusController;
   late TextEditingController _comentariosController;
   String? _selectedPais;
+  DateTime? _selectedLastCallDate;
 
   Set<int> get selectedLeadIds => _selectedLeadIds;
 
@@ -114,6 +116,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
       _statusController.text = lead.lastCallStatus;
       _comentariosController.text = lead.comentarios;
       _selectedPais = lead.pais.isNotEmpty ? lead.pais : null;
+      _selectedLastCallDate = lead.lastCallDate;
     });
   }
 
@@ -135,6 +138,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
       pais: _selectedPais ?? '',
       lastCallStatus: _statusController.text.trim(),
       comentarios: _comentariosController.text.trim(),
+      lastCallDate: _selectedLastCallDate,
     );
 
     context.read<LeadsBloc>().add(UpdateLead(lead: updatedLead));
@@ -430,6 +434,43 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       controller: _statusController,
                       label: 'Status',
                       icon: Icons.info_outline,
+                    ),
+                    const SizedBox(height: TBSpacing.md),
+                    // Última Fecha de Llamada datepicker
+                    GestureDetector(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedLastCallDate ?? DateTime.now(),
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                          locale: const Locale('es', ''),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedLastCallDate = picked;
+                          });
+                        }
+                      },
+                      child: AbsorbPointer(
+                        child: TextFormField(
+                          readOnly: true,
+                          style: TBTypography.bodyMedium,
+                          decoration: InputDecoration(
+                            labelText: 'Últ. Fecha de Llamada',
+                            prefixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          ),
+                          controller: TextEditingController(
+                            text: _selectedLastCallDate != null
+                                ? DateFormat('dd/MM/yyyy').format(_selectedLastCallDate!)
+                                : '',
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     _buildPanelTextField(
@@ -1062,6 +1103,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
                   _buildSortableColumn('Apellido', 'apellido'),
                   _buildSortableColumn('Asesor', 'advisor'),
                   _buildSortableColumn('Status', 'lastCallStatus'),
+                  _buildSortableColumn('Últ. Llamada', 'lastCallDate'),
                   _buildSortableColumn('País', 'pais'),
                   _buildSortableColumn('Teléfono', 'telefono'),
                   _buildSortableColumn('Email', 'email'),
@@ -1097,6 +1139,12 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       DataCell(Text(lead.apellido, style: TBTypography.bodyMedium)),
                       DataCell(_buildAdvisorCell(lead)),
                       DataCell(_buildStatusBadge(lead.lastCallStatus)),
+                      DataCell(Text(
+                        lead.lastCallDate != null
+                            ? DateFormat('dd/MM/yyyy').format(lead.lastCallDate!)
+                            : '-',
+                        style: TBTypography.bodyMedium,
+                      )),
                       DataCell(Text(lead.pais, style: TBTypography.bodyMedium)),
                       DataCell(Text(lead.telefono, style: TBTypography.bodyMedium)),
                       DataCell(Text(lead.email, style: TBTypography.bodyMedium.copyWith(color: TBColors.primary))),
@@ -1176,7 +1224,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
 
   int? _getSortColumnIndex() {
     if (_sortColumn == null) return null;
-    const columns = ['nombre', 'apellido', 'advisor', 'lastCallStatus', 'pais', 'telefono', 'email', 'campana'];
+    const columns = ['nombre', 'apellido', 'advisor', 'lastCallStatus', 'lastCallDate', 'pais', 'telefono', 'email', 'campana'];
     final index = columns.indexOf(_sortColumn!);
     return index >= 0 ? index + 1 : null;
   }
