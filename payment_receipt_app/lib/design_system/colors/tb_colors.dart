@@ -31,8 +31,8 @@ class TBColors {
   static const Color warning = Color(0xFFFF9800);
   
   // Background Colors
-  static const Color background = Color(0xFFF8F9FA);
-  static const Color surface = Color(0xFFFFFFFF);
+  static const Color background = Color(0xFFEEF0F3);
+  static const Color surface = Color(0xFFF8F9FA);
   
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
