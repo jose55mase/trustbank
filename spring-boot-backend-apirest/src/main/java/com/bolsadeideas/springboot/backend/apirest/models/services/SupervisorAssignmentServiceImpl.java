@@ -82,23 +82,34 @@ public class SupervisorAssignmentServiceImpl implements ISupervisorAssignmentSer
     @Override
     @Transactional
     public SupervisorAssignmentResponse updateAssignment(Long userId, Long newAssignmentTypeId) {
-        // Obtener la asignación existente
-        SupervisorAssignmentEntity assignment = supervisorAssignmentDao.findByUserId(userId)
-                .orElseThrow(() -> new NoAssignmentConfiguredException(userId));
-
-        // Validar que el nuevo tipo de asignación existe
+        // Validar que el nuevo tipo de asignación (campaña) existe
         AssignmentTypeEntity newAssignmentType = assignmentTypeDao.findById(newAssignmentTypeId)
                 .orElseThrow(() -> new AssignmentTypeNotFoundException(newAssignmentTypeId));
 
-        Long oldTypeId = assignment.getAssignmentType().getId();
+        // Buscar asignación existente o crear una nueva (upsert)
+        SupervisorAssignmentEntity assignment = supervisorAssignmentDao.findByUserId(userId)
+                .orElse(null);
 
-        // Actualizar la asignación
-        assignment.setAssignmentType(newAssignmentType);
-        SupervisorAssignmentEntity saved = supervisorAssignmentDao.save(assignment);
-
-        logger.info("Assignment changed: userId={}, oldTypeId={}, newTypeId={}", userId, oldTypeId, newAssignmentTypeId);
-
-        return toResponse(saved);
+        if (assignment != null) {
+            // Actualizar la asignación existente
+            Long oldTypeId = assignment.getAssignmentType().getId();
+            assignment.setAssignmentType(newAssignmentType);
+            SupervisorAssignmentEntity saved = supervisorAssignmentDao.save(assignment);
+            logger.info("Assignment changed: userId={}, oldTypeId={}, newTypeId={}", userId, oldTypeId, newAssignmentTypeId);
+            return toResponse(saved);
+        } else {
+            // Crear nueva asignación
+            UserEntity user = userDao.findByid(userId);
+            if (user == null) {
+                throw new RuntimeException("Usuario no encontrado con ID: " + userId);
+            }
+            SupervisorAssignmentEntity newAssignment = new SupervisorAssignmentEntity();
+            newAssignment.setUser(user);
+            newAssignment.setAssignmentType(newAssignmentType);
+            SupervisorAssignmentEntity saved = supervisorAssignmentDao.save(newAssignment);
+            logger.info("Assignment created: userId={}, typeId={}", userId, newAssignmentTypeId);
+            return toResponse(saved);
+        }
     }
 
     @Override
