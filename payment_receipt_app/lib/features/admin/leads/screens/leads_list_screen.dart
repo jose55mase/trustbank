@@ -5,6 +5,7 @@ import '../../../../constants/countries.dart';
 import '../../../../design_system/colors/tb_colors.dart';
 import '../../../../design_system/typography/tb_typography.dart';
 import '../../../../design_system/spacing/tb_spacing.dart';
+import '../../../../services/permissions_provider.dart';
 import '../bloc/leads_bloc.dart';
 import '../models/advisor_summary.dart';
 import '../models/lead_model.dart';
@@ -70,6 +71,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   void initState() {
     super.initState();
     _loadAdvisorsForFilter();
+    _refreshPermissions();
     _nombreController = TextEditingController();
     _apellidoController = TextEditingController();
     _telefonoController = TextEditingController();
@@ -77,6 +79,12 @@ class _LeadsListViewState extends State<_LeadsListView> {
     _campanaController = TextEditingController();
     _statusController = TextEditingController();
     _comentariosController = TextEditingController();
+  }
+
+  /// Refresh granular permissions on navigation to Leads screen.
+  Future<void> _refreshPermissions() async {
+    await PermissionsProvider().refresh();
+    if (mounted) setState(() {});
   }
 
   @override
@@ -378,24 +386,28 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       controller: _nombreController,
                       label: 'Nombre',
                       icon: Icons.person_outline,
+                      readOnly: !PermissionsProvider().permissions.canEdit(),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     _buildPanelTextField(
                       controller: _apellidoController,
                       label: 'Apellido',
                       icon: Icons.person_outline,
+                      readOnly: !PermissionsProvider().permissions.canEdit(),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     _buildPanelTextField(
                       controller: _telefonoController,
                       label: 'Teléfono',
                       icon: Icons.phone_outlined,
+                      readOnly: !PermissionsProvider().permissions.canEdit(),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     _buildPanelTextField(
                       controller: _emailController,
                       label: 'Email',
                       icon: Icons.email_outlined,
+                      readOnly: !PermissionsProvider().permissions.canEdit(),
                     ),
                     const SizedBox(height: TBSpacing.md),
                     // País dropdown
@@ -409,6 +421,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
                         ),
+                        filled: !PermissionsProvider().permissions.canEdit(),
+                        fillColor: !PermissionsProvider().permissions.canEdit() ? TBColors.grey100 : null,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                       ),
                       items: Countries.latinAmerica.map((country) {
@@ -417,9 +431,11 @@ class _LeadsListViewState extends State<_LeadsListView> {
                           child: Text(country, style: TBTypography.bodyMedium),
                         );
                       }).toList(),
-                      onChanged: (value) {
-                        setState(() { _selectedPais = value; });
-                      },
+                      onChanged: PermissionsProvider().permissions.canEdit()
+                          ? (value) {
+                              setState(() { _selectedPais = value; });
+                            }
+                          : null,
                     ),
                     const SizedBox(height: TBSpacing.md),
                     // Campaña (read-only)
@@ -430,15 +446,57 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       readOnly: true,
                     ),
                     const SizedBox(height: TBSpacing.md),
-                    _buildPanelTextField(
-                      controller: _statusController,
-                      label: 'Status',
-                      icon: Icons.info_outline,
+                    // Status dropdown
+                    DropdownButtonFormField<String>(
+                      value: _statusController.text.isNotEmpty && 
+                          _statusOptions.map((s) => s.toUpperCase()).contains(_statusController.text.toUpperCase())
+                          ? _statusController.text.toUpperCase()
+                          : null,
+                      decoration: InputDecoration(
+                        labelText: 'Status',
+                        prefixIcon: const Icon(Icons.info_outline, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Sin status', style: TextStyle(color: Colors.grey)),
+                        ),
+                        ..._statusOptions.map((status) {
+                          final color = _getStatusColor(status);
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(status, style: TBTypography.bodyMedium),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                      onChanged: PermissionsProvider().permissions.canEdit()
+                          ? (value) {
+                              setState(() => _statusController.text = value ?? '');
+                            }
+                          : null,
                     ),
                     const SizedBox(height: TBSpacing.md),
                     // Última Fecha de Llamada datepicker + timepicker
                     GestureDetector(
-                      onTap: () async {
+                      onTap: PermissionsProvider().permissions.canEdit()
+                          ? () async {
                         final pickedDate = await showDatePicker(
                           context: context,
                           initialDate: _selectedLastCallDate ?? DateTime.now(),
@@ -463,7 +521,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
                             }
                           });
                         }
-                      },
+                      }
+                          : null,
                       child: AbsorbPointer(
                         child: TextFormField(
                           readOnly: true,
@@ -490,43 +549,47 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       label: 'Comentarios',
                       icon: Icons.comment_outlined,
                       maxLines: 3,
+                      readOnly: !PermissionsProvider().permissions.canEdit(),
                     ),
                     const SizedBox(height: TBSpacing.xl),
-                    // Guardar button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _saveLeadFromPanel,
-                        icon: const Icon(Icons.save_outlined, size: 18),
-                        label: const Text('Guardar'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: TBColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                    // Guardar button (requires edit permission)
+                    if (PermissionsProvider().permissions.canEdit())
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _saveLeadFromPanel,
+                          icon: const Icon(Icons.save_outlined, size: 18),
+                          label: const Text('Guardar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: TBColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: TBSpacing.md),
-                    // Eliminar button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _deleteLeadFromPanel,
-                        icon: const Icon(Icons.delete_outline, size: 18),
-                        label: const Text('Eliminar'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: TBColors.error,
-                          side: const BorderSide(color: TBColors.error),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                    if (PermissionsProvider().permissions.canEdit())
+                      const SizedBox(height: TBSpacing.md),
+                    // Eliminar button (requires delete permission)
+                    if (PermissionsProvider().permissions.canDelete())
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _deleteLeadFromPanel,
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Eliminar'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: TBColors.error,
+                            side: const BorderSide(color: TBColors.error),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -596,20 +659,24 @@ class _LeadsListViewState extends State<_LeadsListView> {
             ),
             const Spacer(),
             _buildHeaderButton(Icons.refresh_rounded, 'Recargar', _loadLeads),
-            const SizedBox(width: TBSpacing.sm),
-            _isExporting
-                ? const SizedBox(
-                    width: 40, height: 40,
-                    child: Padding(
-                      padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    ),
-                  )
-                : _buildHeaderButton(Icons.download_rounded, 'Exportar', () {
-                    context.read<LeadsBloc>().add(ExportLeads());
-                  }),
-            const SizedBox(width: TBSpacing.sm),
-            _buildHeaderButton(Icons.upload_file_rounded, 'Importar', _navigateToUpload),
+            if (PermissionsProvider().permissions.canExport()) ...[
+              const SizedBox(width: TBSpacing.sm),
+              _isExporting
+                  ? const SizedBox(
+                      width: 40, height: 40,
+                      child: Padding(
+                        padding: EdgeInsets.all(8),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      ),
+                    )
+                  : _buildHeaderButton(Icons.download_rounded, 'Exportar', () {
+                      context.read<LeadsBloc>().add(ExportLeads());
+                    }),
+            ],
+            if (PermissionsProvider().permissions.canImport()) ...[
+              const SizedBox(width: TBSpacing.sm),
+              _buildHeaderButton(Icons.upload_file_rounded, 'Importar', _navigateToUpload),
+            ],
           ],
         ),
       ),
@@ -726,20 +793,24 @@ class _LeadsListViewState extends State<_LeadsListView> {
       ),
       child: Row(
         children: [
-          _buildActionButton(
-            icon: Icons.person_add_outlined,
-            label: 'Asignar a Asesor',
-            onPressed: hasSelection ? _onAssignPressed : null,
-            color: TBColors.primary,
-          ),
-          const SizedBox(width: TBSpacing.sm),
-          _buildActionButton(
-            icon: Icons.person_remove_outlined,
-            label: 'Desasignar',
-            onPressed: hasSelection ? _onUnassignPressed : null,
-            color: TBColors.warning,
-            isLoading: _isUnassigning,
-          ),
+          if (PermissionsProvider().permissions.canAssign())
+            _buildActionButton(
+              icon: Icons.person_add_outlined,
+              label: 'Asignar a Asesor',
+              onPressed: hasSelection ? _onAssignPressed : null,
+              color: TBColors.primary,
+            ),
+          if (PermissionsProvider().permissions.canAssign() &&
+              PermissionsProvider().permissions.canUnassign())
+            const SizedBox(width: TBSpacing.sm),
+          if (PermissionsProvider().permissions.canUnassign())
+            _buildActionButton(
+              icon: Icons.person_remove_outlined,
+              label: 'Desasignar',
+              onPressed: hasSelection ? _onUnassignPressed : null,
+              color: TBColors.warning,
+              isLoading: _isUnassigning,
+            ),
           const Spacer(),
           _buildCountryFilterDropdown(),
           const SizedBox(width: TBSpacing.md),
@@ -1212,17 +1283,43 @@ class _LeadsListViewState extends State<_LeadsListView> {
     );
   }
 
+  static const List<String> _statusOptions = [
+    'CALL BACK',
+    'LOW POTENCIAL',
+    'NO ANSWER',
+    'NO INTERED',
+    'INTERED',
+  ];
+
+  static Color _getStatusColor(String? status) {
+    switch (status?.toUpperCase()) {
+      case 'CALL BACK':
+        return const Color(0xFF2196F3); // Blue
+      case 'LOW POTENCIAL':
+        return const Color(0xFFFF9800); // Orange
+      case 'NO ANSWER':
+        return const Color(0xFF9E9E9E); // Grey
+      case 'NO INTERED':
+        return const Color(0xFFF44336); // Red
+      case 'INTERED':
+        return const Color(0xFF4CAF50); // Green
+      default:
+        return const Color(0xFF9E9E9E); // Grey
+    }
+  }
+
   Widget _buildStatusBadge(String status) {
     if (status.isEmpty) return const SizedBox.shrink();
+    final color = _getStatusColor(status);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: TBColors.secondary.withOpacity(0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         status,
-        style: TextStyle(fontSize: 12, color: TBColors.secondary, fontWeight: FontWeight.w600),
+        style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
       ),
     );
   }

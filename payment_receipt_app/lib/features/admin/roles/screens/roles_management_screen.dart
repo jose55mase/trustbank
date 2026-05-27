@@ -7,6 +7,7 @@ import '../../../../design_system/typography/tb_typography.dart';
 import '../../../../models/module_permission.dart';
 import '../../../../models/role_model.dart';
 import '../bloc/roles_bloc.dart';
+import '../widgets/permissions_config_panel.dart';
 
 /// Pantalla de gestión de roles para el panel administrativo.
 ///
@@ -606,10 +607,26 @@ class _ModuleAssignmentViewState extends State<_ModuleAssignmentView> {
             final isAssigned = _assignedModuleIds.contains(module.id);
             return _buildModuleToggle(module, isAssigned);
           }),
+          // Permissions config panel: shown when LEADS module is assigned
+          if (_isLeadsModuleAssigned)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: TBSpacing.md,
+                vertical: TBSpacing.sm,
+              ),
+              child: PermissionsConfigPanel(roleId: widget.role.id),
+            ),
           const SizedBox(height: TBSpacing.sm),
         ],
       ),
     );
+  }
+
+  /// Returns true if the LEADS module is currently assigned to this role.
+  bool get _isLeadsModuleAssigned {
+    final leadsModule = widget.allModules.where((m) => m.code == 'LEADS');
+    if (leadsModule.isEmpty) return false;
+    return _assignedModuleIds.contains(leadsModule.first.id);
   }
 
   Widget _buildModuleToggle(ModulePermission module, bool isAssigned) {

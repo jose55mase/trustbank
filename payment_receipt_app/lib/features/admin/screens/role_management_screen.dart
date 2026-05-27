@@ -269,7 +269,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
       case 'ROLE_ADMIN':
         color = Colors.orange;
         break;
-      case 'ROLE_SUPERVISOR':
+      case 'ROLE_ASESOR':
         color = Colors.purple;
         break;
       case 'ROLE_MODERATOR':
@@ -353,7 +353,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
       }
 
       // Si el nuevo rol es Asesor, abrir modal para asignar campaña
-      if (roleName == 'ROLE_SUPERVISOR') {
+      if (roleName == 'ROLE_ASESOR') {
         final campaign = await RoleAssignmentDialog.show(context);
         if (campaign != null) {
           await SupervisorAssignmentsService.update(user['id'], campaign.id);

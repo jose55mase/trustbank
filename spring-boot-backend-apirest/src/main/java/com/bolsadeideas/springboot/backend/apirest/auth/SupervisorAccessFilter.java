@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Filtro de seguridad que intercepta requests de usuarios con ROLE_SUPERVISOR
+ * Filtro de seguridad que intercepta requests de usuarios con ROLE_ASESOR
  * para bloquear operaciones no permitidas (POST/DELETE en /api/leads/**).
  *
  * Los supervisores solo pueden:
@@ -82,7 +82,7 @@ public class SupervisorAccessFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Check if user has ROLE_SUPERVISOR
+        // Check if user has ROLE_ASESOR
         boolean isSupervisor = hasSupervisorRole(user);
 
         if (!isSupervisor) {
@@ -109,7 +109,7 @@ public class SupervisorAccessFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Checks if the user has the ROLE_SUPERVISOR role.
+     * Checks if the user has the ROLE_ASESOR role.
      */
     private boolean hasSupervisorRole(UserEntity user) {
         List<RolEntity> roles = user.getRols();
@@ -117,7 +117,7 @@ public class SupervisorAccessFilter extends OncePerRequestFilter {
             return false;
         }
         return roles.stream()
-                .anyMatch(rol -> "ROLE_SUPERVISOR".equals(rol.getName()));
+                .anyMatch(rol -> "ROLE_ASESOR".equals(rol.getName()));
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.bolsadeideas.springboot.backend.apirest.models.services;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.data.domain.Page;
@@ -27,6 +28,13 @@ public interface ILeadService {
      * proporcionado, guarda los leads válidos y actualiza los contadores de la importación.
      */
     ImportResultResponse confirmImport(MultipartFile file, Map<Integer, String> columnMapping, Long adminId) throws IOException;
+
+    /**
+     * Confirma la importación con asignación de campañas: crea un registro de importación,
+     * parsea las filas con el mapeo proporcionado, asigna las campañas indicadas a cada lead,
+     * guarda los leads válidos y actualiza los contadores de la importación.
+     */
+    ImportResultResponse confirmImport(MultipartFile file, Map<Integer, String> columnMapping, Long adminId, List<String> campaignFilterValues) throws IOException;
 
     /**
      * Retorna todos los leads con paginación.

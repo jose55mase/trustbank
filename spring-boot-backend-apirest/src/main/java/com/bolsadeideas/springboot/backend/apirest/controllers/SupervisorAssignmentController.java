@@ -143,7 +143,7 @@ public class SupervisorAssignmentController {
      * GET /api/supervisor-assignments/me
      * Obtiene la asignación del asesor autenticado.
      */
-    @Secured("ROLE_SUPERVISOR")
+    @Secured("ROLE_ASESOR")
     @GetMapping("/me")
     public ResponseEntity<?> getMyAssignment() {
         Map<String, Object> response = new HashMap<>();

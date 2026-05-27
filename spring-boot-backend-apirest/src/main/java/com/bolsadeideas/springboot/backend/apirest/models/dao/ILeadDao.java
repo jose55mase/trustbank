@@ -85,6 +85,37 @@ public interface ILeadDao extends JpaRepository<LeadEntity, Long> {
     @Query("SELECT COUNT(l) FROM LeadEntity l WHERE l.advisor.id = :advisorId")
     Long countByAdvisorId(@Param("advisorId") Long advisorId);
 
+    // --- Métodos para filtrado por campañas (campaign visibility) ---
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns")
+    Page<LeadEntity> findByCampanaIn(@Param("campaigns") List<String> campaigns, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND l.advisor IS NULL")
+    Page<LeadEntity> findByCampanaInAndAdvisorIsNull(@Param("campaigns") List<String> campaigns, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND (" +
+           "LOWER(l.nombre) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.apellido) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.lastCallStatus) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.pais) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.telefono) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.email) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.campana) LIKE LOWER(CONCAT('%', :term, '%')) OR " +
+           "LOWER(l.comentarios) LIKE LOWER(CONCAT('%', :term, '%')))")
+    Page<LeadEntity> searchByCampanaInAndTerm(@Param("campaigns") List<String> campaigns, @Param("term") String term, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND l.pais = :pais")
+    Page<LeadEntity> findByCampanaInAndPais(@Param("campaigns") List<String> campaigns, @Param("pais") String pais, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND l.pais = :pais AND l.advisor IS NULL")
+    Page<LeadEntity> findByCampanaInAndPaisAndAdvisorIsNull(@Param("campaigns") List<String> campaigns, @Param("pais") String pais, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND l.pais = :pais AND l.advisor.id = :advisorId")
+    Page<LeadEntity> findByCampanaInAndPaisAndAdvisorId(@Param("campaigns") List<String> campaigns, @Param("pais") String pais, @Param("advisorId") Long advisorId, Pageable pageable);
+
+    @Query("SELECT l FROM LeadEntity l WHERE l.campana IN :campaigns AND l.advisor.id = :advisorId")
+    Page<LeadEntity> findByCampanaInAndAdvisorId(@Param("campaigns") List<String> campaigns, @Param("advisorId") Long advisorId, Pageable pageable);
+
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE leads SET advisor_id = :advisorId WHERE id IN :leadIds", nativeQuery = true)
     int bulkAssign(@Param("leadIds") List<Long> leadIds, @Param("advisorId") Long advisorId);

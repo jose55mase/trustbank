@@ -45,6 +45,62 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   int _totalLeadCount = 0;
   static const int _pageSize = 20;
 
+  // ─── STATUS OPTIONS ──────────────────────────────────────────────────
+  static const List<String> _statusOptions = [
+    'CALL BACK',
+    'LOW POTENCIAL',
+    'NO ANSWER',
+    'NO INTERED',
+    'INTERED',
+  ];
+
+  static Color _getStatusColor(String? status) {
+    switch (status?.toUpperCase()) {
+      case 'CALL BACK':
+        return const Color(0xFF2196F3); // Blue
+      case 'LOW POTENCIAL':
+        return const Color(0xFFFF9800); // Orange
+      case 'NO ANSWER':
+        return const Color(0xFF9E9E9E); // Grey
+      case 'NO INTERED':
+        return const Color(0xFFF44336); // Red
+      case 'INTERED':
+        return const Color(0xFF4CAF50); // Green
+      default:
+        return const Color(0xFF9E9E9E); // Grey
+    }
+  }
+
+  // ─── COLUMN VISIBILITY ───────────────────────────────────────────────
+  bool _showColumnSelector = false;
+  final Map<String, bool> _visibleColumns = {
+    'nombre': true,
+    'apellido': true,
+    'status': true,
+    'ultLlamada': true,
+    'telefono': true,
+    'email': true,
+    'pais': true,
+    'campana': true,
+    'comentarios': true,
+    'fechaRegistro': true,
+    'asesor': true,
+  };
+
+  static const Map<String, String> _columnLabels = {
+    'nombre': 'Nombre',
+    'apellido': 'Apellido',
+    'status': 'Status',
+    'ultLlamada': 'Últ. Llamada',
+    'telefono': 'Teléfono',
+    'email': 'Email',
+    'pais': 'País',
+    'campana': 'Campaña',
+    'comentarios': 'Comentarios',
+    'fechaRegistro': 'Fecha Registro',
+    'asesor': 'Asesor',
+  };
+
   // ─── DETAIL PANEL STATE ──────────────────────────────────────────────
   LeadModel? _selectedLead;
   final _panelFormKey = GlobalKey<FormState>();
@@ -53,7 +109,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   late TextEditingController _telefonoController;
   late TextEditingController _emailController;
   late TextEditingController _campanaController;
-  late TextEditingController _statusController;
+  String? _selectedStatus;
   late TextEditingController _comentariosController;
   String? _selectedPais;
   DateTime? _selectedLastCallDate;
@@ -66,7 +122,6 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     _telefonoController = TextEditingController();
     _emailController = TextEditingController();
     _campanaController = TextEditingController();
-    _statusController = TextEditingController();
     _comentariosController = TextEditingController();
   }
 
@@ -78,7 +133,6 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     _telefonoController.dispose();
     _emailController.dispose();
     _campanaController.dispose();
-    _statusController.dispose();
     _comentariosController.dispose();
     super.dispose();
   }
@@ -122,7 +176,10 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       _telefonoController.text = lead.telefono ?? '';
       _emailController.text = lead.email ?? '';
       _campanaController.text = lead.campana ?? '';
-      _statusController.text = lead.lastCallStatus ?? '';
+      _selectedStatus = (lead.lastCallStatus != null && 
+          _statusOptions.contains(lead.lastCallStatus!.toUpperCase()))
+          ? lead.lastCallStatus!.toUpperCase()
+          : null;
       _comentariosController.text = lead.comentarios ?? '';
       _selectedPais =
           lead.pais != null && lead.pais!.isNotEmpty ? lead.pais : null;
@@ -146,7 +203,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       'telefono': _telefonoController.text.trim(),
       'email': _emailController.text.trim(),
       'pais': _selectedPais ?? '',
-      'lastCallStatus': _statusController.text.trim(),
+      'lastCallStatus': _selectedStatus ?? '',
       'comentarios': _comentariosController.text.trim(),
       if (_selectedLastCallDate != null)
         'lastCallDate': _selectedLastCallDate!.toIso8601String(),
@@ -250,11 +307,93 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
 
     return Row(
       children: [
-        // Left: Table content
-        Expanded(child: _buildLeadsContent(state)),
+        // Left: Column selector + Table content
+        Expanded(
+          child: Column(
+            children: [
+              _buildColumnSelectorToggle(),
+              if (_showColumnSelector) _buildColumnSelector(),
+              Expanded(child: _buildLeadsContent(state)),
+            ],
+          ),
+        ),
         // Right: Detail/Edit panel
         if (_selectedLead != null) _buildDetailPanel(),
       ],
+    );
+  }
+
+  // ─── COLUMN SELECTOR ────────────────────────────────────────────────
+
+  Widget _buildColumnSelectorToggle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: InkWell(
+          onTap: () => setState(() => _showColumnSelector = !_showColumnSelector),
+          borderRadius: BorderRadius.circular(TBSpacing.radiusSm),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: TBColors.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(TBSpacing.radiusSm),
+              border: Border.all(color: TBColors.primary.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _showColumnSelector ? Icons.expand_less : Icons.expand_more,
+                  size: 18,
+                  color: TBColors.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Columnas',
+                  style: TBTypography.labelMedium.copyWith(color: TBColors.primary),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildColumnSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: TBColors.surface,
+        borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+        border: Border.all(color: TBColors.grey300),
+      ),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: _visibleColumns.keys.map((key) {
+          final isVisible = _visibleColumns[key]!;
+          return FilterChip(
+            label: Text(
+              _columnLabels[key]!,
+              style: TBTypography.labelSmall.copyWith(
+                color: isVisible ? TBColors.primary : TBColors.grey500,
+              ),
+            ),
+            selected: isVisible,
+            onSelected: (value) => setState(() => _visibleColumns[key] = value),
+            selectedColor: TBColors.primary.withOpacity(0.15),
+            checkmarkColor: TBColors.primary,
+            backgroundColor: TBColors.grey100,
+            side: BorderSide(
+              color: isVisible ? TBColors.primary.withOpacity(0.5) : TBColors.grey300,
+            ),
+            visualDensity: VisualDensity.compact,
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -421,99 +560,97 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
               ),
             ],
           ),
-          columns: const [
-            DataColumn(label: Text('Nombre')),
-            DataColumn(label: Text('Apellido')),
-            DataColumn(label: Text('Teléfono')),
-            DataColumn(label: Text('Email')),
-            DataColumn(label: Text('País')),
-            DataColumn(label: Text('Campaña')),
-            DataColumn(label: Text('Última Llamada')),
-            DataColumn(label: Text('Últ. Fecha')),
-            DataColumn(label: Text('Comentarios')),
-          ],
+          columns: _buildVisibleColumns(),
           rows: leads.map((lead) => _buildLeadRow(lead)).toList(),
         ),
       ),
     );
   }
 
+  List<DataColumn> _buildVisibleColumns() {
+    final columns = <DataColumn>[];
+    if (_visibleColumns['nombre']!) columns.add(const DataColumn(label: Text('Nombre')));
+    if (_visibleColumns['apellido']!) columns.add(const DataColumn(label: Text('Apellido')));
+    if (_visibleColumns['status']!) columns.add(const DataColumn(label: Text('Status')));
+    if (_visibleColumns['ultLlamada']!) columns.add(const DataColumn(label: Text('Últ. Llamada')));
+    if (_visibleColumns['telefono']!) columns.add(const DataColumn(label: Text('Teléfono')));
+    if (_visibleColumns['email']!) columns.add(const DataColumn(label: Text('Email')));
+    if (_visibleColumns['pais']!) columns.add(const DataColumn(label: Text('País')));
+    if (_visibleColumns['campana']!) columns.add(const DataColumn(label: Text('Campaña')));
+    if (_visibleColumns['comentarios']!) columns.add(const DataColumn(label: Text('Comentarios')));
+    if (_visibleColumns['fechaRegistro']!) columns.add(const DataColumn(label: Text('Fecha Registro')));
+    if (_visibleColumns['asesor']!) columns.add(const DataColumn(label: Text('Asesor')));
+    return columns;
+  }
+
   DataRow _buildLeadRow(LeadModel lead) {
+    final cells = <DataCell>[];
+    if (_visibleColumns['nombre']!) cells.add(DataCell(Text(lead.nombre ?? '-')));
+    if (_visibleColumns['apellido']!) cells.add(DataCell(Text(lead.apellido ?? '-')));
+    if (_visibleColumns['status']!) cells.add(DataCell(_buildStatusBadge(lead.lastCallStatus)));
+    if (_visibleColumns['ultLlamada']!) {
+      cells.add(DataCell(Text(
+        lead.lastCallDate != null
+            ? DateFormat('dd/MM/yyyy HH:mm').format(lead.lastCallDate!)
+            : '-',
+      )));
+    }
+    if (_visibleColumns['telefono']!) cells.add(DataCell(Text(lead.telefono ?? '-')));
+    if (_visibleColumns['email']!) {
+      cells.add(DataCell(
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 180),
+          child: Text(lead.email ?? '-', overflow: TextOverflow.ellipsis),
+        ),
+      ));
+    }
+    if (_visibleColumns['pais']!) cells.add(DataCell(Text(lead.pais ?? '-')));
+    if (_visibleColumns['campana']!) cells.add(DataCell(Text(lead.campana ?? '-')));
+    if (_visibleColumns['comentarios']!) {
+      cells.add(DataCell(
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 200),
+          child: Text(lead.comentarios ?? '-', overflow: TextOverflow.ellipsis, maxLines: 2),
+        ),
+      ));
+    }
+    if (_visibleColumns['fechaRegistro']!) {
+      cells.add(DataCell(Text(
+        lead.fechaRegistro != null
+            ? DateFormat('dd/MM/yyyy').format(lead.fechaRegistro!)
+            : '-',
+      )));
+    }
+    if (_visibleColumns['asesor']!) {
+      cells.add(DataCell(Text(lead.advisorName ?? '-')));
+    }
+
     return DataRow(
       selected: _selectedLead?.id == lead.id,
       onSelectChanged: (_) => _onLeadTap(lead),
-      cells: [
-        DataCell(Text(lead.nombre ?? '-')),
-        DataCell(Text(lead.apellido ?? '-')),
-        DataCell(Text(lead.telefono ?? '-')),
-        DataCell(
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 180),
-            child: Text(
-              lead.email ?? '-',
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
-        DataCell(Text(lead.pais ?? '-')),
-        DataCell(Text(lead.campana ?? '-')),
-        DataCell(_buildCallStatusBadge(lead.lastCallStatus)),
-        DataCell(Text(
-          lead.lastCallDate != null
-              ? DateFormat('dd/MM/yyyy HH:mm').format(lead.lastCallDate!)
-              : '-',
-        )),
-        DataCell(
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 200),
-            child: Text(
-              lead.comentarios ?? '-',
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
-          ),
-        ),
-      ],
+      cells: cells,
     );
   }
 
-  Widget _buildCallStatusBadge(String? status) {
+  Widget _buildStatusBadge(String? status) {
     if (status == null || status.isEmpty) {
       return Text('-', style: TBTypography.bodyMedium);
     }
 
-    Color badgeColor;
-    switch (status.toLowerCase()) {
-      case 'contestó':
-      case 'contesto':
-      case 'contactado':
-        badgeColor = TBColors.success;
-        break;
-      case 'no contestó':
-      case 'no contesto':
-      case 'sin respuesta':
-        badgeColor = TBColors.warning;
-        break;
-      case 'número inválido':
-      case 'numero invalido':
-      case 'rechazado':
-        badgeColor = TBColors.error;
-        break;
-      default:
-        badgeColor = TBColors.grey500;
-    }
+    final color = _getStatusColor(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: badgeColor.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         status,
         style: TBTypography.labelMedium.copyWith(
-          color: badgeColor,
+          color: color,
           fontWeight: FontWeight.w600,
+          fontSize: 11,
         ),
       ),
     );
@@ -628,10 +765,46 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                       readOnly: true,
                     ),
                     const SizedBox(height: TBSpacing.md),
-                    _buildPanelTextField(
-                      controller: _statusController,
-                      label: 'Última Llamada',
-                      icon: Icons.phone_callback_outlined,
+                    // Status dropdown
+                    DropdownButtonFormField<String>(
+                      value: _selectedStatus,
+                      decoration: InputDecoration(
+                        labelText: 'Status',
+                        prefixIcon: const Icon(Icons.info_outline, size: 20),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('Sin status', style: TextStyle(color: Colors.grey)),
+                        ),
+                        ..._statusOptions.map((status) {
+                          final color = _getStatusColor(status);
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: color,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(status, style: TBTypography.bodyMedium),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                      onChanged: (value) {
+                        setState(() => _selectedStatus = value);
+                      },
                     ),
                     const SizedBox(height: TBSpacing.md),
                     // Última Fecha de Llamada datepicker + timepicker

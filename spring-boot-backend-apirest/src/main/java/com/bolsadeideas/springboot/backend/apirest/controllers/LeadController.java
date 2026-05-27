@@ -3,7 +3,9 @@ package com.bolsadeideas.springboot.backend.apirest.controllers;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -12,6 +14,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,6 +26,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,14 +39,18 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-
+import com.bolsadeideas.springboot.backend.apirest.models.dao.IAssignmentTypeDao;
 import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadDao;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.AssignmentTypeEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadImportEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.ILeadService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.ImportResultResponse;
 import com.bolsadeideas.springboot.backend.apirest.models.services.LeadExportService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.MappingPreviewResponse;
+import com.bolsadeideas.springboot.backend.apirest.models.services.UsuarioService;
+import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IPermissionService;
 
 /**
  * Controlador REST para la gestión de Leads importados desde archivos Excel.
@@ -61,6 +70,74 @@ public class LeadController {
 
     @Autowired
     private ILeadDao leadDao;
+
+    @Autowired
+    private IPermissionService permissionService;
+
+    @Autowired
+    private IAssignmentTypeDao assignmentTypeDao;
+
+    @Autowired
+    private UsuarioService usuarioService;
+
+    /**
+     * Resuelve los filter_value strings de las campañas visibles para el usuario actual.
+     * 
+     * Reglas:
+     * - ROLE_ADMIN: retorna null (sin restricciones, ve todo).
+     * - Otros roles con campañas asignadas: retorna los filterValues de esas campañas.
+     * - Otros roles SIN campañas asignadas: retorna lista con valor imposible (no ve nada).
+     */
+    private List<String> resolveVisibleCampaignFilterValues() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+
+        // Admins have unrestricted access
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+        if (isAdmin) {
+            return Collections.emptyList();
+        }
+
+        String email = authentication.getName();
+        UserEntity user = usuarioService.findByemail(email);
+        if (user == null) {
+            return null;
+        }
+
+        List<Long> campaignIds = permissionService.getUserVisibleCampaignIds(user.getId());
+        System.out.println("[CAMPAIGN_FILTER] userId=" + user.getId() + ", email=" + email 
+                + ", role=" + (user.getRols() != null && !user.getRols().isEmpty() ? user.getRols().get(0).getName() + "(id=" + user.getRols().get(0).getId() + ")" : "NONE")
+                + ", campaignIds=" + campaignIds);
+
+        if (campaignIds == null || campaignIds.isEmpty()) {
+            // Non-admin user with no campaigns assigned - should see nothing
+            System.out.println("[CAMPAIGN_FILTER] No campaigns for non-admin user, blocking access");
+            return Collections.singletonList("__NO_ACCESS__");
+        }
+
+        // Look up the filterValue strings for the visible campaign IDs
+        List<AssignmentTypeEntity> campaigns = assignmentTypeDao.findAllById(campaignIds);
+        List<String> filterValues = campaigns.stream()
+                .map(c -> {
+                    // Use filterValue if available, otherwise fall back to campaign name
+                    String fv = c.getFilterValue();
+                    return (fv != null && !fv.trim().isEmpty()) ? fv : c.getName();
+                })
+                .filter(fv -> fv != null && !fv.trim().isEmpty())
+                .collect(Collectors.toList());
+        
+        if (filterValues.isEmpty()) {
+            // Campaigns exist but none have usable filter values - block access
+            System.out.println("[CAMPAIGN_FILTER] Campaigns found but no valid filterValues, blocking access");
+            return Collections.singletonList("__NO_ACCESS__");
+        }
+        
+        System.out.println("[CAMPAIGN_FILTER] Resolved filterValues=" + filterValues);
+        return filterValues;
+    }
 
     /**
      * POST /api/leads/upload
@@ -105,13 +182,15 @@ public class LeadController {
     /**
      * POST /api/leads/import/confirm
      * Confirma la importación con el mapeo definido. Recibe el archivo y el mapeo como multipart.
+     * Opcionalmente recibe campaignIds para asignar campañas a los leads importados.
      */
     // Access controlled by ModuleAccessFilter (LEADS module)
     @PostMapping("/import/confirm")
     public ResponseEntity<?> confirmImport(
             @RequestParam("file") MultipartFile file,
             @RequestParam("columnMapping") String columnMappingJson,
-            @RequestParam("adminId") Long adminId) {
+            @RequestParam("adminId") Long adminId,
+            @RequestParam(value = "campaignIds", required = false) List<Long> campaignIds) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -124,7 +203,17 @@ public class LeadController {
             // Parsear el JSON del mapeo de columnas
             Map<Integer, String> columnMapping = parseColumnMapping(columnMappingJson);
 
-            ImportResultResponse result = leadService.confirmImport(file, columnMapping, adminId);
+            // Resolver filterValues de las campañas seleccionadas
+            List<String> campaignFilterValues = null;
+            if (campaignIds != null && !campaignIds.isEmpty()) {
+                List<AssignmentTypeEntity> campaigns = assignmentTypeDao.findAllById(campaignIds);
+                campaignFilterValues = campaigns.stream()
+                        .map(AssignmentTypeEntity::getFilterValue)
+                        .filter(fv -> fv != null && !fv.trim().isEmpty())
+                        .collect(Collectors.toList());
+            }
+
+            ImportResultResponse result = leadService.confirmImport(file, columnMapping, adminId, campaignFilterValues);
             return new ResponseEntity<>(result, HttpStatus.OK);
         } catch (IOException e) {
             response.put("error", "No se pudo leer el archivo Excel: " + e.getMessage());
@@ -194,6 +283,10 @@ public class LeadController {
      * - unassigned=true: retorna solo leads sin asesor asignado
      * - advisorId={id}: retorna solo leads asignados al asesor especificado
      * - pais={pais}: retorna solo leads del país especificado
+     * 
+     * Aplica filtrado por campañas visibles según los permisos del usuario.
+     * Si el usuario tiene restricciones de campaña, solo se retornan leads
+     * cuyo campo 'campana' coincida con los filter_value de las campañas asignadas.
      */
     // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping
@@ -211,26 +304,45 @@ public class LeadController {
                     ? Sort.Direction.DESC : Sort.Direction.ASC;
             Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, sort));
 
+            // Resolve campaign visibility filter
+            List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
+
             Page<LeadEntity> leads;
 
-            if (pais != null && !pais.trim().isEmpty()) {
-                // Filtrar por país, combinado con otros filtros
-                if (Boolean.TRUE.equals(unassigned)) {
-                    leads = leadDao.findByPaisAndAdvisorIsNull(pais, pageable);
+            if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
+                // User has campaign restrictions - apply campaign filtering
+                if (pais != null && !pais.trim().isEmpty()) {
+                    if (Boolean.TRUE.equals(unassigned)) {
+                        leads = leadDao.findByCampanaInAndPaisAndAdvisorIsNull(visibleCampaigns, pais, pageable);
+                    } else if (advisorId != null) {
+                        leads = leadDao.findByCampanaInAndPaisAndAdvisorId(visibleCampaigns, pais, advisorId, pageable);
+                    } else {
+                        leads = leadDao.findByCampanaInAndPais(visibleCampaigns, pais, pageable);
+                    }
+                } else if (Boolean.TRUE.equals(unassigned)) {
+                    leads = leadDao.findByCampanaInAndAdvisorIsNull(visibleCampaigns, pageable);
                 } else if (advisorId != null) {
-                    leads = leadDao.findByPaisAndAdvisorId(pais, advisorId, pageable);
+                    leads = leadDao.findByCampanaInAndAdvisorId(visibleCampaigns, advisorId, pageable);
                 } else {
-                    leads = leadDao.findByPais(pais, pageable);
+                    leads = leadDao.findByCampanaIn(visibleCampaigns, pageable);
                 }
-            } else if (Boolean.TRUE.equals(unassigned)) {
-                // Filtrar solo leads sin asesor asignado
-                leads = leadDao.findByAdvisorIsNull(pageable);
-            } else if (advisorId != null) {
-                // Filtrar leads por asesor específico
-                leads = leadDao.findByAdvisorId(advisorId, pageable);
             } else {
-                // Sin filtro: retornar todos los leads
-                leads = leadService.findAll(pageable);
+                // No campaign restrictions - use existing unfiltered queries
+                if (pais != null && !pais.trim().isEmpty()) {
+                    if (Boolean.TRUE.equals(unassigned)) {
+                        leads = leadDao.findByPaisAndAdvisorIsNull(pais, pageable);
+                    } else if (advisorId != null) {
+                        leads = leadDao.findByPaisAndAdvisorId(pais, advisorId, pageable);
+                    } else {
+                        leads = leadDao.findByPais(pais, pageable);
+                    }
+                } else if (Boolean.TRUE.equals(unassigned)) {
+                    leads = leadDao.findByAdvisorIsNull(pageable);
+                } else if (advisorId != null) {
+                    leads = leadDao.findByAdvisorId(advisorId, pageable);
+                } else {
+                    leads = leadService.findAll(pageable);
+                }
             }
 
             return new ResponseEntity<>(leads, HttpStatus.OK);
@@ -244,6 +356,7 @@ public class LeadController {
     /**
      * GET /api/leads/search
      * Busca leads por término en múltiples campos con paginación.
+     * Aplica filtrado por campañas visibles según los permisos del usuario.
      */
     // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping("/search")
@@ -254,7 +367,20 @@ public class LeadController {
 
         try {
             Pageable pageable = PageRequest.of(page, size);
-            Page<LeadEntity> leads = leadService.searchByTerm(term, pageable);
+
+            // Resolve campaign visibility filter
+            List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
+
+            Page<LeadEntity> leads;
+
+            if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
+                // User has campaign restrictions - apply campaign filtering to search
+                leads = leadDao.searchByCampanaInAndTerm(visibleCampaigns, term, pageable);
+            } else {
+                // No campaign restrictions - use existing unfiltered search
+                leads = leadService.searchByTerm(term, pageable);
+            }
+
             return new ResponseEntity<>(leads, HttpStatus.OK);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
@@ -274,6 +400,18 @@ public class LeadController {
 
         try {
             LeadEntity lead = leadService.findById(id);
+
+            // Enforce campaign-based access control
+            List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
+            if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
+                String leadCampana = lead.getCampana();
+                if (leadCampana == null || !visibleCampaigns.contains(leadCampana)) {
+                    response.put("error", "CAMPAIGN_ACCESS_DENIED");
+                    response.put("message", "No tienes acceso a este lead");
+                    return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+                }
+            }
+
             return new ResponseEntity<>(lead, HttpStatus.OK);
         } catch (RuntimeException e) {
             response.put("error", "Lead no encontrado");
@@ -294,6 +432,20 @@ public class LeadController {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            // Retrieve existing lead to check campaign access
+            LeadEntity existingLead = leadService.findById(id);
+
+            // Enforce campaign-based access control
+            List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
+            if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
+                String leadCampana = existingLead.getCampana();
+                if (leadCampana == null || !visibleCampaigns.contains(leadCampana)) {
+                    response.put("error", "CAMPAIGN_ACCESS_DENIED");
+                    response.put("message", "No tienes acceso a este lead");
+                    return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+                }
+            }
+
             LeadEntity updatedLead = leadService.update(id, lead);
             return new ResponseEntity<>(updatedLead, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
@@ -318,6 +470,20 @@ public class LeadController {
         Map<String, Object> response = new HashMap<>();
 
         try {
+            // Retrieve existing lead to check campaign access before deletion
+            LeadEntity existingLead = leadService.findById(id);
+
+            // Enforce campaign-based access control
+            List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
+            if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
+                String leadCampana = existingLead.getCampana();
+                if (leadCampana == null || !visibleCampaigns.contains(leadCampana)) {
+                    response.put("error", "CAMPAIGN_ACCESS_DENIED");
+                    response.put("message", "No tienes acceso a este lead");
+                    return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
+                }
+            }
+
             leadService.delete(id);
             response.put("mensaje", "Lead eliminado exitosamente");
             return new ResponseEntity<>(response, HttpStatus.OK);

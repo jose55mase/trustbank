@@ -39,7 +39,7 @@ public class LeadAssignmentService {
 
     /**
      * Asigna múltiples leads a un asesor.
-     * Valida que el advisorId corresponda a un usuario con ROLE_SUPERVISOR.
+     * Valida que el advisorId corresponda a un usuario con ROLE_ASESOR.
      * Si algunos lead IDs no existen, retorna éxito parcial con los IDs fallidos.
      *
      * @param leadIds lista de IDs de leads a asignar
@@ -48,7 +48,7 @@ public class LeadAssignmentService {
      */
     @Transactional
     public AssignmentResultDTO assignLeads(List<Long> leadIds, Long advisorId) {
-        // Validar que el asesor tiene rol ROLE_SUPERVISOR
+        // Validar que el asesor tiene rol ROLE_ASESOR
         UserEntity advisor = validateAdvisorRole(advisorId);
 
         // Identificar leads que existen vs los que no
@@ -100,7 +100,7 @@ public class LeadAssignmentService {
 
     /**
      * Reasigna leads de un asesor a otro.
-     * Valida que ambos advisorIds correspondan a usuarios con ROLE_SUPERVISOR.
+     * Valida que ambos advisorIds correspondan a usuarios con ROLE_ASESOR.
      *
      * @param fromAdvisorId ID del asesor origen
      * @param toAdvisorId ID del asesor destino
@@ -147,7 +147,7 @@ public class LeadAssignmentService {
      */
     @Transactional(readOnly = true)
     public List<AdvisorSummaryDTO> getAdvisorSummary() {
-        // Obtener todos los usuarios y filtrar los que tienen ROLE_SUPERVISOR
+        // Obtener todos los usuarios y filtrar los que tienen ROLE_ASESOR
         List<UserEntity> allUsers = new ArrayList<>();
         userDao.findAll().forEach(allUsers::add);
 
@@ -168,7 +168,7 @@ public class LeadAssignmentService {
     }
 
     /**
-     * Valida que el usuario existe y tiene rol ROLE_SUPERVISOR.
+     * Valida que el usuario existe y tiene rol ROLE_ASESOR.
      *
      * @param userId ID del usuario a validar
      * @return la entidad del usuario si es válido
@@ -184,7 +184,7 @@ public class LeadAssignmentService {
         }
 
         if (!hasSupervisorRole(user)) {
-            logger.warn("Invalid advisor: userId={}, reason=missing_role_supervisor", userId);
+            logger.warn("Invalid advisor: userId={}, reason=missing_role_asesor", userId);
             throw new IllegalArgumentException(
                     "El usuario especificado no existe o no tiene rol de asesor");
         }
@@ -193,14 +193,14 @@ public class LeadAssignmentService {
     }
 
     /**
-     * Verifica si un usuario tiene el rol ROLE_SUPERVISOR.
+     * Verifica si un usuario tiene el rol ROLE_ASESOR.
      */
     private boolean hasSupervisorRole(UserEntity user) {
         if (user.getRols() == null || user.getRols().isEmpty()) {
             return false;
         }
         return user.getRols().stream()
-                .anyMatch(rol -> "ROLE_SUPERVISOR".equals(rol.getName()));
+                .anyMatch(rol -> "ROLE_ASESOR".equals(rol.getName()));
     }
 
     /**

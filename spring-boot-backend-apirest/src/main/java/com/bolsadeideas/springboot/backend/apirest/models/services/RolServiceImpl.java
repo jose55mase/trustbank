@@ -14,6 +14,7 @@ import com.bolsadeideas.springboot.backend.apirest.models.dto.RoleConfigResponse
 import com.bolsadeideas.springboot.backend.apirest.models.entity.ModuleEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.RolEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IPermissionService;
 import com.bolsadeideas.springboot.backend.apirest.models.services.intefaces.IRolService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,8 @@ import java.util.stream.StreamSupport;
 @Service
 public class RolServiceImpl implements IRolService {
 
+    private static final String LEADS_MODULE_CODE = "LEADS";
+
     @Autowired
     private RolDao rolDao;
 
@@ -34,6 +37,9 @@ public class RolServiceImpl implements IRolService {
 
     @Autowired
     private IUserDao userDao;
+
+    @Autowired
+    private IPermissionService permissionService;
 
     @Override
     @Transactional(readOnly = true)
@@ -113,10 +119,62 @@ public class RolServiceImpl implements IRolService {
         RolEntity role = rolDao.findById(roleId)
                 .orElseThrow(RoleNotFoundException::new);
 
-        List<ModuleEntity> modules = moduleDao.findAllById(moduleIds);
-        role.setModules(new HashSet<>(modules));
+        // Capture previously assigned modules to detect additions/removals
+        Set<Long> previousModuleIds = role.getModules() != null
+                ? role.getModules().stream().map(ModuleEntity::getId).collect(Collectors.toSet())
+                : new HashSet<>();
+
+        List<ModuleEntity> newModules = moduleDao.findAllById(moduleIds);
+        Set<Long> newModuleIds = newModules.stream()
+                .map(ModuleEntity::getId)
+                .collect(Collectors.toSet());
+
+        role.setModules(new HashSet<>(newModules));
         RolEntity saved = rolDao.save(role);
+
+        // Handle LEADS module permission lifecycle
+        handleLeadsModulePermissions(roleId, previousModuleIds, newModuleIds, newModules);
+
         return toRolResponse(saved);
+    }
+
+    /**
+     * Handles initialization/cleanup of granular permissions when the LEADS module
+     * is assigned to or removed from a role.
+     */
+    private void handleLeadsModulePermissions(Long roleId, Set<Long> previousModuleIds,
+                                               Set<Long> newModuleIds, List<ModuleEntity> newModules) {
+        // Find the LEADS module among the new modules or look it up
+        ModuleEntity leadsModule = newModules.stream()
+                .filter(m -> LEADS_MODULE_CODE.equals(m.getCode()))
+                .findFirst()
+                .orElse(null);
+
+        // Determine if LEADS was previously assigned
+        boolean hadLeads = false;
+        if (leadsModule != null) {
+            hadLeads = previousModuleIds.contains(leadsModule.getId());
+        } else {
+            // LEADS is not in the new set; check if it was in the previous set
+            // We need to find the LEADS module to get its ID
+            ModuleEntity leadsModuleLookup = moduleDao.findByCode(LEADS_MODULE_CODE);
+            if (leadsModuleLookup != null) {
+                hadLeads = previousModuleIds.contains(leadsModuleLookup.getId());
+                if (hadLeads) {
+                    leadsModule = leadsModuleLookup;
+                }
+            }
+        }
+
+        boolean hasLeadsNow = leadsModule != null && newModuleIds.contains(leadsModule.getId());
+
+        if (!hadLeads && hasLeadsNow) {
+            // LEADS module was just assigned — initialize default permissions
+            permissionService.initializeDefaultPermissions(roleId, leadsModule.getId());
+        } else if (hadLeads && !hasLeadsNow) {
+            // LEADS module was just removed — delete all permissions
+            permissionService.deletePermissionsForRoleModule(roleId, leadsModule.getId());
+        }
     }
 
     @Override

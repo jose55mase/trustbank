@@ -64,7 +64,7 @@ public class DevDataLoader implements CommandLineRunner {
         entityManager.persist(roleSuperAdmin);
 
         RolEntity roleSupervisor = new RolEntity();
-        roleSupervisor.setName("ROLE_SUPERVISOR");
+        roleSupervisor.setName("ROLE_ASESOR");
         roleSupervisor.setModules(new HashSet<>(Arrays.asList(modLeads)));
         entityManager.persist(roleSupervisor);
 
@@ -101,7 +101,7 @@ public class DevDataLoader implements CommandLineRunner {
         System.out.println("=== Datos de prueba cargados ===");
         System.out.println("Usuario: user@test.com / 12345 (módulos: LEADS, DOCUMENTS)");
         System.out.println("Admin:   admin@test.com / 12345 (todos los módulos)");
-        System.out.println("Roles disponibles: ROLE_USER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_SUPERVISOR");
+        System.out.println("Roles disponibles: ROLE_USER, ROLE_ADMIN, ROLE_SUPER_ADMIN, ROLE_ASESOR");
         System.out.println("================================");
     }
 

@@ -18,6 +18,7 @@ import '../../admin/screens/admin_dashboard_screen.dart';
 import '../../account/screens/account_screen.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/permission_service.dart';
+import '../../../services/permissions_provider.dart';
 
 import '../../admin/screens/role_management_screen.dart';
 import '../bloc/home_bloc.dart';
@@ -49,6 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
     PermissionService().loadPermissions().then((_) {
       if (mounted) setState(() {});
     }).catchError((_) {});
+
+    // Cargar permisos granulares de acciones (non-blocking)
+    PermissionsProvider().loadPermissions().catchError((_) {});
     
     // Refrescar datos cada 30 segundos para capturar cambios de saldo
     Timer.periodic(const Duration(seconds: 30), (timer) {

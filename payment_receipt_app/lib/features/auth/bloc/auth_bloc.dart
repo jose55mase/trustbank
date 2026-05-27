@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../../services/permission_service.dart';
+import '../../../services/permissions_provider.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
@@ -47,6 +48,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           // Non-blocking: permissions will be empty but login still succeeds
         }
 
+        // Load granular action permissions (non-blocking)
+        try {
+          await PermissionsProvider().loadPermissions();
+        } catch (_) {
+          // Non-blocking: fail-closed behavior applies
+        }
+
         emit(AuthAuthenticated(
           user: User(
             id: '1',
@@ -85,6 +93,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     PermissionService().clear();
+    PermissionsProvider().clear();
     emit(AuthInitial());
   }
 }

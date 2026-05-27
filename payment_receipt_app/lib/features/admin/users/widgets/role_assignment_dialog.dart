@@ -7,7 +7,7 @@ import '../../../../models/assignment_type.dart';
 import '../../../../services/assignment_types_service.dart';
 
 /// Diálogo modal para seleccionar un tipo de asignación al asignar
-/// el rol ROLE_SUPERVISOR a un usuario.
+/// el rol ROLE_ASESOR a un usuario.
 ///
 /// Carga los tipos de asignación activos desde el backend y permite
 /// al administrador seleccionar uno antes de confirmar el cambio de rol.

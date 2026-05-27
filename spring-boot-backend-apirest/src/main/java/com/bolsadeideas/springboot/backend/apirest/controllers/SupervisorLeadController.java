@@ -51,7 +51,7 @@ public class SupervisorLeadController {
      * GET /api/supervisor/leads?page=X&size=Y
      * Lista leads filtrados por la asignación del supervisor autenticado.
      */
-    @Secured("ROLE_SUPERVISOR")
+    @Secured("ROLE_ASESOR")
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(defaultValue = "0") int page,
@@ -83,7 +83,7 @@ public class SupervisorLeadController {
      * GET /api/supervisor/leads/search?term=X&page=Y&size=Z
      * Busca leads dentro de los asignados al supervisor por un término de búsqueda.
      */
-    @Secured("ROLE_SUPERVISOR")
+    @Secured("ROLE_ASESOR")
     @GetMapping("/search")
     public ResponseEntity<?> search(
             @RequestParam String term,
@@ -117,7 +117,7 @@ public class SupervisorLeadController {
      * Obtiene el detalle de un lead asignado al supervisor.
      * Verifica que el lead pertenece a la asignación del supervisor antes de retornarlo.
      */
-    @Secured("ROLE_SUPERVISOR")
+    @Secured("ROLE_ASESOR")
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -157,7 +157,7 @@ public class SupervisorLeadController {
      * Solo actualiza los campos con valor no nulo en el request.
      * Verifica que el lead pertenece a la asignación del supervisor.
      */
-    @Secured("ROLE_SUPERVISOR")
+    @Secured("ROLE_ASESOR")
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePartial(@PathVariable Long id, @RequestBody LeadPartialUpdateRequest request) {
         Map<String, Object> response = new HashMap<>();

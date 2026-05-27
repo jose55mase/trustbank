@@ -74,6 +74,12 @@ public class LeadServiceImpl implements ILeadService {
     @Override
     @Transactional
     public ImportResultResponse confirmImport(MultipartFile file, Map<Integer, String> columnMapping, Long adminId) throws IOException {
+        return confirmImport(file, columnMapping, adminId, null);
+    }
+
+    @Override
+    @Transactional
+    public ImportResultResponse confirmImport(MultipartFile file, Map<Integer, String> columnMapping, Long adminId, List<String> campaignFilterValues) throws IOException {
         // Crear registro de importación con estado PROCESSING
         LeadImportEntity importEntity = new LeadImportEntity();
         importEntity.setFileName(file.getOriginalFilename());
@@ -92,16 +98,30 @@ public class LeadServiceImpl implements ILeadService {
         List<LeadEntity> validLeads = parseResult.getValidLeads();
         DeduplicationResult deduplicationResult = deduplicationEngine.filterDuplicates(validLeads);
 
-        // Guardar solo los leads únicos (no duplicados) con el importId
+        // Resolver el valor de campaña a asignar (múltiples campañas separadas por coma)
+        String campaignValue = null;
+        if (campaignFilterValues != null && !campaignFilterValues.isEmpty()) {
+            campaignValue = String.join(",", campaignFilterValues);
+        }
+
+        // Guardar solo los leads únicos (no duplicados) con el importId y campaña
         List<LeadEntity> uniqueLeads = deduplicationResult.getUniqueLeads();
         for (LeadEntity lead : uniqueLeads) {
             lead.setImportId(importEntity.getId());
+            if (campaignValue != null) {
+                lead.setCampana(campaignValue);
+            }
         }
         leadDao.saveAll(uniqueLeads);
 
         // Guardar los leads actualizados (duplicados cuyos datos cambiaron)
         List<LeadEntity> updatedLeads = deduplicationResult.getUpdatedLeads();
         if (!updatedLeads.isEmpty()) {
+            if (campaignValue != null) {
+                for (LeadEntity lead : updatedLeads) {
+                    lead.setCampana(campaignValue);
+                }
+            }
             leadDao.saveAll(updatedLeads);
         }
 

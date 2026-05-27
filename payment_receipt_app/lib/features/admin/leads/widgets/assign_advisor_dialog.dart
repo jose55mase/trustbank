@@ -10,7 +10,7 @@ import '../services/lead_assignment_service.dart';
 
 /// Diálogo modal para asignar leads seleccionados a un asesor.
 ///
-/// Carga la lista de asesores activos (ROLE_SUPERVISOR) desde el endpoint
+/// Carga la lista de asesores activos (ROLE_ASESOR) desde el endpoint
 /// de resumen de asesores, permite seleccionar uno, y ejecuta la asignación
 /// masiva al confirmar.
 ///
