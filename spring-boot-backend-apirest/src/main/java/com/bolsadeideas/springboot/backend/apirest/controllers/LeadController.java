@@ -66,7 +66,7 @@ public class LeadController {
      * POST /api/leads/upload
      * Sube un archivo Excel y retorna la vista previa del mapeo de columnas.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @PostMapping("/upload")
     public ResponseEntity<?> uploadExcel(@RequestParam("file") MultipartFile file) {
         Map<String, Object> response = new HashMap<>();
@@ -106,7 +106,7 @@ public class LeadController {
      * POST /api/leads/import/confirm
      * Confirma la importación con el mapeo definido. Recibe el archivo y el mapeo como multipart.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @PostMapping("/import/confirm")
     public ResponseEntity<?> confirmImport(
             @RequestParam("file") MultipartFile file,
@@ -143,7 +143,7 @@ public class LeadController {
      * Genera y descarga un archivo Excel (.xlsx) con todos los leads.
      * Timeout de 30 segundos; retorna HTTP 504 si se excede.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportLeads() {
         try {
@@ -195,7 +195,7 @@ public class LeadController {
      * - advisorId={id}: retorna solo leads asignados al asesor especificado
      * - pais={pais}: retorna solo leads del país especificado
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(defaultValue = "0") int page,
@@ -245,7 +245,7 @@ public class LeadController {
      * GET /api/leads/search
      * Busca leads por término en múltiples campos con paginación.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping("/search")
     public ResponseEntity<?> searchByTerm(
             @RequestParam String term,
@@ -267,7 +267,7 @@ public class LeadController {
      * GET /api/leads/{id}
      * Obtiene el detalle de un lead por su ID.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping("/{id:\\d+}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -288,7 +288,7 @@ public class LeadController {
      * PUT /api/leads/{id}
      * Actualiza un lead existente.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @PutMapping("/{id:\\d+}")
     public ResponseEntity<?> update(@PathVariable Long id, @RequestBody LeadEntity lead) {
         Map<String, Object> response = new HashMap<>();
@@ -312,7 +312,7 @@ public class LeadController {
      * DELETE /api/leads/{id}
      * Elimina un lead por su ID.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @DeleteMapping("/{id:\\d+}")
     public ResponseEntity<?> delete(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
@@ -334,7 +334,7 @@ public class LeadController {
      * GET /api/leads/imports
      * Lista el historial de importaciones con paginación.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter (LEADS module)
     @GetMapping("/imports")
     public ResponseEntity<?> getImportHistory(
             @RequestParam(defaultValue = "0") int page,

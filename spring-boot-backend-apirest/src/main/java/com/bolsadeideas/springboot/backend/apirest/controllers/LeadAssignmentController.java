@@ -49,7 +49,7 @@ public class LeadAssignmentController {
      * Asigna múltiples leads a un asesor.
      * Retorna 200 si todos se asignaron, 207 si hubo éxito parcial (algunos IDs no existen).
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter
     @PostMapping("/leads/assign")
     public ResponseEntity<?> assignLeads(@Valid @RequestBody LeadAssignmentRequest request) {
         Map<String, Object> response = new HashMap<>();
@@ -79,7 +79,7 @@ public class LeadAssignmentController {
      * POST /api/admin/leads/unassign
      * Desasigna leads (establece advisor_id = null).
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter
     @PostMapping("/leads/unassign")
     public ResponseEntity<?> unassignLeads(@Valid @RequestBody LeadUnassignRequest request) {
         Map<String, Object> response = new HashMap<>();
@@ -101,7 +101,7 @@ public class LeadAssignmentController {
      * Reasigna leads de un asesor a otro.
      * Retorna 200 si todos se reasignaron, 207 si hubo éxito parcial.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter
     @PostMapping("/leads/reassign")
     public ResponseEntity<?> reassignLeads(@Valid @RequestBody LeadReassignRequest request) {
         Map<String, Object> response = new HashMap<>();
@@ -134,7 +134,7 @@ public class LeadAssignmentController {
      * Retorna resumen de asesores con conteo de leads asignados.
      * Incluye asesores con 0 leads.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter
     @GetMapping("/advisors/summary")
     public ResponseEntity<?> getAdvisorSummary() {
         Map<String, Object> response = new HashMap<>();
@@ -152,7 +152,7 @@ public class LeadAssignmentController {
      * GET /api/admin/advisors/{advisorId}/leads
      * Retorna los leads asignados a un asesor específico con paginación.
      */
-    @Secured("ROLE_ADMIN")
+    // Access controlled by ModuleAccessFilter
     @GetMapping("/advisors/{advisorId}/leads")
     public ResponseEntity<?> getAdvisorLeads(
             @PathVariable Long advisorId,

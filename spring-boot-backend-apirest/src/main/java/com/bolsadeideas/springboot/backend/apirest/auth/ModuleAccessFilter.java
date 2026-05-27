@@ -44,6 +44,8 @@ public class ModuleAccessFilter extends OncePerRequestFilter {
 
     static {
         MODULE_ENDPOINT_MAP.put("/api/leads/**", "LEADS");
+        MODULE_ENDPOINT_MAP.put("/api/admin/leads/**", "LEADS");
+        MODULE_ENDPOINT_MAP.put("/api/admin/advisors/**", "LEADS");
         MODULE_ENDPOINT_MAP.put("/api/documents/**", "DOCUMENTS");
         MODULE_ENDPOINT_MAP.put("/api/admin/documents/**", "DOCUMENT_APPROVAL");
     }
