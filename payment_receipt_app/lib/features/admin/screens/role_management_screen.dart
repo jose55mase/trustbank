@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import '../../../design_system/colors/tb_colors.dart';
 import '../../../design_system/typography/tb_typography.dart';
 import '../../../design_system/spacing/tb_spacing.dart';
+import '../../../models/role_model.dart';
 import '../../../models/supervisor_assignment.dart';
 import '../../../models/user_role.dart';
 import '../../../services/api_service.dart';
 import '../../../services/supervisor_assignments_service.dart';
 import '../../../widgets/module_guard.dart';
+import '../roles/services/roles_service.dart';
 import '../users/widgets/role_assignment_dialog.dart';
 
 class RoleManagementScreen extends StatefulWidget {
@@ -301,45 +303,25 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
   }
 
   void _showRoleDialog(dynamic user) {
-    final currentRole = _getUserRole(user);
-    UserRole selectedRole = currentRole;
-
     showDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => AlertDialog(
-          title: Text('Cambiar rol de ${user['name']}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: UserRole.values.map((role) {
-              return RadioListTile<UserRole>(
-                title: Text(_getRoleDisplayName(role)),
-                subtitle: Text(_getRoleDescription(role)),
-                value: role,
-                groupValue: selectedRole,
-                onChanged: (value) {
-                  setDialogState(() {
-                    selectedRole = value!;
-                  });
-                },
-              );
-            }).toList(),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: selectedRole != currentRole
-                  ? () => _updateUserRole(user, selectedRole)
-                  : null,
-              child: const Text('Guardar'),
-            ),
-          ],
-        ),
+      builder: (dialogContext) => _DynamicRoleDialog(
+        userName: user['name'] ?? 'Usuario',
+        currentRoleName: _getUserRoleName(user),
+        onRoleSelected: (roleName) async {
+          await _updateUserRole(user, roleName);
+        },
       ),
     );
+  }
+
+  /// Gets the role name string from the user's rols array.
+  String _getUserRoleName(dynamic user) {
+    final rols = user['rols'];
+    if (rols != null && rols is List && rols.isNotEmpty) {
+      return rols[0]['name'] ?? 'ROLE_USER';
+    }
+    return 'ROLE_USER';
   }
 
   String _getRoleDescription(UserRole role) {
@@ -357,16 +339,16 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     }
   }
 
-  Future<void> _updateUserRole(dynamic user, UserRole newRole) async {
+  Future<void> _updateUserRole(dynamic user, String roleName) async {
     try {
-      await ApiService.updateUserRole(user['id'], newRole.value);
+      await ApiService.updateUserRole(user['id'], roleName);
 
       if (mounted) {
         Navigator.pop(context);
       }
 
       // Si el nuevo rol es Asesor, abrir modal para asignar campaña
-      if (newRole == UserRole.supervisor) {
+      if (roleName == 'ROLE_SUPERVISOR') {
         final campaign = await RoleAssignmentDialog.show(context);
         if (campaign != null) {
           await SupervisorAssignmentsService.update(user['id'], campaign.id);
@@ -378,11 +360,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(
-            newRole == UserRole.supervisor
-                ? 'Rol actualizado a Asesor'
-                : 'Rol actualizado correctamente',
-          )),
+          const SnackBar(content: Text('Rol actualizado correctamente')),
         );
       }
     } catch (e) {
@@ -392,5 +370,107 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
         );
       }
     }
+  }
+}
+
+/// Dialog that loads roles dynamically from the API.
+class _DynamicRoleDialog extends StatefulWidget {
+  final String userName;
+  final String currentRoleName;
+  final Future<void> Function(String roleName) onRoleSelected;
+
+  const _DynamicRoleDialog({
+    required this.userName,
+    required this.currentRoleName,
+    required this.onRoleSelected,
+  });
+
+  @override
+  State<_DynamicRoleDialog> createState() => _DynamicRoleDialogState();
+}
+
+class _DynamicRoleDialogState extends State<_DynamicRoleDialog> {
+  List<RoleModel>? _roles;
+  bool _isLoading = true;
+  String? _selectedRoleName;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRoleName = widget.currentRoleName;
+    _loadRoles();
+  }
+
+  Future<void> _loadRoles() async {
+    try {
+      final roles = await RolesService.getRoles();
+      if (mounted) {
+        setState(() {
+          _roles = roles;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TBSpacing.radiusLg),
+      ),
+      title: Text('Cambiar rol de ${widget.userName}'),
+      content: _isLoading
+          ? const SizedBox(
+              height: 100,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : _roles == null || _roles!.isEmpty
+              ? const Text('No hay roles disponibles')
+              : SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: _roles!.map((role) {
+                      return RadioListTile<String>(
+                        title: Text(role.name),
+                        subtitle: Text(
+                          '${role.modules.length} módulos · ${role.userCount} usuarios',
+                          style: TBTypography.bodySmall.copyWith(color: TBColors.grey600),
+                        ),
+                        value: role.name,
+                        groupValue: _selectedRoleName,
+                        activeColor: TBColors.primary,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedRoleName = value;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancelar'),
+        ),
+        ElevatedButton(
+          onPressed: _selectedRoleName != null && _selectedRoleName != widget.currentRoleName
+              ? () => widget.onRoleSelected(_selectedRoleName!)
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: TBColors.primary,
+            foregroundColor: Colors.white,
+          ),
+          child: const Text('Guardar'),
+        ),
+      ],
+    );
   }
 }
