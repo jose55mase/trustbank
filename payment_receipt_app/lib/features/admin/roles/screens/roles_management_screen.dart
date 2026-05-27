@@ -220,13 +220,16 @@ class _RolesManagementView extends StatelessWidget {
   }
 
   void _showCreateRoleDialog(BuildContext context) {
+    // Get allModules from the current state
+    final state = context.read<RolesBloc>().state;
+    final allModules = state is RolesLoaded ? state.allModules : <ModulePermission>[];
+
     showDialog(
       context: context,
-      builder: (dialogContext) => _RoleNameDialog(
-        title: 'Crear Nuevo Rol',
-        confirmLabel: 'Crear',
-        onConfirm: (name) {
-          context.read<RolesBloc>().add(CreateRole(name: name));
+      builder: (dialogContext) => _CreateRoleDialog(
+        allModules: allModules,
+        onConfirm: (name, moduleIds) {
+          context.read<RolesBloc>().add(CreateRole(name: name, moduleIds: moduleIds));
         },
       ),
     );
@@ -784,6 +787,172 @@ class _RoleNameDialogState extends State<_RoleNameDialog> {
             ),
           ),
           child: Text(widget.confirmLabel, style: TBTypography.buttonMedium),
+        ),
+      ],
+    );
+  }
+}
+
+// ─── DIÁLOGO DE CREAR ROL CON MÓDULOS ────────────────────────────────────
+
+class _CreateRoleDialog extends StatefulWidget {
+  final List<ModulePermission> allModules;
+  final void Function(String name, List<int> moduleIds) onConfirm;
+
+  const _CreateRoleDialog({
+    required this.allModules,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_CreateRoleDialog> createState() => _CreateRoleDialogState();
+}
+
+class _CreateRoleDialogState extends State<_CreateRoleDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final Set<int> _selectedModuleIds = {};
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.trim().isEmpty) return 'El nombre es requerido';
+    if (value.trim().length < 3) return 'Mínimo 3 caracteres';
+    if (value.trim().length > 50) return 'Máximo 50 caracteres';
+    return null;
+  }
+
+  void _submit() {
+    if (_formKey.currentState?.validate() ?? false) {
+      widget.onConfirm(_nameController.text.trim(), _selectedModuleIds.toList());
+      Navigator.of(context).pop();
+    }
+  }
+
+  IconData _getModuleIcon(String code) {
+    switch (code) {
+      case 'LEADS':
+        return Icons.leaderboard_outlined;
+      case 'DOCUMENTS':
+        return Icons.description_outlined;
+      case 'DOCUMENT_APPROVAL':
+        return Icons.verified_outlined;
+      case 'USER_MANAGEMENT':
+        return Icons.group_outlined;
+      case 'ROLE_MANAGEMENT':
+        return Icons.admin_panel_settings_outlined;
+      case 'SUPERVISOR_ASSIGNMENTS':
+        return Icons.campaign_outlined;
+      default:
+        return Icons.extension_outlined;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(TBSpacing.radiusLg),
+      ),
+      title: Text('Crear Nuevo Rol', style: TBTypography.headlineMedium),
+      content: SizedBox(
+        width: 400,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Name field
+              TextFormField(
+                controller: _nameController,
+                autofocus: true,
+                validator: _validateName,
+                maxLength: 50,
+                decoration: InputDecoration(
+                  labelText: 'Nombre del rol',
+                  hintText: 'Ej: Administrador, Operador...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                    borderSide: const BorderSide(color: TBColors.primary, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: TBSpacing.md,
+                    vertical: TBSpacing.md,
+                  ),
+                ),
+              ),
+              const SizedBox(height: TBSpacing.lg),
+              // Modules section
+              Text(
+                'Módulos del panel',
+                style: TBTypography.titleMedium.copyWith(color: TBColors.grey700),
+              ),
+              const SizedBox(height: TBSpacing.sm),
+              // Module checkboxes
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 300),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: widget.allModules.map((module) {
+                      final isSelected = _selectedModuleIds.contains(module.id);
+                      return CheckboxListTile(
+                        value: isSelected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedModuleIds.add(module.id);
+                            } else {
+                              _selectedModuleIds.remove(module.id);
+                            }
+                          });
+                        },
+                        title: Text(module.name, style: TBTypography.bodyMedium),
+                        subtitle: module.description.isNotEmpty
+                            ? Text(
+                                module.description,
+                                style: TBTypography.bodySmall.copyWith(color: TBColors.grey600),
+                              )
+                            : null,
+                        secondary: Icon(
+                          _getModuleIcon(module.code),
+                          color: isSelected ? TBColors.primary : TBColors.grey400,
+                        ),
+                        activeColor: TBColors.primary,
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Cancelar', style: TBTypography.buttonMedium.copyWith(color: TBColors.grey600)),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: TBColors.primary,
+            foregroundColor: TBColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: TBSpacing.lg, vertical: TBSpacing.sm),
+          ),
+          child: Text('Crear', style: TBTypography.buttonMedium),
         ),
       ],
     );

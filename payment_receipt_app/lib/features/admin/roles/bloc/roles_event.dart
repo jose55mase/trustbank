@@ -6,8 +6,9 @@ class LoadRoles extends RolesEvent {}
 
 class CreateRole extends RolesEvent {
   final String name;
+  final List<int>? moduleIds;
 
-  CreateRole({required this.name});
+  CreateRole({required this.name, this.moduleIds});
 }
 
 class UpdateRole extends RolesEvent {

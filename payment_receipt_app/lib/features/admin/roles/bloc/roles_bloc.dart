@@ -35,7 +35,11 @@ class RolesBloc extends Bloc<RolesEvent, RolesState> {
   ) async {
     emit(RolesLoading());
     try {
-      await RolesService.createRole(event.name);
+      final createdRole = await RolesService.createRole(event.name);
+      // If modules were selected, assign them to the new role
+      if (event.moduleIds != null && event.moduleIds!.isNotEmpty) {
+        await RolesService.updateRoleModules(createdRole.id, event.moduleIds!);
+      }
       add(LoadRoles());
     } catch (e) {
       emit(RolesError(
