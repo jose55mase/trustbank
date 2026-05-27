@@ -42,6 +42,7 @@ public class DevDataLoader implements CommandLineRunner {
         ModuleEntity modUserMgmt = createModule("USER_MANAGEMENT", "Gestión de Usuarios", "Administrar usuarios del sistema", "group", 4);
         ModuleEntity modRoleMgmt = createModule("ROLE_MANAGEMENT", "Gestión de Roles", "Administrar roles y permisos", "admin_panel_settings", 5);
         ModuleEntity modSupervisorAssignments = createModule("SUPERVISOR_ASSIGNMENTS", "Tipos de Asignación", "Gestionar tipos de asignación de supervisores", "assignment", 6);
+        ModuleEntity modRequests = createModule("REQUESTS", "Solicitudes", "Ver y gestionar solicitudes de usuarios", "inbox", 7);
 
         entityManager.flush();
 
@@ -53,12 +54,12 @@ public class DevDataLoader implements CommandLineRunner {
 
         RolEntity roleAdmin = new RolEntity();
         roleAdmin.setName("ROLE_ADMIN");
-        roleAdmin.setModules(new HashSet<>(Arrays.asList(modLeads, modDocuments, modDocApproval, modUserMgmt, modRoleMgmt, modSupervisorAssignments)));
+        roleAdmin.setModules(new HashSet<>(Arrays.asList(modLeads, modDocuments, modDocApproval, modUserMgmt, modRoleMgmt, modSupervisorAssignments, modRequests)));
         entityManager.persist(roleAdmin);
 
         RolEntity roleSuperAdmin = new RolEntity();
         roleSuperAdmin.setName("ROLE_SUPER_ADMIN");
-        roleSuperAdmin.setModules(new HashSet<>(Arrays.asList(modLeads, modDocuments, modDocApproval, modUserMgmt, modRoleMgmt, modSupervisorAssignments)));
+        roleSuperAdmin.setModules(new HashSet<>(Arrays.asList(modLeads, modDocuments, modDocApproval, modUserMgmt, modRoleMgmt, modSupervisorAssignments, modRequests)));
         entityManager.persist(roleSuperAdmin);
 
         RolEntity roleSupervisor = new RolEntity();

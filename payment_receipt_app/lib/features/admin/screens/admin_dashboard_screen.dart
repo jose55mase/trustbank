@@ -8,7 +8,9 @@ import '../../../models/module_permission.dart';
 import '../../../services/permission_service.dart';
 import '../bloc/admin_bloc.dart';
 
+import '../widgets/request_card.dart';
 import '../widgets/admin_stats.dart';
+import '../widgets/filter_chips.dart';
 import 'document_management_screen.dart';
 import 'users_management_screen.dart';
 import 'document_approval_screen.dart';
@@ -115,6 +117,58 @@ class _AdminDashboardBody extends StatelessWidget {
                       Text('Acciones Rápidas', style: TBTypography.titleLarge),
                       const SizedBox(height: TBSpacing.md),
                       _buildActionGrid(context),
+                      // Solicitudes (solo si tiene módulo REQUESTS)
+                      if (PermissionService().hasModuleAccess('REQUESTS')) ...[
+                        const SizedBox(height: TBSpacing.xl),
+                        FilterChips(
+                          onFilterChanged: (type, status) {
+                            context.read<AdminBloc>().add(
+                              FilterRequests(type: type, status: status),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: TBSpacing.lg),
+                        Row(
+                          children: [
+                            Text('Solicitudes', style: TBTypography.titleLarge),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: TBColors.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${state.requests.length}',
+                                style: const TextStyle(
+                                  color: TBColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: TBSpacing.md),
+                        if (state.requests.isEmpty)
+                          _buildEmptyRequests()
+                        else
+                          ...state.requests.map((request) => Padding(
+                            padding: const EdgeInsets.only(bottom: TBSpacing.sm),
+                            child: RequestCard(
+                              request: request,
+                              onProcess: (status, notes) {
+                                context.read<AdminBloc>().add(
+                                  ProcessRequest(
+                                    requestId: request.id,
+                                    status: status,
+                                    notes: notes,
+                                  ),
+                                );
+                              },
+                            ),
+                          )),
+                      ],
                     ]),
                   ),
                 ),
@@ -334,6 +388,26 @@ class _AdminDashboardBody extends StatelessWidget {
     );
   }
 
+  Widget _buildEmptyRequests() {
+    return Container(
+      padding: const EdgeInsets.all(TBSpacing.xl),
+      decoration: BoxDecoration(
+        color: TBColors.surface,
+        borderRadius: BorderRadius.circular(TBSpacing.radiusLg),
+        border: Border.all(color: TBColors.grey300),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.inbox_rounded, size: 48, color: TBColors.grey400),
+          const SizedBox(height: TBSpacing.md),
+          Text(
+            'No hay solicitudes pendientes',
+            style: TBTypography.bodyMedium.copyWith(color: TBColors.grey600),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Helper class to encapsulate module action configuration for the dashboard grid.
