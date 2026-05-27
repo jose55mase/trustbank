@@ -17,6 +17,7 @@ import 'document_approval_screen.dart';
 import 'role_management_screen.dart';
 import '../leads/screens/leads_list_screen.dart';
 import '../assignment_types/screens/assignment_types_management_screen.dart';
+import '../roles/screens/roles_management_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -261,6 +262,22 @@ class _AdminDashboardBody extends StatelessWidget {
       }
     }
 
+    // Add "Crear Roles" icon if user has ROLE_MANAGEMENT access
+    if (permissionService.hasModuleAccess('ROLE_MANAGEMENT')) {
+      actionIcons.add(
+        _buildActionIcon(
+          context,
+          icon: Icons.security_rounded,
+          label: 'Crear\nRoles',
+          color: Colors.indigo,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const RolesManagementScreen()),
+          ),
+        ),
+      );
+    }
+
     if (actionIcons.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -318,7 +335,7 @@ class _AdminDashboardBody extends StatelessWidget {
       case 'ROLE_MANAGEMENT':
         return _ModuleActionConfig(
           icon: Icons.admin_panel_settings_rounded,
-          label: 'Roles',
+          label: 'Asignar\nRoles',
           color: TBColors.error,
           onTap: (context) => Navigator.push(
             context,
