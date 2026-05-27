@@ -149,7 +149,7 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
                     ],
                   ),
                 ),
-                _buildRoleChip(currentRole),
+                _buildRoleChip(_getUserRoleName(user)),
               ],
             ),
             if (isSupervisor) ...[
@@ -257,29 +257,34 @@ class _RoleManagementScreenState extends State<RoleManagementScreen> {
     }
   }
 
-  Widget _buildRoleChip(UserRole role) {
+  Widget _buildRoleChip(String roleName) {
+    // Remove ROLE_ prefix for display
+    final displayName = roleName.replaceFirst('ROLE_', '').replaceAll('_', ' ');
+
     Color color;
-    switch (role) {
-      case UserRole.superAdmin:
+    switch (roleName) {
+      case 'ROLE_SUPER_ADMIN':
         color = Colors.red;
         break;
-      case UserRole.admin:
+      case 'ROLE_ADMIN':
         color = Colors.orange;
         break;
-      case UserRole.supervisor:
+      case 'ROLE_SUPERVISOR':
         color = Colors.purple;
         break;
-      case UserRole.moderator:
+      case 'ROLE_MODERATOR':
         color = Colors.blue;
         break;
-      case UserRole.user:
+      case 'ROLE_USER':
         color = Colors.green;
         break;
+      default:
+        color = TBColors.primary;
     }
 
     return Chip(
       label: Text(
-        _getRoleDisplayName(role),
+        displayName,
         style: TextStyle(color: color, fontSize: 12),
       ),
       backgroundColor: color.withOpacity(0.1),
