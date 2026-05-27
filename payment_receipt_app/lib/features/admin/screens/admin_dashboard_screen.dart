@@ -26,7 +26,8 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final permissionService = PermissionService();
     // Only allow access if user has admin-level modules (not just basic LEADS/DOCUMENTS)
-    final hasAccess = permissionService.hasModuleAccess('USER_MANAGEMENT') ||
+    final hasAccess = permissionService.hasModuleAccess('ADMIN_PANEL') ||
+        permissionService.hasModuleAccess('USER_MANAGEMENT') ||
         permissionService.hasModuleAccess('ROLE_MANAGEMENT') ||
         permissionService.hasModuleAccess('DOCUMENT_APPROVAL') ||
         permissionService.hasModuleAccess('SUPERVISOR_ASSIGNMENTS');
