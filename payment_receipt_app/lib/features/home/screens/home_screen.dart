@@ -201,7 +201,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<List<PopupMenuEntry<String>>> _buildMenuItems() async {
     final permissionService = PermissionService();
-    // Only show admin panel if user has admin-level modules (not just basic user modules)
+    // Reload permissions fresh every time the menu opens
+    try {
+      await permissionService.loadPermissions();
+    } catch (_) {}
+    
     final hasAdminAccess = permissionService.hasModuleAccess('ADMIN_PANEL') ||
         permissionService.hasModuleAccess('USER_MANAGEMENT') ||
         permissionService.hasModuleAccess('ROLE_MANAGEMENT') ||
