@@ -48,14 +48,16 @@ public class SupervisorLeadController {
     private UsuarioService usuarioService;
 
     /**
-     * GET /api/supervisor/leads?page=X&size=Y
+     * GET /api/supervisor/leads?page=X&size=Y&status=X
      * Lista leads filtrados por la asignación del supervisor autenticado.
+     * Soporta filtro opcional por status (lastCallStatus).
      */
     @Secured("ROLE_ASESOR")
     @GetMapping
     public ResponseEntity<?> findAll(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String status) {
 
         Map<String, Object> response = new HashMap<>();
 
@@ -67,7 +69,14 @@ public class SupervisorLeadController {
             }
 
             Pageable pageable = PageRequest.of(page, size);
-            Page<LeadEntity> leads = supervisorLeadService.findLeadsBySupervisor(userId, pageable);
+            Page<LeadEntity> leads;
+
+            if (status != null && !status.trim().isEmpty()) {
+                leads = supervisorLeadService.findLeadsBySupervisorAndStatus(userId, status.trim(), pageable);
+            } else {
+                leads = supervisorLeadService.findLeadsBySupervisor(userId, pageable);
+            }
+
             return new ResponseEntity<>(leads, HttpStatus.OK);
         } catch (NoAssignmentConfiguredException e) {
             response.put("error", "NO_ASSIGNMENT_CONFIGURED");

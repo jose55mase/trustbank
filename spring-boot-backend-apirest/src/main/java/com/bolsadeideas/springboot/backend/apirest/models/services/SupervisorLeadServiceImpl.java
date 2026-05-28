@@ -33,6 +33,12 @@ public class SupervisorLeadServiceImpl implements ISupervisorLeadService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<LeadEntity> findLeadsBySupervisorAndStatus(Long userId, String status, Pageable pageable) {
+        return leadDao.findByAdvisorIdAndLastCallStatus(userId, status, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<LeadEntity> searchLeadsBySupervisor(Long userId, String term, Pageable pageable) {
         return leadDao.searchByAdvisorIdAndTerm(userId, term, pageable);
     }

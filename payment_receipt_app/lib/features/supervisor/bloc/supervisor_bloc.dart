@@ -80,6 +80,7 @@ class SupervisorBloc extends Bloc<SupervisorEvent, SupervisorState> {
       final result = await SupervisorService.getLeads(
         page: event.page,
         size: event.size,
+        status: event.status,
       );
       emit(SupervisorLeadsLoaded(
         leads: result['leads'] as List<LeadModel>,

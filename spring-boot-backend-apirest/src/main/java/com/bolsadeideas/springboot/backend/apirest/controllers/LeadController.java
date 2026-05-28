@@ -283,6 +283,7 @@ public class LeadController {
      * - unassigned=true: retorna solo leads sin asesor asignado
      * - advisorId={id}: retorna solo leads asignados al asesor especificado
      * - pais={pais}: retorna solo leads del país especificado
+     * - status={status}: retorna solo leads con el lastCallStatus especificado
      * 
      * Aplica filtrado por campañas visibles según los permisos del usuario.
      * Si el usuario tiene restricciones de campaña, solo se retornan leads
@@ -297,7 +298,8 @@ public class LeadController {
             @RequestParam(defaultValue = "asc") String direction,
             @RequestParam(required = false) Boolean unassigned,
             @RequestParam(required = false) Long advisorId,
-            @RequestParam(required = false) String pais) {
+            @RequestParam(required = false) String pais,
+            @RequestParam(required = false) String status) {
 
         try {
             Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction)
@@ -307,44 +309,36 @@ public class LeadController {
             // Resolve campaign visibility filter
             List<String> visibleCampaigns = resolveVisibleCampaignFilterValues();
 
-            Page<LeadEntity> leads;
+            // Build dynamic specification
+            org.springframework.data.jpa.domain.Specification<LeadEntity> spec = org.springframework.data.jpa.domain.Specification.where(null);
 
+            // Campaign visibility filter
             if (visibleCampaigns != null && !visibleCampaigns.isEmpty()) {
-                // User has campaign restrictions - apply campaign filtering
-                if (pais != null && !pais.trim().isEmpty()) {
-                    if (Boolean.TRUE.equals(unassigned)) {
-                        leads = leadDao.findByCampanaInAndPaisAndAdvisorIsNull(visibleCampaigns, pais, pageable);
-                    } else if (advisorId != null) {
-                        leads = leadDao.findByCampanaInAndPaisAndAdvisorId(visibleCampaigns, pais, advisorId, pageable);
-                    } else {
-                        leads = leadDao.findByCampanaInAndPais(visibleCampaigns, pais, pageable);
-                    }
-                } else if (Boolean.TRUE.equals(unassigned)) {
-                    leads = leadDao.findByCampanaInAndAdvisorIsNull(visibleCampaigns, pageable);
-                } else if (advisorId != null) {
-                    leads = leadDao.findByCampanaInAndAdvisorId(visibleCampaigns, advisorId, pageable);
-                } else {
-                    leads = leadDao.findByCampanaIn(visibleCampaigns, pageable);
-                }
-            } else {
-                // No campaign restrictions - use existing unfiltered queries
-                if (pais != null && !pais.trim().isEmpty()) {
-                    if (Boolean.TRUE.equals(unassigned)) {
-                        leads = leadDao.findByPaisAndAdvisorIsNull(pais, pageable);
-                    } else if (advisorId != null) {
-                        leads = leadDao.findByPaisAndAdvisorId(pais, advisorId, pageable);
-                    } else {
-                        leads = leadDao.findByPais(pais, pageable);
-                    }
-                } else if (Boolean.TRUE.equals(unassigned)) {
-                    leads = leadDao.findByAdvisorIsNull(pageable);
-                } else if (advisorId != null) {
-                    leads = leadDao.findByAdvisorId(advisorId, pageable);
-                } else {
-                    leads = leadService.findAll(pageable);
-                }
+                final List<String> campaigns = visibleCampaigns;
+                spec = spec.and((root, query, cb) -> root.get("campana").in(campaigns));
             }
 
+            // Status filter
+            if (status != null && !status.trim().isEmpty()) {
+                final String statusValue = status.trim();
+                spec = spec.and((root, query, cb) -> cb.equal(cb.upper(root.get("lastCallStatus")), statusValue.toUpperCase()));
+            }
+
+            // País filter
+            if (pais != null && !pais.trim().isEmpty()) {
+                final String paisValue = pais.trim();
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("pais"), paisValue));
+            }
+
+            // Unassigned filter
+            if (Boolean.TRUE.equals(unassigned)) {
+                spec = spec.and((root, query, cb) -> cb.isNull(root.get("advisor")));
+            } else if (advisorId != null) {
+                final Long advId = advisorId;
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("advisor").get("id"), advId));
+            }
+
+            Page<LeadEntity> leads = leadDao.findAll(spec, pageable);
             return new ResponseEntity<>(leads, HttpStatus.OK);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();

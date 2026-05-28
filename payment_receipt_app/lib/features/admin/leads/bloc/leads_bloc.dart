@@ -94,6 +94,7 @@ class LeadsBloc extends Bloc<LeadsEvent, LeadsState> {
         unassigned: event.unassigned,
         advisorId: event.advisorId,
         pais: event.pais,
+        status: event.status,
       );
       emit(LeadsLoaded(
         leads: result['leads'] as List<LeadModel>,

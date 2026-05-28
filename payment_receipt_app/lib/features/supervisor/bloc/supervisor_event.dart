@@ -6,8 +6,9 @@ abstract class SupervisorEvent {}
 class LoadSupervisorLeads extends SupervisorEvent {
   final int page;
   final int size;
+  final String? status;
 
-  LoadSupervisorLeads({this.page = 0, this.size = 20});
+  LoadSupervisorLeads({this.page = 0, this.size = 20, this.status});
 }
 
 /// Busca leads dentro de la asignación del supervisor.

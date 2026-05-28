@@ -44,6 +44,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   int _currentPage = 0;
   int _totalLeadCount = 0;
   static const int _pageSize = 20;
+  String? _statusFilter;
 
   // ─── STATUS OPTIONS ──────────────────────────────────────────────────
   static const List<String> _statusOptions = [
@@ -142,7 +143,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     if (term.trim().isEmpty) {
       context
           .read<SupervisorBloc>()
-          .add(LoadSupervisorLeads(page: 0, size: _pageSize));
+          .add(LoadSupervisorLeads(page: 0, size: _pageSize, status: _statusFilter));
     } else {
       context
           .read<SupervisorBloc>()
@@ -158,7 +159,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     if (term.isEmpty) {
       context
           .read<SupervisorBloc>()
-          .add(LoadSupervisorLeads(page: page, size: _pageSize));
+          .add(LoadSupervisorLeads(page: page, size: _pageSize, status: _statusFilter));
     } else {
       context
           .read<SupervisorBloc>()
@@ -460,41 +461,92 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(TBSpacing.screenPadding),
-      child: TextField(
-        controller: _searchController,
-        onChanged: _onSearch,
-        decoration: InputDecoration(
-          hintText: 'Buscar por nombre, apellido, teléfono o email...',
-          hintStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey500),
-          prefixIcon: const Icon(Icons.search, color: TBColors.grey500),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.clear, color: TBColors.grey500),
-                  onPressed: () {
-                    _searchController.clear();
-                    _onSearch('');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: TBColors.surface,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-            borderSide: const BorderSide(color: TBColors.grey300),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearch,
+              decoration: InputDecoration(
+                hintText: 'Buscar por nombre, apellido, teléfono o email...',
+                hintStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey500),
+                prefixIcon: const Icon(Icons.search, color: TBColors.grey500),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: TBColors.grey500),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearch('');
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: TBColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  borderSide: const BorderSide(color: TBColors.grey300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  borderSide: const BorderSide(color: TBColors.grey300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  borderSide: const BorderSide(color: TBColors.primary, width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: TBSpacing.md,
+                  vertical: TBSpacing.md,
+                ),
+              ),
+            ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-            borderSide: const BorderSide(color: TBColors.grey300),
+          const SizedBox(width: TBSpacing.md),
+          // Status filter dropdown
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: TBColors.surface,
+              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+              border: Border.all(color: TBColors.grey300),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _statusFilter ?? '',
+                isDense: true,
+                hint: const Text('Status'),
+                style: TBTypography.bodyMedium.copyWith(fontSize: 13),
+                icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
+                items: [
+                  const DropdownMenuItem(value: '', child: Text('Todos')),
+                  ..._statusOptions.map((s) => DropdownMenuItem(
+                    value: s,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8, height: 8,
+                          decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(s),
+                      ],
+                    ),
+                  )),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _statusFilter = (value == null || value.isEmpty) ? null : value;
+                    _currentPage = 0;
+                  });
+                  context.read<SupervisorBloc>().add(
+                    LoadSupervisorLeads(page: 0, size: _pageSize, status: _statusFilter),
+                  );
+                },
+              ),
+            ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-            borderSide: const BorderSide(color: TBColors.primary, width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: TBSpacing.md,
-            vertical: TBSpacing.md,
-          ),
-        ),
+        ],
       ),
     );
   }

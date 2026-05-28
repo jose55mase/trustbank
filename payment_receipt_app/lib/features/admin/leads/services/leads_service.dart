@@ -117,6 +117,7 @@ class LeadsService {
     bool? unassigned,
     int? advisorId,
     String? pais,
+    String? status,
   }) async {
     final queryParams = <String, String>{
       'page': page.toString(),
@@ -133,6 +134,10 @@ class LeadsService {
 
     if (pais != null && pais.isNotEmpty) {
       queryParams['pais'] = pais;
+    }
+
+    if (status != null && status.isNotEmpty) {
+      queryParams['status'] = status;
     }
 
     final uri = Uri.parse('$_baseUrl/leads').replace(queryParameters: queryParams);

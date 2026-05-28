@@ -49,6 +49,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   // ─── FILTER STATE ────────────────────────────────────────────────────
   String _filterValue = 'all';
   String? _countryFilter;
+  String? _statusFilter;
   List<AdvisorSummary> _advisors = [];
   bool _isUnassigning = false;
 
@@ -206,6 +207,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
             ? int.tryParse(_filterValue)
             : null,
         pais: _countryFilter,
+        status: _statusFilter,
       ));
     }
   }
@@ -812,6 +814,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
               isLoading: _isUnassigning,
             ),
           const Spacer(),
+          _buildStatusFilterDropdown(),
+          const SizedBox(width: TBSpacing.md),
           _buildCountryFilterDropdown(),
           const SizedBox(width: TBSpacing.md),
           _buildFilterDropdown(),
@@ -884,6 +888,53 @@ class _LeadsListViewState extends State<_LeadsListView> {
             icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
             items: _buildFilterItems(),
             onChanged: _onFilterChanged,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusFilterDropdown() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.info_outline, size: 18, color: TBColors.grey600),
+        const SizedBox(width: 6),
+        DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _statusFilter ?? '',
+            isDense: true,
+            style: TBTypography.bodyMedium.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: TBColors.grey700,
+            ),
+            icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
+            items: [
+              const DropdownMenuItem(value: '', child: Text('Todos los status')),
+              ..._statusOptions.map((s) => DropdownMenuItem(
+                value: s,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8, height: 8,
+                      decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(s),
+                  ],
+                ),
+              )),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _statusFilter = (value == null || value.isEmpty) ? null : value;
+                _currentPage = 0;
+                _selectedLeadIds.clear();
+              });
+              _loadLeads();
+            },
           ),
         ),
       ],

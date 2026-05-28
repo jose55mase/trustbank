@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadEntity;
 
-public interface ILeadDao extends JpaRepository<LeadEntity, Long> {
+public interface ILeadDao extends JpaRepository<LeadEntity, Long>, org.springframework.data.jpa.repository.JpaSpecificationExecutor<LeadEntity> {
 
     Page<LeadEntity> findAll(Pageable pageable);
 
@@ -69,6 +69,8 @@ public interface ILeadDao extends JpaRepository<LeadEntity, Long> {
     // --- Métodos para asignación directa de leads a asesores ---
 
     Page<LeadEntity> findByAdvisorId(Long advisorId, Pageable pageable);
+
+    Page<LeadEntity> findByAdvisorIdAndLastCallStatus(Long advisorId, String lastCallStatus, Pageable pageable);
 
     Page<LeadEntity> findByAdvisorIsNull(Pageable pageable);
 

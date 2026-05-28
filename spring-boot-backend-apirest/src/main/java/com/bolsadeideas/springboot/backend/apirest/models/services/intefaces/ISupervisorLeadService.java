@@ -18,6 +18,11 @@ public interface ISupervisorLeadService {
     Page<LeadEntity> findLeadsBySupervisor(Long userId, Pageable pageable);
 
     /**
+     * Retorna los leads filtrados por asignación del supervisor y por status (lastCallStatus).
+     */
+    Page<LeadEntity> findLeadsBySupervisorAndStatus(Long userId, String status, Pageable pageable);
+
+    /**
      * Busca leads dentro de los asignados al supervisor por un término de búsqueda.
      * Filtra por campana (asignación) y por término en nombre, apellido, teléfono o email.
      */

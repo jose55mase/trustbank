@@ -12,15 +12,20 @@ import 'api_service.dart';
 class SupervisorService {
   static String get _baseUrl => AppConfig.apiBaseUrl;
 
-  /// GET /api/supervisor/leads?page=X&size=Y
+  /// GET /api/supervisor/leads?page=X&size=Y&status=X
   /// Returns paginated leads filtered by the supervisor's assignment type.
   static Future<Map<String, dynamic>> getLeads({
     int page = 0,
     int size = 20,
+    String? status,
   }) async {
     try {
+      String url = '$_baseUrl/supervisor/leads?page=$page&size=$size';
+      if (status != null && status.isNotEmpty) {
+        url += '&status=${Uri.encodeComponent(status)}';
+      }
       final response = await http.get(
-        Uri.parse('$_baseUrl/supervisor/leads?page=$page&size=$size'),
+        Uri.parse(url),
         headers: await ApiService.headers,
       );
 

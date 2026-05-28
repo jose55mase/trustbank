@@ -9,6 +9,7 @@ class LoadLeads extends LeadsEvent {
   final bool? unassigned;
   final int? advisorId;
   final String? pais;
+  final String? status;
 
   LoadLeads({
     this.page = 0,
@@ -17,6 +18,7 @@ class LoadLeads extends LeadsEvent {
     this.unassigned,
     this.advisorId,
     this.pais,
+    this.status,
   });
 }
 
