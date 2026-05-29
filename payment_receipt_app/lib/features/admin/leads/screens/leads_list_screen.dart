@@ -814,8 +814,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
               isLoading: _isUnassigning,
             ),
           const Spacer(),
-          _buildStatusFilterDropdown(),
-          const SizedBox(width: TBSpacing.md),
           _buildCountryFilterDropdown(),
           const SizedBox(width: TBSpacing.md),
           _buildFilterDropdown(),
@@ -888,53 +886,6 @@ class _LeadsListViewState extends State<_LeadsListView> {
             icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
             items: _buildFilterItems(),
             onChanged: _onFilterChanged,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusFilterDropdown() {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.info_outline, size: 18, color: TBColors.grey600),
-        const SizedBox(width: 6),
-        DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _statusFilter ?? '',
-            isDense: true,
-            style: TBTypography.bodyMedium.copyWith(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: TBColors.grey700,
-            ),
-            icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
-            items: [
-              const DropdownMenuItem(value: '', child: Text('Todos los status')),
-              ..._statusOptions.map((s) => DropdownMenuItem(
-                value: s,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8, height: 8,
-                      decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(s),
-                  ],
-                ),
-              )),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _statusFilter = (value == null || value.isEmpty) ? null : value;
-                _currentPage = 0;
-                _selectedLeadIds.clear();
-              });
-              _loadLeads();
-            },
           ),
         ),
       ],
@@ -1236,7 +1187,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
                   _buildSortableColumn('Nombre', 'nombre'),
                   _buildSortableColumn('Apellido', 'apellido'),
                   _buildSortableColumn('Asesor', 'advisor'),
-                  _buildSortableColumn('Status', 'lastCallStatus'),
+                  DataColumn(label: _buildStatusColumnHeader()),
                   _buildSortableColumn('Últ. Llamada', 'lastCallDate'),
                   _buildSortableColumn('País', 'pais'),
                   _buildSortableColumn('Teléfono', 'telefono'),
@@ -1359,6 +1310,49 @@ class _LeadsListViewState extends State<_LeadsListView> {
     }
   }
 
+  Widget _buildStatusColumnHeader() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _statusFilter ?? '',
+        isDense: true,
+        style: TBTypography.titleMedium.copyWith(
+          color: TBColors.grey700,
+          fontSize: 13,
+        ),
+        icon: Icon(
+          Icons.filter_list,
+          size: 14,
+          color: _statusFilter != null ? TBColors.primary : TBColors.grey500,
+        ),
+        items: [
+          const DropdownMenuItem(value: '', child: Text('Status')),
+          ..._statusOptions.map((s) => DropdownMenuItem(
+            value: s,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 6),
+                Text(s, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          )),
+        ],
+        onChanged: (value) {
+          setState(() {
+            _statusFilter = (value == null || value.isEmpty) ? null : value;
+            _currentPage = 0;
+            _selectedLeadIds.clear();
+          });
+          _loadLeads();
+        },
+      ),
+    );
+  }
+
   Widget _buildStatusBadge(String status) {
     if (status.isEmpty) return const SizedBox.shrink();
     final color = _getStatusColor(status);
@@ -1384,7 +1378,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
 
   int? _getSortColumnIndex() {
     if (_sortColumn == null) return null;
-    const columns = ['nombre', 'apellido', 'advisor', 'lastCallStatus', 'lastCallDate', 'pais', 'telefono', 'email', 'campana'];
+    // Status column is now a filter dropdown (not sortable), skip it in index calculation
+    const columns = ['nombre', 'apellido', 'advisor', null, 'lastCallDate', 'pais', 'telefono', 'email', 'campana'];
     final index = columns.indexOf(_sortColumn!);
     return index >= 0 ? index + 1 : null;
   }

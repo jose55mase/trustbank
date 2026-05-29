@@ -461,92 +461,41 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(TBSpacing.screenPadding),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              onChanged: _onSearch,
-              decoration: InputDecoration(
-                hintText: 'Buscar por nombre, apellido, teléfono o email...',
-                hintStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey500),
-                prefixIcon: const Icon(Icons.search, color: TBColors.grey500),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: TBColors.grey500),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearch('');
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: TBColors.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                  borderSide: const BorderSide(color: TBColors.grey300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                  borderSide: const BorderSide(color: TBColors.grey300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-                  borderSide: const BorderSide(color: TBColors.primary, width: 2),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: TBSpacing.md,
-                  vertical: TBSpacing.md,
-                ),
-              ),
-            ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: _onSearch,
+        decoration: InputDecoration(
+          hintText: 'Buscar por nombre, apellido, teléfono o email...',
+          hintStyle: TBTypography.bodyMedium.copyWith(color: TBColors.grey500),
+          prefixIcon: const Icon(Icons.search, color: TBColors.grey500),
+          suffixIcon: _searchController.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear, color: TBColors.grey500),
+                  onPressed: () {
+                    _searchController.clear();
+                    _onSearch('');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: TBColors.surface,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            borderSide: const BorderSide(color: TBColors.grey300),
           ),
-          const SizedBox(width: TBSpacing.md),
-          // Status filter dropdown
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: TBColors.surface,
-              borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
-              border: Border.all(color: TBColors.grey300),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _statusFilter ?? '',
-                isDense: true,
-                hint: const Text('Status'),
-                style: TBTypography.bodyMedium.copyWith(fontSize: 13),
-                icon: const Icon(Icons.arrow_drop_down, color: TBColors.grey600),
-                items: [
-                  const DropdownMenuItem(value: '', child: Text('Todos')),
-                  ..._statusOptions.map((s) => DropdownMenuItem(
-                    value: s,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 8, height: 8,
-                          decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(s),
-                      ],
-                    ),
-                  )),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    _statusFilter = (value == null || value.isEmpty) ? null : value;
-                    _currentPage = 0;
-                  });
-                  context.read<SupervisorBloc>().add(
-                    LoadSupervisorLeads(page: 0, size: _pageSize, status: _statusFilter),
-                  );
-                },
-              ),
-            ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            borderSide: const BorderSide(color: TBColors.grey300),
           ),
-        ],
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+            borderSide: const BorderSide(color: TBColors.primary, width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: TBSpacing.md,
+            vertical: TBSpacing.md,
+          ),
+        ),
       ),
     );
   }
@@ -623,7 +572,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     final columns = <DataColumn>[];
     if (_visibleColumns['nombre']!) columns.add(const DataColumn(label: Text('Nombre')));
     if (_visibleColumns['apellido']!) columns.add(const DataColumn(label: Text('Apellido')));
-    if (_visibleColumns['status']!) columns.add(const DataColumn(label: Text('Status')));
+    if (_visibleColumns['status']!) columns.add(DataColumn(label: _buildStatusColumnHeader()));
     if (_visibleColumns['ultLlamada']!) columns.add(const DataColumn(label: Text('Últ. Llamada')));
     if (_visibleColumns['telefono']!) columns.add(const DataColumn(label: Text('Teléfono')));
     if (_visibleColumns['email']!) columns.add(const DataColumn(label: Text('Email')));
@@ -633,6 +582,50 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     if (_visibleColumns['fechaRegistro']!) columns.add(const DataColumn(label: Text('Fecha Registro')));
     if (_visibleColumns['asesor']!) columns.add(const DataColumn(label: Text('Asesor')));
     return columns;
+  }
+
+  Widget _buildStatusColumnHeader() {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<String>(
+        value: _statusFilter ?? '',
+        isDense: true,
+        style: TBTypography.labelMedium.copyWith(
+          color: TBColors.primaryDark,
+          fontWeight: FontWeight.w700,
+        ),
+        icon: Icon(
+          Icons.filter_list,
+          size: 14,
+          color: _statusFilter != null ? TBColors.primary : TBColors.grey500,
+        ),
+        items: [
+          const DropdownMenuItem(value: '', child: Text('Status')),
+          ..._statusOptions.map((s) => DropdownMenuItem(
+            value: s,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8, height: 8,
+                  decoration: BoxDecoration(color: _getStatusColor(s), shape: BoxShape.circle),
+                ),
+                const SizedBox(width: 6),
+                Text(s, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          )),
+        ],
+        onChanged: (value) {
+          setState(() {
+            _statusFilter = (value == null || value.isEmpty) ? null : value;
+            _currentPage = 0;
+          });
+          context.read<SupervisorBloc>().add(
+            LoadSupervisorLeads(page: 0, size: _pageSize, status: _statusFilter),
+          );
+        },
+      ),
+    );
   }
 
   DataRow _buildLeadRow(LeadModel lead) {
