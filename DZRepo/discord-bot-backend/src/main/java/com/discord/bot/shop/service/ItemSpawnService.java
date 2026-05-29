@@ -12,17 +12,15 @@ import java.util.List;
 
 /**
  * Service responsible for spawning purchased items on the DayZ server
- * using the event system (events.xml + cfgeventspawns.xml).
+ * by injecting events into the main events.xml and cfgeventspawns.xml files.
  *
- * <p>Instead of using custom JSON files, this service generates two XML files:
- * <ul>
- *   <li>{@code db/shop_events.xml} — defines what items to spawn</li>
- *   <li>{@code shop_eventspawns.xml} — defines where to spawn them (with auto terrain height)</li>
- * </ul>
+ * <p>Strategy:
+ * <ol>
+ *   <li>On purchase: download original files, append shop events, upload modified files</li>
+ *   <li>After restart (items spawned): upload the original files back (removes shop events)</li>
+ * </ol>
  *
- * <p>The DayZ server reads these files on startup and spawns items at the specified
- * coordinates with automatic terrain height adjustment (a="-1").
- * After delivery, the files are cleared so items don't respawn on next restart.</p>
+ * <p>Event names use the format {@code Item_ShopOrder_{id}} to match DayZ's naming convention.</p>
  */
 @Service
 public class ItemSpawnService {
@@ -34,131 +32,140 @@ public class ItemSpawnService {
     @Value("${shop.nitrado.service-id:0}")
     private int serviceId;
 
-    @Value("${shop.nitrado.events-path:/dayzOffline.chernarusplus/db/shop_events.xml}")
+    @Value("${shop.nitrado.events-path:/dayzOffline.chernarusplus/db/events.xml}")
     private String eventsFilePath;
 
-    @Value("${shop.nitrado.eventspawns-path:/dayzOffline.chernarusplus/shop_eventspawns.xml}")
+    @Value("${shop.nitrado.eventspawns-path:/dayzOffline.chernarusplus/cfgeventspawns.xml}")
     private String eventSpawnsFilePath;
+
+    /** Cached original content of events.xml (before shop modifications). */
+    private String originalEventsContent;
+
+    /** Cached original content of cfgeventspawns.xml (before shop modifications). */
+    private String originalEventSpawnsContent;
 
     public ItemSpawnService(NitradoApiClient nitradoClient) {
         this.nitradoClient = nitradoClient;
     }
 
     /**
-     * Uploads the shop event files with all pending orders so they spawn on next server restart.
+     * Downloads the original files, appends shop events for all pending orders, and uploads.
      *
      * @param pendingOrders the list of orders waiting to be delivered
-     * @throws ItemSpawnException if the upload fails
      */
     public void uploadPendingOrders(List<ShopOrder> pendingOrders) {
         if (pendingOrders == null || pendingOrders.isEmpty()) {
-            log.info("No pending orders to upload. Uploading empty shop event files.");
-            uploadEmptyFiles();
+            log.info("[ShopSpawn] No pending orders to upload.");
             return;
         }
 
         try {
-            String eventsXml = generateEventsXml(pendingOrders);
-            String eventSpawnsXml = generateEventSpawnsXml(pendingOrders);
+            // Download and cache originals (only if not already cached)
+            if (originalEventsContent == null) {
+                originalEventsContent = nitradoClient.downloadFile(serviceId, eventsFilePath);
+            }
+            if (originalEventSpawnsContent == null) {
+                originalEventSpawnsContent = nitradoClient.downloadFile(serviceId, eventSpawnsFilePath);
+            }
 
-            nitradoClient.uploadFile(serviceId, eventsFilePath, eventsXml);
-            nitradoClient.uploadFile(serviceId, eventSpawnsFilePath, eventSpawnsXml);
+            // Generate modified files with shop events appended
+            String modifiedEvents = injectShopEvents(originalEventsContent, pendingOrders);
+            String modifiedSpawns = injectShopSpawns(originalEventSpawnsContent, pendingOrders);
 
-            log.info("Uploaded shop event files with {} pending orders.", pendingOrders.size());
+            // Upload modified files
+            nitradoClient.uploadFile(serviceId, eventsFilePath, modifiedEvents);
+            nitradoClient.uploadFile(serviceId, eventSpawnsFilePath, modifiedSpawns);
+
+            log.info("[ShopSpawn] Uploaded {} shop events to server files.", pendingOrders.size());
         } catch (Exception e) {
-            log.error("Failed to upload shop event files: {}", e.getMessage(), e);
-            throw new ItemSpawnException("Error al subir archivos de eventos de tienda: " + e.getMessage(), e);
+            log.error("[ShopSpawn] Failed to upload shop events: {}", e.getMessage(), e);
+            throw new ItemSpawnException("Error al subir eventos de tienda: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Uploads empty event files to clear all shop spawns (call after items are delivered).
+     * Restores the original files (without shop events) after server restart.
+     * This prevents items from respawning on subsequent restarts.
      */
-    public void uploadEmptyFiles() {
+    public void restoreOriginalFiles() {
         try {
-            String emptyEvents = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<events>\n</events>\n";
-            String emptySpawns = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<eventposdef>\n</eventposdef>\n";
-
-            nitradoClient.uploadFile(serviceId, eventsFilePath, emptyEvents);
-            nitradoClient.uploadFile(serviceId, eventSpawnsFilePath, emptySpawns);
-
-            log.info("Uploaded empty shop event files (cleared spawns).");
+            if (originalEventsContent != null) {
+                nitradoClient.uploadFile(serviceId, eventsFilePath, originalEventsContent);
+                log.info("[ShopSpawn] Restored original events.xml");
+            }
+            if (originalEventSpawnsContent != null) {
+                nitradoClient.uploadFile(serviceId, eventSpawnsFilePath, originalEventSpawnsContent);
+                log.info("[ShopSpawn] Restored original cfgeventspawns.xml");
+            }
+            // Clear cache so next cycle downloads fresh originals
+            originalEventsContent = null;
+            originalEventSpawnsContent = null;
         } catch (Exception e) {
-            log.warn("Failed to upload empty shop event files: {}", e.getMessage());
+            log.error("[ShopSpawn] Failed to restore original files: {}", e.getMessage());
         }
     }
 
     /**
-     * Legacy method kept for compatibility — now just marks the order for batch processing.
-     * The actual spawn happens when uploadPendingOrders is called before a server restart.
+     * Injects shop event entries before the closing </events> tag.
      */
-    public void spawnItem(ShopOrder order) {
-        // Items are now spawned via the event system on server restart.
-        // This method is a no-op; the order stays PENDING until batch upload + restart.
-        log.info("Order #{} queued for delivery via event system (will spawn on next restart).",
-                order.getId());
-    }
-
-    /**
-     * Generates the shop_events.xml content with one event per order.
-     * Each event spawns the item with lifetime=3600 (1 hour), no restock, fixed position.
-     */
-    private String generateEventsXml(List<ShopOrder> orders) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
-        sb.append("<events>\n");
+    private String injectShopEvents(String original, List<ShopOrder> orders) {
+        StringBuilder shopEvents = new StringBuilder();
 
         for (ShopOrder order : orders) {
-            String eventName = "ShopOrder_" + order.getId();
+            String eventName = "Item_ShopOrder_" + order.getId();
             String className = order.getProduct().getDayzClassName();
             int qty = order.getQuantity();
 
-            sb.append("  <event name=\"").append(eventName).append("\">\n");
-            sb.append("    <nominal>").append(qty).append("</nominal>\n");
-            sb.append("    <min>").append(qty).append("</min>\n");
-            sb.append("    <max>").append(qty).append("</max>\n");
-            sb.append("    <lifetime>3600</lifetime>\n");
-            sb.append("    <restock>0</restock>\n");
-            sb.append("    <saferadius>0</saferadius>\n");
-            sb.append("    <distanceradius>0</distanceradius>\n");
-            sb.append("    <cleanupradius>200</cleanupradius>\n");
-            sb.append("    <flags deletable=\"0\" init_random=\"0\" remove_damaged=\"0\"/>\n");
-            sb.append("    <position>fixed</position>\n");
-            sb.append("    <limit>child</limit>\n");
-            sb.append("    <active>1</active>\n");
-            sb.append("    <children>\n");
-            sb.append("      <child lootmax=\"0\" lootmin=\"0\" max=\"")
-              .append(qty).append("\" min=\"").append(qty)
-              .append("\" type=\"").append(className).append("\"/>\n");
-            sb.append("    </children>\n");
-            sb.append("  </event>\n");
+            shopEvents.append("  <event name=\"").append(eventName).append("\">\n");
+            shopEvents.append("    <nominal>").append(qty).append("</nominal>\n");
+            shopEvents.append("    <min>").append(qty).append("</min>\n");
+            shopEvents.append("    <max>").append(qty).append("</max>\n");
+            shopEvents.append("    <lifetime>3600</lifetime>\n");
+            shopEvents.append("    <restock>0</restock>\n");
+            shopEvents.append("    <saferadius>0</saferadius>\n");
+            shopEvents.append("    <distanceradius>0</distanceradius>\n");
+            shopEvents.append("    <cleanupradius>200</cleanupradius>\n");
+            shopEvents.append("    <flags deletable=\"0\" init_random=\"0\" remove_damaged=\"0\"/>\n");
+            shopEvents.append("    <position>fixed</position>\n");
+            shopEvents.append("    <limit>child</limit>\n");
+            shopEvents.append("    <active>1</active>\n");
+            shopEvents.append("    <children>\n");
+            shopEvents.append("      <child lootmax=\"0\" lootmin=\"0\" max=\"")
+                      .append(qty).append("\" min=\"").append(qty)
+                      .append("\" type=\"").append(className).append("\"/>\n");
+            shopEvents.append("    </children>\n");
+            shopEvents.append("  </event>\n");
         }
 
-        sb.append("</events>\n");
-        return sb.toString();
+        // Insert before </events>
+        return original.replace("</events>", shopEvents.toString() + "</events>");
     }
 
     /**
-     * Generates the shop_eventspawns.xml content with positions for each order.
-     * Uses a="-1" so DayZ automatically adjusts height to terrain.
+     * Injects shop spawn positions before the closing </eventposdef> tag.
      */
-    private String generateEventSpawnsXml(List<ShopOrder> orders) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
-        sb.append("<eventposdef>\n");
+    private String injectShopSpawns(String original, List<ShopOrder> orders) {
+        StringBuilder shopSpawns = new StringBuilder();
 
         for (ShopOrder order : orders) {
-            String eventName = "ShopOrder_" + order.getId();
+            String eventName = "Item_ShopOrder_" + order.getId();
 
-            sb.append("  <event name=\"").append(eventName).append("\">\n");
-            sb.append("    <pos x=\"").append(order.getCoordX())
-              .append("\" z=\"").append(order.getCoordY())
-              .append("\" a=\"-1\"/>\n");
-            sb.append("  </event>\n");
+            shopSpawns.append("  <event name=\"").append(eventName).append("\">\n");
+            shopSpawns.append("    <pos x=\"").append(order.getCoordX())
+                      .append("\" z=\"").append(order.getCoordY())
+                      .append("\" a=\"-1\"/>\n");
+            shopSpawns.append("  </event>\n");
         }
 
-        sb.append("</eventposdef>\n");
-        return sb.toString();
+        // Insert before </eventposdef>
+        return original.replace("</eventposdef>", shopSpawns.toString() + "</eventposdef>");
+    }
+
+    /**
+     * Legacy method — kept for compatibility. Orders are now batch-processed.
+     */
+    public void spawnItem(ShopOrder order) {
+        log.info("Order #{} queued for delivery via event system.", order.getId());
     }
 
     public static class ItemSpawnException extends RuntimeException {

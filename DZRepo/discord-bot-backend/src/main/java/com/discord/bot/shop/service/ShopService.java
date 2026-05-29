@@ -124,8 +124,8 @@ public class ShopService {
             order.setStatus("DELIVERED");
             shopOrderRepository.save(order);
         }
-        itemSpawnService.uploadEmptyFiles();
-        log.info("Confirmed delivery of {} orders and cleared event files.", pending.size());
+        itemSpawnService.restoreOriginalFiles();
+        log.info("Confirmed delivery of {} orders and restored original files.", pending.size());
     }
 
     @Transactional

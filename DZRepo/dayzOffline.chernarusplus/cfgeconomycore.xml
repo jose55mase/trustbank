@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <economycore>
-	<ce folder="db">
-		<file name="shop_events.xml" type="events"/>
-		<file name="shop_eventspawns.xml" type="eventspawns"/>
-	</ce>
 	<classes>
 <!--
 These are rootclasses to be used by economy.
