@@ -52,6 +52,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   String? _statusFilter;
   List<AdvisorSummary> _advisors = [];
   bool _isUnassigning = false;
+  bool _isSavingLead = false;
 
   // ─── DETAIL PANEL STATE ──────────────────────────────────────────────
   LeadModel? _selectedLead;
@@ -135,7 +136,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
     });
   }
 
-  void _saveLeadFromPanel() {
+  void _saveLeadFromPanel() async {
     if (_selectedLead == null) return;
     if (!(_panelFormKey.currentState?.validate() ?? false)) return;
 
@@ -150,22 +151,62 @@ class _LeadsListViewState extends State<_LeadsListView> {
       lastCallDate: _selectedLastCallDate,
     );
 
-    context.read<LeadsBloc>().add(UpdateLead(lead: updatedLead));
-    _closeDetailPanel();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white, size: 20),
-            SizedBox(width: 8),
-            Text('Lead actualizado correctamente'),
+    // Mostrar indicador de carga
+    setState(() => _isSavingLead = true);
+
+    try {
+      await LeadsService.updateLead(updatedLead);
+      if (!mounted) return;
+      setState(() => _isSavingLead = false);
+      _closeDetailPanel();
+      // Recargar lista
+      _loadLeads();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white, size: 20),
+              SizedBox(width: 8),
+              Text('Lead actualizado correctamente'),
+            ],
+          ),
+          backgroundColor: TBColors.success,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSavingLead = false);
+      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      showDialog(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(TBSpacing.radiusLg)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: TBColors.error.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.error_outline, color: TBColors.error, size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Text('Error al guardar'),
+            ],
+          ),
+          content: Text(errorMessage),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Entendido'),
+            ),
           ],
         ),
-        backgroundColor: TBColors.success,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-    );
+      );
+    }
   }
 
   void _deleteLeadFromPanel() {
@@ -559,9 +600,14 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: _saveLeadFromPanel,
-                          icon: const Icon(Icons.save_outlined, size: 18),
-                          label: const Text('Guardar'),
+                          onPressed: _isSavingLead ? null : _saveLeadFromPanel,
+                          icon: _isSavingLead
+                              ? const SizedBox(
+                                  width: 18, height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.save_outlined, size: 18),
+                          label: Text(_isSavingLead ? 'Guardando...' : 'Guardar'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: TBColors.primary,
                             foregroundColor: Colors.white,
@@ -1193,6 +1239,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
                   _buildSortableColumn('Teléfono', 'telefono'),
                   _buildSortableColumn('Email', 'email'),
                   _buildSortableColumn('Campaña', 'campana'),
+                  _buildSortableColumn('Fecha Registro', 'fechaRegistro'),
+                  _buildSortableColumn('Comentarios', 'comentarios'),
                 ],
                 rows: state.leads.map((lead) {
                   final isSelected = lead.id != null && _selectedLeadIds.contains(lead.id);
@@ -1234,6 +1282,23 @@ class _LeadsListViewState extends State<_LeadsListView> {
                       DataCell(Text(lead.telefono, style: TBTypography.bodyMedium)),
                       DataCell(Text(lead.email, style: TBTypography.bodyMedium.copyWith(color: TBColors.primary))),
                       DataCell(Text(lead.campana, style: TBTypography.bodyMedium)),
+                      DataCell(Text(
+                        lead.fechaRegistro != null
+                            ? DateFormat('dd/MM/yyyy').format(lead.fechaRegistro!)
+                            : '-',
+                        style: TBTypography.bodyMedium,
+                      )),
+                      DataCell(
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Text(
+                            lead.comentarios.isNotEmpty ? lead.comentarios : '-',
+                            style: TBTypography.bodyMedium.copyWith(color: TBColors.grey600),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                          ),
+                        ),
+                      ),
                     ],
                     onSelectChanged: (_) => _openDetailPanel(lead),
                   );
@@ -1379,7 +1444,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   int? _getSortColumnIndex() {
     if (_sortColumn == null) return null;
     // Status column is now a filter dropdown (not sortable), skip it in index calculation
-    const columns = ['nombre', 'apellido', 'advisor', null, 'lastCallDate', 'pais', 'telefono', 'email', 'campana'];
+    const columns = ['nombre', 'apellido', 'advisor', null, 'lastCallDate', 'pais', 'telefono', 'email', 'campana', 'fechaRegistro', 'comentarios'];
     final index = columns.indexOf(_sortColumn!);
     return index >= 0 ? index + 1 : null;
   }
