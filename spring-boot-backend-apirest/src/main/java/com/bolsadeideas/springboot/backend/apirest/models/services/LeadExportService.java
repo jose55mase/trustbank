@@ -12,7 +12,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadDao;
@@ -22,11 +21,12 @@ import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadEntity;
 public class LeadExportService {
 
     private static final String[] HEADERS = {
-        "Nombre", "Apellido", "Last Call Status", "País",
+        "Nombre", "Apellido", "Last Call Status", "Últ. Llamada", "Asesor", "País",
         "Teléfono", "Email", "Campaña", "Fecha de Registro", "Comentarios"
     };
 
     private static final String DATE_FORMAT = "dd/MM/yyyy";
+    private static final String DATETIME_FORMAT = "dd/MM/yyyy HH:mm";
 
     @Autowired
     private ILeadDao leadDao;
@@ -57,11 +57,12 @@ public class LeadExportService {
                 cell.setCellStyle(headerStyle);
             }
 
-            // Consultar todos los leads ordenados por fechaRegistro DESC
-            List<LeadEntity> leads = leadDao.findAll(Sort.by(Sort.Direction.DESC, "fechaRegistro"));
+            // Consultar todos los leads con advisor precargado
+            List<LeadEntity> leads = leadDao.findAllWithAdvisorForExport();
 
             // Escribir filas de datos
             SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+            SimpleDateFormat dateTimeFormat = new SimpleDateFormat(DATETIME_FORMAT);
             int rowIndex = 1;
 
             for (LeadEntity lead : leads) {
@@ -70,14 +71,25 @@ public class LeadExportService {
                 row.createCell(0).setCellValue(lead.getNombre() != null ? lead.getNombre() : "");
                 row.createCell(1).setCellValue(lead.getApellido() != null ? lead.getApellido() : "");
                 row.createCell(2).setCellValue(lead.getLastCallStatus() != null ? lead.getLastCallStatus() : "");
-                row.createCell(3).setCellValue(lead.getPais() != null ? lead.getPais() : "");
-                row.createCell(4).setCellValue(lead.getTelefono() != null ? lead.getTelefono() : "");
-                row.createCell(5).setCellValue(lead.getEmail() != null ? lead.getEmail() : "");
-                row.createCell(6).setCellValue(lead.getCampana() != null ? lead.getCampana() : "");
-                row.createCell(7).setCellValue(
+                row.createCell(3).setCellValue(
+                    lead.getLastCallDate() != null ? dateTimeFormat.format(lead.getLastCallDate()) : ""
+                );
+                // Asesor
+                String advisorName = "";
+                if (lead.getAdvisor() != null) {
+                    String firstName = lead.getAdvisor().getFirstName() != null ? lead.getAdvisor().getFirstName() : "";
+                    String lastName = lead.getAdvisor().getLastName() != null ? lead.getAdvisor().getLastName() : "";
+                    advisorName = (firstName + " " + lastName).trim();
+                }
+                row.createCell(4).setCellValue(advisorName);
+                row.createCell(5).setCellValue(lead.getPais() != null ? lead.getPais() : "");
+                row.createCell(6).setCellValue(lead.getTelefono() != null ? lead.getTelefono() : "");
+                row.createCell(7).setCellValue(lead.getEmail() != null ? lead.getEmail() : "");
+                row.createCell(8).setCellValue(lead.getCampana() != null ? lead.getCampana() : "");
+                row.createCell(9).setCellValue(
                     lead.getFechaRegistro() != null ? dateFormat.format(lead.getFechaRegistro()) : ""
                 );
-                row.createCell(8).setCellValue(lead.getComentarios() != null ? lead.getComentarios() : "");
+                row.createCell(10).setCellValue(lead.getComentarios() != null ? lead.getComentarios() : "");
             }
 
             // Escribir al OutputStream

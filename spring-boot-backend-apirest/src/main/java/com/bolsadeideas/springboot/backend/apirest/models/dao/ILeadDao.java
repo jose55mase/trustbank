@@ -49,6 +49,9 @@ public interface ILeadDao extends JpaRepository<LeadEntity, Long>, org.springfra
 
     List<LeadEntity> findAll(Sort sort);
 
+    @Query("SELECT l FROM LeadEntity l LEFT JOIN FETCH l.advisor ORDER BY l.fechaRegistro DESC")
+    List<LeadEntity> findAllWithAdvisorForExport();
+
     Page<LeadEntity> findByCampana(String campana, Pageable pageable);
 
     @Query("SELECT l FROM LeadEntity l WHERE l.campana = :campana AND (" +
