@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/auth_screen.dart';
 import '../../features/config_editor/config_editor_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/economy_config/economy_config_screen.dart';
 import '../../features/events_manager/events_manager_screen.dart';
 import '../../features/globals_manager/globals_manager_screen.dart';
+import '../../features/game_logs/game_logs_screen.dart';
 import '../../features/logs/logs_screen.dart';
+import '../../features/player_stats/player_stats_screen.dart';
 import '../../features/players/players_screen.dart';
 import '../../features/server_control/server_control_screen.dart';
 import '../../features/server_selection/server_selection_screen.dart';
@@ -14,7 +17,7 @@ import '../../features/types_manager/types_manager_screen.dart';
 import '../../shared/widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/auth',
+  initialLocation: '/servers',
   routes: [
     // Auth and server selection remain outside the navigation shell.
     GoRoute(
@@ -71,6 +74,21 @@ final appRouter = GoRouter(
           path: '/logs',
           name: 'logs',
           builder: (context, state) => const LogsScreen(),
+        ),
+        GoRoute(
+          path: '/game-logs',
+          name: 'game-logs',
+          builder: (context, state) => const GameLogsScreen(),
+        ),
+        GoRoute(
+          path: '/economy',
+          name: 'economy',
+          builder: (context, state) => const EconomyConfigScreen(),
+        ),
+        GoRoute(
+          path: '/player-stats',
+          name: 'player-stats',
+          builder: (context, state) => const PlayerStatsScreen(),
         ),
       ],
     ),

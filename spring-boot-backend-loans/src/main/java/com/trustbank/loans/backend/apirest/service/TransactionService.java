@@ -5,6 +5,9 @@ import com.trustbank.loans.backend.apirest.entity.Loan;
 import com.trustbank.loans.backend.apirest.repository.TransactionRepository;
 import com.trustbank.loans.backend.apirest.repository.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +23,7 @@ public class TransactionService {
     @Autowired
     private LoanRepository loanRepository;
     
+    @Cacheable(value = "transactions")
     public List<Transaction> findAll() {
         return transactionRepository.findAllOrderByDateDesc();
     }
@@ -32,6 +36,14 @@ public class TransactionService {
         return transactionRepository.findByLoanIdOrderByDateDesc(loanId);
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "transactions", allEntries = true),
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", allEntries = true),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Transaction save(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
@@ -40,10 +52,26 @@ public class TransactionService {
         return transactionRepository.getTotalPayments();
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "transactions", allEntries = true),
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", allEntries = true),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public void deleteById(Long id) {
         transactionRepository.deleteById(id);
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "transactions", allEntries = true),
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", allEntries = true),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Transaction saveWithLoan(Transaction transaction, boolean shouldUpdateInstallments) {
         // Asegurar que el préstamo existe y está correctamente asociado
         

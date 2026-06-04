@@ -6,6 +6,9 @@ import com.trustbank.loans.backend.apirest.entity.User;
 import com.trustbank.loans.backend.apirest.repository.LoanRepository;
 import com.trustbank.loans.backend.apirest.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.HashMap;
@@ -22,18 +25,22 @@ public class LoanService {
     @Autowired
     private UserRepository userRepository;
     
+    @Cacheable(value = "loans")
     public List<Loan> findAll() {
         return loanRepository.findAllByOrderByIdDesc();
     }
     
+    @Cacheable(value = "loan", key = "#id")
     public Optional<Loan> findById(Long id) {
         return loanRepository.findById(id);
     }
     
+    @Cacheable(value = "loans_by_user", key = "#userId")
     public List<Loan> findByUserId(Long userId) {
         return loanRepository.findByUserId(userId);
     }
     
+    @Cacheable(value = "loans_by_user_active", key = "#userId")
     public List<Loan> findActiveAndOverdueLoansByUserId(Long userId) {
         List<Loan> allLoans = loanRepository.findByUserId(userId);
         return allLoans.stream()
@@ -52,6 +59,12 @@ public class LoanService {
         return activeLoans;
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Loan save(Loan loan) {
         if (loan.getUser() != null && loan.getUser().getId() != null) {
             Optional<User> user = userRepository.findById(loan.getUser().getId());
@@ -93,7 +106,6 @@ public class LoanService {
                 }
                 break;
             case "Quincenal 30-15":
-                // Primera fecha: último día del mes si estamos antes del último día, o día 15 del siguiente mes
                 if (start.getDayOfMonth() < start.lengthOfMonth()) {
                     firstPayment = start.withDayOfMonth(start.lengthOfMonth());
                 } else {
@@ -131,10 +143,12 @@ public class LoanService {
         return firstPayment.atStartOfDay();
     }
     
+    @Cacheable(value = "loan_stats", key = "'totalActive'")
     public Double getTotalActiveLoanAmount() {
         return loanRepository.getTotalActiveLoanAmount();
     }
     
+    @Cacheable(value = "loan_stats", key = "'totalRemaining'")
     public Double getTotalRemainingAmount() {
         List<Loan> activeLoans = loanRepository.findByStatus(LoanStatus.ACTIVE);
         List<Loan> overdueLoans = loanRepository.findByStatus(LoanStatus.OVERDUE);
@@ -150,13 +164,19 @@ public class LoanService {
         return activeTotal + overdueTotal;
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", allEntries = true),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Map<String, Object> recalculateAllBalances() {
         List<Loan> allLoans = loanRepository.findAll();
         int processedLoans = 0;
         int updatedLoans = 0;
         
         for (Loan loan : allLoans) {
-            // Recalcular cuotas pagadas basándose en transacciones
             List<com.trustbank.loans.backend.apirest.entity.Transaction> payments = 
                 loan.getTransactions() != null ? loan.getTransactions() : java.util.Collections.emptyList();
             
@@ -167,7 +187,6 @@ public class LoanService {
             int oldPaidInstallments = loan.getPaidInstallments();
             loan.setPaidInstallments(paymentCount);
             
-            // Verificar si el préstamo está completamente pagado
             BigDecimal remainingAmount = loan.getRemainingAmount();
             LoanStatus oldStatus = loan.getStatus();
             
@@ -177,7 +196,6 @@ public class LoanService {
                 }
             }
             
-            // Contar como actualizado si cambió algo
             if (oldPaidInstallments != paymentCount || !oldStatus.equals(loan.getStatus())) {
                 updatedLoans++;
             }
@@ -194,21 +212,42 @@ public class LoanService {
         return result;
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", key = "#id"),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public void deleteById(Long id) {
         loanRepository.deleteById(id);
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", key = "#id"),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Loan updateStatus(Long id, LoanStatus newStatus) {
         Optional<Loan> loanOpt = loanRepository.findById(id);
         if (loanOpt.isPresent()) {
             Loan loan = loanOpt.get();
-            loan.setStatus(newStatus); // Esto automáticamente guarda el estado anterior
+            loan.setStatus(newStatus);
             return loanRepository.save(loan);
         } else {
             throw new RuntimeException("Préstamo no encontrado con ID: " + id);
         }
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", key = "#id"),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Loan updatePaymentStatus(Long id, Boolean pagoAnterior, Boolean pagoActual) {
         Optional<Loan> loanOpt = loanRepository.findById(id);
         if (loanOpt.isPresent()) {
@@ -221,6 +260,13 @@ public class LoanService {
         }
     }
     
+    @Caching(evict = {
+        @CacheEvict(value = "loans", allEntries = true),
+        @CacheEvict(value = "loan", key = "#id"),
+        @CacheEvict(value = "loan_stats", allEntries = true),
+        @CacheEvict(value = "loans_by_user", allEntries = true),
+        @CacheEvict(value = "loans_by_user_active", allEntries = true)
+    })
     public Loan updatePaidInstallments(Long id, Integer paidInstallments) {
         Optional<Loan> loanOpt = loanRepository.findById(id);
         if (loanOpt.isPresent()) {
@@ -236,6 +282,7 @@ public class LoanService {
         return loanRepository.findByStatus(LoanStatus.OVERDUE);
     }
     
+    @Cacheable(value = "loan_stats", key = "'overdueCount'")
     public Long countOverdueLoans() {
         return loanRepository.countByStatus(LoanStatus.OVERDUE);
     }

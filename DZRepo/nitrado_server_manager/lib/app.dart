@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
-import 'features/auth/auth_notifier.dart';
 
 /// Server status color constants (Req 10.5, 2.5).
 const kOnlineColor = Colors.green;
@@ -22,16 +21,8 @@ class _NitradoServerManagerAppState
   @override
   void initState() {
     super.initState();
-    // Attempt to restore a previous session on app start (Req 1.2).
-    Future.microtask(() {
-      ref.read(authNotifierProvider.notifier).tryRestoreSession().then((_) {
-        if (!mounted) return;
-        final status = ref.read(authNotifierProvider).status;
-        if (status == AuthStatus.authenticated) {
-          appRouter.go('/servers');
-        }
-      });
-    });
+    // Backend handles Nitrado authentication internally — no token needed
+    // in the Flutter app. Go straight to server selection.
   }
 
   @override
