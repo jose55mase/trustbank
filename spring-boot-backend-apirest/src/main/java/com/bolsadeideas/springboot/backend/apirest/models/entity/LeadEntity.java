@@ -14,6 +14,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 
@@ -76,6 +77,9 @@ public class LeadEntity implements Serializable {
     @JoinColumn(name = "advisor_id", nullable = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password", "rols", "documentsAprov", "document", "documentFrom", "documentBack", "documentFromStatus", "documentBackStatus", "fotoStatus", "foto", "aboutme", "moneyclean", "postal", "administratorManager"})
     private UserEntity advisor;
+
+    @Transient
+    private String lastComment;
 
     public LeadEntity() {
     }
@@ -209,5 +213,13 @@ public class LeadEntity implements Serializable {
 
     public void setAdvisor(UserEntity advisor) {
         this.advisor = advisor;
+    }
+
+    public String getLastComment() {
+        return lastComment;
+    }
+
+    public void setLastComment(String lastComment) {
+        this.lastComment = lastComment;
     }
 }

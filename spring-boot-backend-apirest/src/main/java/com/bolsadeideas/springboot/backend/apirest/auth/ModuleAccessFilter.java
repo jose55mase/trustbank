@@ -89,7 +89,9 @@ public class ModuleAccessFilter extends OncePerRequestFilter {
             "/api/user/**",
             "/api/users/**",
             "/api/supervisor/**",
-            "/api/clientes/**"
+            "/api/clientes/**",
+            "/api/leads/*/comments",
+            "/api/leads/*/comments/**"
     );
 
     @Autowired

@@ -38,6 +38,8 @@ public class SupervisorAccessFilter extends OncePerRequestFilter {
     private static final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     private static final String LEADS_PATTERN = "/api/leads/**";
+    private static final String LEADS_COMMENTS_PATTERN = "/api/leads/*/comments/**";
+    private static final String LEADS_COMMENTS_BASE_PATTERN = "/api/leads/*/comments";
 
     @Autowired
     private IUserService userService;
@@ -48,6 +50,12 @@ public class SupervisorAccessFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         String method = request.getMethod();
+
+        // Allow comments endpoints for all users (POST/DELETE on /api/leads/*/comments/**)
+        if (pathMatcher.match(LEADS_COMMENTS_PATTERN, path)
+                || pathMatcher.match(LEADS_COMMENTS_BASE_PATTERN, path)) {
+            return true; // Skip this filter — let the request through
+        }
 
         // Only apply this filter to POST/DELETE on /api/leads/**
         if (pathMatcher.match(LEADS_PATTERN, path)) {

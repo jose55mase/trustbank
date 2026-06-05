@@ -15,6 +15,7 @@ class LeadModel {
   final int? advisorId;
   final String? advisorName;
   final DateTime? lastCallDate;
+  final String? lastComment;
 
   LeadModel({
     this.id,
@@ -33,6 +34,7 @@ class LeadModel {
     this.advisorId,
     this.advisorName,
     this.lastCallDate,
+    this.lastComment,
   });
 
   factory LeadModel.fromJson(Map<String, dynamic> json) {
@@ -65,6 +67,7 @@ class LeadModel {
       advisorId: advisorId,
       advisorName: advisorName,
       lastCallDate: _parseDate(json['lastCallDate']),
+      lastComment: json['lastComment'] as String?,
     );
   }
 
@@ -109,6 +112,7 @@ class LeadModel {
     int? advisorId,
     String? advisorName,
     DateTime? lastCallDate,
+    String? lastComment,
   }) {
     return LeadModel(
       id: id ?? this.id,
@@ -127,6 +131,7 @@ class LeadModel {
       advisorId: advisorId ?? this.advisorId,
       advisorName: advisorName ?? this.advisorName,
       lastCallDate: lastCallDate ?? this.lastCallDate,
+      lastComment: lastComment ?? this.lastComment,
     );
   }
 

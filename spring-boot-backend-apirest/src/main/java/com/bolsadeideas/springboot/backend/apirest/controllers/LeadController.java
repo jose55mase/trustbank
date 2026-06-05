@@ -40,8 +40,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.bolsadeideas.springboot.backend.apirest.models.dao.IAssignmentTypeDao;
+import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadCommentDao;
 import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadDao;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.AssignmentTypeEntity;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadCommentEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadImportEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
@@ -70,6 +72,9 @@ public class LeadController {
 
     @Autowired
     private ILeadDao leadDao;
+
+    @Autowired
+    private ILeadCommentDao leadCommentDao;
 
     @Autowired
     private IPermissionService permissionService;
@@ -339,6 +344,17 @@ public class LeadController {
             }
 
             Page<LeadEntity> leads = leadDao.findAll(spec, pageable);
+
+            // Populate lastComment field with the most recent comment text
+            for (LeadEntity lead : leads.getContent()) {
+                LeadCommentEntity latestComment = leadCommentDao.findFirstByLeadIdOrderByCreatedAtDesc(lead.getId());
+                if (latestComment != null) {
+                    lead.setLastComment(latestComment.getText());
+                } else if (lead.getComentarios() != null && !lead.getComentarios().trim().isEmpty()) {
+                    lead.setLastComment(lead.getComentarios());
+                }
+            }
+
             return new ResponseEntity<>(leads, HttpStatus.OK);
         } catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
