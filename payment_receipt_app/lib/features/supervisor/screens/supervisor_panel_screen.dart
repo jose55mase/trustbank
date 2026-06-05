@@ -43,6 +43,7 @@ class _SupervisorPanelView extends StatefulWidget {
 
 class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _horizontalScrollController = ScrollController();
   int _currentPage = 0;
   int _totalLeadCount = 0;
   static const int _pageSize = 20;
@@ -50,6 +51,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
 
   // ─── STATUS OPTIONS ──────────────────────────────────────────────────
   static const List<String> _statusOptions = [
+    'NEW',
     'CALL BACK',
     'LOW POTENCIAL',
     'POTENTIAL',
@@ -60,6 +62,8 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
 
   static Color _getStatusColor(String? status) {
     switch (status?.toUpperCase()) {
+      case 'NEW':
+        return const Color(0xFF9E9E9E); // Grey
       case 'CALL BACK':
         return const Color(0xFF2196F3); // Blue
       case 'LOW POTENCIAL':
@@ -67,7 +71,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       case 'POTENTIAL':
         return const Color(0xFF9C27B0); // Violet
       case 'NO ANSWER':
-        return const Color(0xFF9E9E9E); // Grey
+        return const Color(0xFF00BCD4); // Cyan
       case 'NO INTERED':
         return const Color(0xFFF44336); // Red
       case 'INTERED':
@@ -321,7 +325,6 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       });
     }
     if (state is SupervisorLeadUpdated) {
-      _closeDetailPanel();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
@@ -590,9 +593,14 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   Widget _buildLeadsTable(List<LeadModel> leads) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: TBSpacing.screenPadding),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
+      child: Scrollbar(
+        controller: _horizontalScrollController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        child: SingleChildScrollView(
+          controller: _horizontalScrollController,
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
           headingRowColor: WidgetStateProperty.all(
             TBColors.primary.withOpacity(0.05),
           ),
@@ -617,6 +625,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
           columns: _buildVisibleColumns(),
           rows: leads.map((lead) => _buildLeadRow(lead)).toList(),
         ),
+      ),
       ),
     );
   }
