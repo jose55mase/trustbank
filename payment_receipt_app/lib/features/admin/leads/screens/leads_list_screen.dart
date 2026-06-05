@@ -41,6 +41,7 @@ class _LeadsListView extends StatefulWidget {
 
 class _LeadsListViewState extends State<_LeadsListView> {
   final _searchController = TextEditingController();
+  final _horizontalScrollController = ScrollController();
   int _currentPage = 0;
   String? _sortColumn;
   bool _sortAscending = true;
@@ -208,9 +209,12 @@ class _LeadsListViewState extends State<_LeadsListView> {
     try {
       await LeadsService.updateLead(updatedLead);
       if (!mounted) return;
-      setState(() => _isSavingLead = false);
-      _closeDetailPanel();
-      // Recargar lista
+      setState(() {
+        _isSavingLead = false;
+        // Update the selected lead in place without closing the panel
+        _selectedLead = updatedLead;
+      });
+      // Reload the table at the current page (no reset)
       _loadLeads();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1265,10 +1269,15 @@ class _LeadsListViewState extends State<_LeadsListView> {
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
+          child: Scrollbar(
+            controller: _horizontalScrollController,
+            thumbVisibility: true,
+            trackVisibility: true,
             child: SingleChildScrollView(
-              child: DataTable(
+              controller: _horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SingleChildScrollView(
+                child: DataTable(
                 sortColumnIndex: _getSortColumnIndex(),
                 sortAscending: _sortAscending,
                 headingRowColor: WidgetStateProperty.all(TBColors.grey100),
@@ -1381,6 +1390,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
               ),
             ),
           ),
+          ),
         ),
         _buildPaginationControls(state),
       ],
@@ -1426,6 +1436,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
   }
 
   static const List<String> _statusOptions = [
+    'NEW',
     'CALL BACK',
     'LOW POTENCIAL',
     'POTENTIAL',
@@ -1436,6 +1447,8 @@ class _LeadsListViewState extends State<_LeadsListView> {
 
   static Color _getStatusColor(String? status) {
     switch (status?.toUpperCase()) {
+      case 'NEW':
+        return const Color(0xFF9E9E9E); // Grey
       case 'CALL BACK':
         return const Color(0xFF2196F3); // Blue
       case 'LOW POTENCIAL':
@@ -1443,7 +1456,7 @@ class _LeadsListViewState extends State<_LeadsListView> {
       case 'POTENTIAL':
         return const Color(0xFF9C27B0); // Violet
       case 'NO ANSWER':
-        return const Color(0xFF9E9E9E); // Grey
+        return const Color(0xFF00BCD4); // Cyan
       case 'NO INTERED':
         return const Color(0xFFF44336); // Red
       case 'INTERED':
