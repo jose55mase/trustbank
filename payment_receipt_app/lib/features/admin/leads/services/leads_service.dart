@@ -299,7 +299,7 @@ class LeadsService {
   static String _parseError(String responseBody, int statusCode) {
     try {
       final data = json.decode(responseBody);
-      return data['message'] ?? 'Error del servidor: $statusCode';
+      return data['message'] ?? data['error'] ?? 'Error del servidor: $statusCode';
     } catch (_) {
       return 'Error del servidor: $statusCode';
     }

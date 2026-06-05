@@ -5,9 +5,11 @@ import 'package:intl/intl.dart';
 import '../../../../constants/countries.dart';
 import '../../../../design_system/colors/tb_colors.dart';
 import '../../../../design_system/typography/tb_typography.dart';
+import '../bloc/lead_comments_bloc.dart';
 import '../bloc/leads_bloc.dart';
 import '../models/lead_model.dart';
 import '../services/leads_service.dart';
+import '../widgets/comments_section.dart';
 
 class LeadDetailScreen extends StatelessWidget {
   final int leadId;
@@ -134,7 +136,6 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
       email: _emailController.text.trim(),
       campana: _campanaController.text.trim(),
       fechaRegistro: fechaRegistro,
-      comentarios: _comentariosController.text.trim(),
     );
 
     setState(() {
@@ -270,49 +271,56 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
   Widget _buildDetailView(LeadModel lead) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Card(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDetailHeader(lead),
-              const Divider(height: 32),
-              _buildDetailField('Nombre', lead.nombre, Icons.person),
-              _buildDetailField('Apellido', lead.apellido, Icons.person_outline),
-              _buildDetailField(
-                  'Estado de Llamada', lead.lastCallStatus, Icons.phone_callback),
-              _buildDetailField('País', lead.pais, Icons.flag),
-              _buildDetailField('Teléfono', lead.telefono, Icons.phone),
-              _buildDetailField('Email', lead.email, Icons.email),
-              _buildDetailField('Campaña', lead.campana, Icons.campaign),
-              _buildDetailField(
-                'Fecha de Registro',
-                lead.fechaRegistro != null
-                    ? DateFormat('dd/MM/yyyy').format(lead.fechaRegistro!)
-                    : 'No disponible',
-                Icons.calendar_today,
-              ),
-              _buildDetailField(
-                  'Comentarios', lead.comentarios, Icons.comment),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _enterEditMode,
-                  icon: const Icon(Icons.edit),
-                  label: const Text('Editar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TBColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Column(
+        children: [
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailHeader(lead),
+                  const Divider(height: 32),
+                  _buildDetailField('Nombre', lead.nombre, Icons.person),
+                  _buildDetailField('Apellido', lead.apellido, Icons.person_outline),
+                  _buildDetailField(
+                      'Estado de Llamada', lead.lastCallStatus, Icons.phone_callback),
+                  _buildDetailField('País', lead.pais, Icons.flag),
+                  _buildDetailField('Teléfono', lead.telefono, Icons.phone),
+                  _buildDetailField('Email', lead.email, Icons.email),
+                  _buildDetailField('Campaña', lead.campana, Icons.campaign),
+                  _buildDetailField(
+                    'Fecha de Registro',
+                    lead.fechaRegistro != null
+                        ? DateFormat('dd/MM/yyyy').format(lead.fechaRegistro!)
+                        : 'No disponible',
+                    Icons.calendar_today,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _enterEditMode,
+                      icon: const Icon(Icons.edit),
+                      label: const Text('Editar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TBColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          const SizedBox(height: 16),
+          BlocProvider(
+            create: (context) => LeadCommentsBloc()..add(LoadComments(leadId: widget.leadId)),
+            child: CommentsSection(leadId: widget.leadId),
+          ),
+        ],
       ),
     );
   }
@@ -390,15 +398,17 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
   Widget _buildEditMode() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Form(
-        key: _formKey,
-        child: Card(
-          elevation: 2,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: Column(
+        children: [
+          Form(
+            key: _formKey,
+            child: Card(
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 Text(
                   'Editar Lead',
                   style: TBTypography.titleLarge,
@@ -448,12 +458,6 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
                   icon: Icons.calendar_today,
                   keyboardType: TextInputType.datetime,
                 ),
-                _buildTextField(
-                  controller: _comentariosController,
-                  label: 'Comentarios',
-                  icon: Icons.comment,
-                  maxLines: 3,
-                ),
                 const SizedBox(height: 24),
                 Row(
                   children: [
@@ -489,10 +493,17 @@ class _LeadDetailViewState extends State<_LeadDetailView> {
                     ),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
+          ),
+          const SizedBox(height: 16),
+          BlocProvider(
+            create: (context) => LeadCommentsBloc()..add(LoadComments(leadId: widget.leadId)),
+            child: CommentsSection(leadId: widget.leadId),
+          ),
+        ],
       ),
     );
   }

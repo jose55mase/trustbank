@@ -18,6 +18,7 @@ class LeadModel extends Equatable {
   final DateTime? updatedAt;
   final int? advisorId;
   final String? advisorName;
+  final String? lastComment;
 
   const LeadModel({
     required this.id,
@@ -35,6 +36,7 @@ class LeadModel extends Equatable {
     this.updatedAt,
     this.advisorId,
     this.advisorName,
+    this.lastComment,
   });
 
   factory LeadModel.fromJson(Map<String, dynamic> json) {
@@ -66,6 +68,7 @@ class LeadModel extends Equatable {
       updatedAt: _parseDate(json['updatedAt']),
       advisorId: advisorId,
       advisorName: advisorName,
+      lastComment: json['lastComment'] as String?,
     );
   }
 
@@ -111,5 +114,6 @@ class LeadModel extends Equatable {
         updatedAt,
         advisorId,
         advisorName,
+        lastComment,
       ];
 }

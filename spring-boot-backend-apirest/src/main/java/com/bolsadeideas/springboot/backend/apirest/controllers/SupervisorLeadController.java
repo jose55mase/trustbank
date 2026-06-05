@@ -22,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bolsadeideas.springboot.backend.apirest.exceptions.LeadNotInAssignmentException;
 import com.bolsadeideas.springboot.backend.apirest.exceptions.NoAssignmentConfiguredException;
+import com.bolsadeideas.springboot.backend.apirest.models.dao.ILeadCommentDao;
 import com.bolsadeideas.springboot.backend.apirest.models.dto.LeadPartialUpdateRequest;
+import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadCommentEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.LeadEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.entity.UserEntity;
 import com.bolsadeideas.springboot.backend.apirest.models.services.ILeadService;
@@ -40,6 +42,9 @@ public class SupervisorLeadController {
 
     @Autowired
     private ISupervisorLeadService supervisorLeadService;
+
+    @Autowired
+    private ILeadCommentDao leadCommentDao;
 
     @Autowired
     private ILeadService leadService;
@@ -75,6 +80,16 @@ public class SupervisorLeadController {
                 leads = supervisorLeadService.findLeadsBySupervisorAndStatus(userId, status.trim(), pageable);
             } else {
                 leads = supervisorLeadService.findLeadsBySupervisor(userId, pageable);
+            }
+
+            // Populate lastComment field with the most recent comment text
+            for (LeadEntity lead : leads.getContent()) {
+                LeadCommentEntity latestComment = leadCommentDao.findFirstByLeadIdOrderByCreatedAtDesc(lead.getId());
+                if (latestComment != null) {
+                    lead.setLastComment(latestComment.getText());
+                } else if (lead.getComentarios() != null && !lead.getComentarios().trim().isEmpty()) {
+                    lead.setLastComment(lead.getComentarios());
+                }
             }
 
             return new ResponseEntity<>(leads, HttpStatus.OK);

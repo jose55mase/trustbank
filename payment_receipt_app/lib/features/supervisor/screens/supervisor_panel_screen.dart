@@ -9,6 +9,8 @@ import '../../../design_system/typography/tb_typography.dart';
 import '../../../models/lead_model.dart';
 import '../../../services/auth_service.dart';
 import '../../auth/screens/login_screen.dart';
+import '../../admin/leads/bloc/lead_comments_bloc.dart';
+import '../../admin/leads/widgets/comments_section.dart';
 import '../bloc/supervisor_bloc.dart';
 
 /// Pantalla principal del Panel del Supervisor (Asesor).
@@ -50,6 +52,7 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
   static const List<String> _statusOptions = [
     'CALL BACK',
     'LOW POTENCIAL',
+    'POTENTIAL',
     'NO ANSWER',
     'NO INTERED',
     'INTERED',
@@ -61,6 +64,8 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
         return const Color(0xFF2196F3); // Blue
       case 'LOW POTENCIAL':
         return const Color(0xFFFF9800); // Orange
+      case 'POTENTIAL':
+        return const Color(0xFF9C27B0); // Violet
       case 'NO ANSWER':
         return const Color(0xFF9E9E9E); // Grey
       case 'NO INTERED':
@@ -194,6 +199,55 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     });
   }
 
+  void _openCommentsDialog(LeadModel lead) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return Dialog(
+          alignment: Alignment.centerLeft,
+          insetPadding: const EdgeInsets.only(left: 16, top: 40, bottom: 40, right: 300),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: SizedBox(
+            width: 450,
+            height: MediaQuery.of(dialogContext).size.height * 0.8,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '${lead.nombre ?? ''} ${lead.apellido ?? ''}',
+                          style: TBTypography.titleLarge.copyWith(fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: BlocProvider(
+                        create: (context) => LeadCommentsBloc()
+                          ..add(LoadComments(leadId: lead.id)),
+                        child: CommentsSection(leadId: lead.id),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _saveLeadFromPanel() {
     if (_selectedLead == null) return;
     if (!(_panelFormKey.currentState?.validate() ?? false)) return;
@@ -205,7 +259,6 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
       'email': _emailController.text.trim(),
       'pais': _selectedPais ?? '',
       'lastCallStatus': _selectedStatus ?? '',
-      'comentarios': _comentariosController.text.trim(),
       if (_selectedLastCallDate != null)
         'lastCallDate': _selectedLastCallDate!.toIso8601String(),
     };
@@ -654,8 +707,22 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
     if (_visibleColumns['comentarios']!) {
       cells.add(DataCell(
         ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 200),
-          child: Text(lead.comentarios ?? '-', overflow: TextOverflow.ellipsis, maxLines: 2),
+          constraints: const BoxConstraints(maxWidth: 350),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(lead.lastComment ?? lead.comentarios ?? '-', overflow: TextOverflow.ellipsis, maxLines: 3),
+              ),
+              if ((lead.lastComment ?? lead.comentarios ?? '').isNotEmpty)
+                IconButton(
+                  icon: const Icon(Icons.open_in_new, size: 16, color: Colors.red),
+                  tooltip: 'Ver comentarios',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  onPressed: () => _openCommentsDialog(lead),
+                ),
+            ],
+          ),
         ),
       ));
     }
@@ -901,33 +968,36 @@ class _SupervisorPanelViewState extends State<_SupervisorPanelView> {
                       ),
                     ),
                     const SizedBox(height: TBSpacing.md),
-                    _buildPanelTextField(
-                      controller: _comentariosController,
-                      label: 'Comentarios',
-                      icon: Icons.comment_outlined,
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: TBSpacing.xl),
-                    // Guardar button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: _saveLeadFromPanel,
-                        icon: const Icon(Icons.save_outlined, size: 18),
-                        label: const Text('Guardar'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: TBColors.primary,
-                          foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(TBSpacing.radiusMd),
-                          ),
-                        ),
+                    // Protected comments section
+                    if (_selectedLead != null)
+                      BlocProvider(
+                        key: ValueKey('comments_${_selectedLead!.id}'),
+                        create: (context) => LeadCommentsBloc()
+                          ..add(LoadComments(leadId: _selectedLead!.id)),
+                        child: CommentsSection(leadId: _selectedLead!.id),
                       ),
-                    ),
+                    const SizedBox(height: TBSpacing.md),
                   ],
+                ),
+              ),
+            ),
+          ),
+          // Fixed buttons at the bottom
+          Padding(
+            padding: const EdgeInsets.all(TBSpacing.md),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _saveLeadFromPanel,
+                icon: const Icon(Icons.save_outlined, size: 18),
+                label: const Text('Guardar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TBColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(TBSpacing.radiusMd),
+                  ),
                 ),
               ),
             ),
