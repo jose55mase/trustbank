@@ -1,0 +1,180 @@
+{
+    "Objects": [
+        {
+            "name": "SparkPlug",
+            "pos": [
+                963.14111328125,
+                521.6617431640625,
+                1181.2421875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                967.7169189453125,
+                521.2562255859375,
+                1182.8343505859376
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "R12",
+            "pos": [
+                966.7405395507813,
+                521.3609619140625,
+                1182.8231201171876
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NBCGlovesGray",
+            "pos": [
+                967.9576416015625,
+                521.2321166992188,
+                1182.414306640625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                967.4776611328125,
+                521.2880859375,
+                1182.5484619140626
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                968.4285278320313,
+                521.17138671875,
+                1182.782470703125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                967.3550415039063,
+                521.299072265625,
+                1182.893798828125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "DZ\\gear\\consumables\\gasmask_filter.p3d",
+            "pos": [
+                968.32421875,
+                521.1802978515625,
+                1183.1064453125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                966.708984375,
+                521.3587646484375,
+                1182.5338134765626
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "DZ\\gear\\consumables\\gasmask_filter.p3d",
+            "pos": [
+                968.5682373046875,
+                521.1585083007813,
+                1182.4383544921876
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                966.62158203125,
+                521.379150390625,
+                1183.2374267578126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+    ]
+}

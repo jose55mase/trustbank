@@ -1,0 +1,276 @@
+{
+    "Objects": [
+        {
+            "name": "NBCGlovesGray",
+            "pos": [
+                958.4624633789063,
+                522.0364990234375,
+                1183.992919921875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "PunchedCard",
+            "pos": [
+                958.902587890625,
+                522.0140991210938,
+                1183.3798828125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NBCHoodGray",
+            "pos": [
+                958.1929321289063,
+                522.040283203125,
+                1184.056396484375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NBCPantsGray",
+            "pos": [
+                958.3533935546875,
+                522.0254516601563,
+                1183.625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NBCBootsGray",
+            "pos": [
+                958.7901611328125,
+                522.0300903320313,
+                1183.8577880859376
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NBCJacketGray",
+            "pos": [
+                958.7403564453125,
+                522.1717529296875,
+                1184.257080078125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "TetracyclineAntibiotics",
+            "pos": [
+                958.3707885742188,
+                522.0009765625,
+                1182.864501953125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                959.0126953125,
+                522.0321044921875,
+                1183.9659423828126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "TetracyclineAntibiotics",
+            "pos": [
+                958.6082763671875,
+                522.0015258789063,
+                1182.927001953125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "TacticalBaconCan_Opened",
+            "pos": [
+                959.27783203125,
+                522.0189819335938,
+                1183.6085205078126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                958.9983520507813,
+                522.0225830078125,
+                1183.66552734375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                958.703125,
+                522.0209350585938,
+                1183.554931640625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                958.7955322265625,
+                522.0186157226563,
+                1183.5010986328126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "TacticalBaconCan_Opened",
+            "pos": [
+                958.98095703125,
+                522.0054321289063,
+                1183.12646484375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "GasMask_Filter",
+            "pos": [
+                958.93310546875,
+                522.0885620117188,
+                1183.5428466796876
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AirborneMask",
+            "pos": [
+                958.5665893554688,
+                522.0105590820313,
+                1183.20263671875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "TacticalBaconCan_Opened",
+            "pos": [
+                959.203125,
+                522.009033203125,
+                1183.282470703125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999996423721314,
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+    ]
+}

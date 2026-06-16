@@ -1,0 +1,180 @@
+{
+    "Objects": [
+        {
+            "name": "CarBattery",
+            "pos": [
+                963.2374267578125,
+                521.660888671875,
+                1181.715576171875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Ammo_12gaPellets",
+            "pos": [
+                962.2852172851563,
+                521.7335815429688,
+                1181.0157470703126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "NVGHeadstrap",
+            "pos": [
+                963.3662719726563,
+                521.6592407226563,
+                1182.287109375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "R12",
+            "pos": [
+                963.0301513671875,
+                521.67236328125,
+                1181.2901611328126
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Ammo_12gaPellets",
+            "pos": [
+                947.5609130859375,
+                525.2816162109375,
+                1164.39501953125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                962.9149169921875,
+                521.6896362304688,
+                1181.0164794921876
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                963.6278686523438,
+                521.6209106445313,
+                1181.125244140625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                963.30419921875,
+                521.65576171875,
+                1180.950927734375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Ammo_12gaPellets",
+            "pos": [
+                962.0450439453125,
+                521.756103515625,
+                1181.4188232421876
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "AmmoBox_12gaBeanbag_10Rnd",
+            "pos": [
+                962.5820922851563,
+                521.7185668945313,
+                1181.5941162109376
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Ammo_12gaPellets",
+            "pos": [
+                962.84326171875,
+                521.7022094726563,
+                1182.022705078125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+    ]
+}

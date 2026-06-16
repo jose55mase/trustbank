@@ -1,0 +1,612 @@
+{
+    "Objects": [
+        {
+            "name": "Land_ContainerLocked_Red_DE",
+            "pos": [
+                6958.560546875,
+                286.8291931152344,
+                4637.87646484375
+            ],
+            "ypr": [
+                63.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999999403953552,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "JungleBoots_Black",
+            "pos": [
+                6958.47412109375,
+                285.730712890625,
+                4638.13623046875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "JungleBoots_Beige",
+            "pos": [
+                6936.44921875,
+                273.50836181640627,
+                4559.177734375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "ShippingContainerKeys_Red",
+            "pos": [
+                6929.37109375,
+                285.6199645996094,
+                4632.0654296875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "DZ\\structures\\military\\improvised\\roadblock_table.p3d",
+            "pos": [
+                6960.35693359375,
+                285.730712890625,
+                4638.166015625
+            ],
+            "ypr": [
+                2.670353412628174,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "ShippingContainerKeys_Orange",
+            "pos": [
+                6929.947265625,
+                285.6199645996094,
+                4632.34033203125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "FAL",
+            "pos": [
+                6960.48095703125,
+                286.5438232421875,
+                4638.06005859375
+            ],
+            "ypr": [
+                -27.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999999403953552,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Pot",
+            "pos": [
+                6956.486328125,
+                285.730712890625,
+                4635.90478515625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Fal_OeBttstck",
+            "pos": [
+                6960.720703125,
+                286.5438232421875,
+                4638.33740234375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "M65Jacket_Black",
+            "pos": [
+                6958.80712890625,
+                287.6389465332031,
+                4636.876953125
+            ],
+            "ypr": [
+                55.7599983215332,
+                -6.999999046325684,
+                -90.00000762939453
+            ],
+            "scale": 0.9999961853027344,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mag_FAL_20Rnd",
+            "pos": [
+                6959.8857421875,
+                286.5438232421875,
+                4637.6005859375
+            ],
+            "ypr": [
+                -9.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mag_Vikhr_30Rnd",
+            "pos": [
+                6937.6435546875,
+                274.4681396484375,
+                4557.74267578125
+            ],
+            "ypr": [
+                35.99999237060547,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mag_FAL_20Rnd",
+            "pos": [
+                6959.9345703125,
+                286.5438232421875,
+                4637.7001953125
+            ],
+            "ypr": [
+                -18.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mag_FAL_20Rnd",
+            "pos": [
+                6959.6044921875,
+                286.5438232421875,
+                4637.64697265625
+            ],
+            "ypr": [
+                -18.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "DZ\\weapons\\attachments\\optics\\optic_acog6x.p3d",
+            "pos": [
+                6960.1025390625,
+                286.5438232421875,
+                4638.31591796875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "BalaclavaMask_Green",
+            "pos": [
+                6941.41650390625,
+                271.0474853515625,
+                4534.5888671875
+            ],
+            "ypr": [
+                35.99999237060547,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "CargoPants_Green",
+            "pos": [
+                6941.38720703125,
+                271.033203125,
+                4534.24169921875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "JungleBoots_Green",
+            "pos": [
+                6940.78466796875,
+                271.0327453613281,
+                4534.16162109375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "WoolGlovesFingerless_Black",
+            "pos": [
+                6941.39208984375,
+                271.0560607910156,
+                4534.7919921875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "BallisticHelmet_Black",
+            "pos": [
+                6941.09912109375,
+                271.04534912109377,
+                4534.50048828125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mag_Vikhr_30Rnd",
+            "pos": [
+                6937.3994140625,
+                274.4816589355469,
+                4558.03125
+            ],
+            "ypr": [
+                35.999996185302737,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "ASVAL",
+            "pos": [
+                6937.78466796875,
+                274.32147216796877,
+                4557.29150390625
+            ],
+            "ypr": [
+                45.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "CargoPants_Black",
+            "pos": [
+                6958.8505859375,
+                285.730712890625,
+                4637.2802734375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Land_ContainerLocked_Orange_DE",
+            "pos": [
+                6936.962890625,
+                274.6068420410156,
+                4559.251953125
+            ],
+            "ypr": [
+                135.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "PlateCarrierVest_Black",
+            "pos": [
+                6959.45849609375,
+                287.71124267578127,
+                4637.18994140625
+            ],
+            "ypr": [
+                57.0,
+                -6.999998569488525,
+                -88.99999237060547
+            ],
+            "scale": 1.0000001192092896,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Land_Roadblock_Table",
+            "pos": [
+                6937.68603515625,
+                273.9085388183594,
+                4557.67724609375
+            ],
+            "ypr": [
+                45.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 1.0,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "WinterMilitaryCoat_Brown",
+            "pos": [
+                6941.724609375,
+                271.053955078125,
+                4534.77978515625
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998211860657,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "WinterMilitaryCoat_DarkGrey",
+            "pos": [
+                6938.62255859375,
+                273.50836181640627,
+                4558.58642578125
+            ],
+            "ypr": [
+                -63.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999999403953552,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "WoolGlovesFingerless_Green",
+            "pos": [
+                6937.02001953125,
+                273.7699279785156,
+                4558.37939453125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "PlateCarrierHolster_Black",
+            "pos": [
+                6960.076171875,
+                285.730712890625,
+                4638.0771484375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "BallisticHelmet_Green",
+            "pos": [
+                6936.09423828125,
+                273.50836181640627,
+                4561.10546875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "PlateCarrierPouches_Black",
+            "pos": [
+                6960.11083984375,
+                285.730712890625,
+                4639.51513671875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "BalaclavaMask_Blackskull",
+            "pos": [
+                6937.4404296875,
+                274.3879089355469,
+                4560.2763671875
+            ],
+            "ypr": [
+                54.9999885559082,
+                -4.999998569488525,
+                -73.0
+            ],
+            "scale": 0.9999979734420776,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Shemag_Green",
+            "pos": [
+                6958.97265625,
+                285.730712890625,
+                4638.94677734375
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "Mich2001Helmet",
+            "pos": [
+                6957.45068359375,
+                285.730712890625,
+                4637.8173828125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "WoolGlovesFingerless_Black",
+            "pos": [
+                6957.9599609375,
+                285.730712890625,
+                4637.21142578125
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "CargoPants_Blue",
+            "pos": [
+                6935.02783203125,
+                273.50836181640627,
+                4560.30029296875
+            ],
+            "ypr": [
+                0.0,
+                0.0,
+                -0.0
+            ],
+            "scale": 0.9999998807907105,
+            "enableCEPersistency": 0,
+            "customString": ""
+        },
+        {
+            "name": "BalaclavaMask_Black",
+            "pos": [
+                6957.79150390625,
+                287.3817138671875,
+                4636.34033203125
+            ],
+            "ypr": [
+                -10.0,
+                0.0,
+                -92.0
+            ],
+            "scale": 0.999997615814209,
+            "enableCEPersistency": 0,
+            "customString": ""
+        }
+    ]
+}

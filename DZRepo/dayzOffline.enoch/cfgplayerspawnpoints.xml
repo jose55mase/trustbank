@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<playerspawnpoints>
+
+    <fresh>
+        <spawn_params>
+            <min_dist_infected>30.0</min_dist_infected>
+            <max_dist_infected>70.0</max_dist_infected>
+            <min_dist_player>25.0</min_dist_player>
+            <max_dist_player>70.0</max_dist_player>
+            <min_dist_static>0.5</min_dist_static>
+            <max_dist_static>2.0</max_dist_static>
+        </spawn_params>
+
+        <generator_params>
+            <grid_density>8</grid_density>
+            <grid_width>40.0</grid_width>
+            <grid_height>40.0</grid_height>
+            <min_dist_static>0.5</min_dist_static>
+            <max_dist_static>2.0</max_dist_static>
+            <min_steepness>-45</min_steepness>
+            <max_steepness>45</max_steepness>
+            <allow_in_water>false</allow_in_water>
+        </generator_params>
+
+        <generator_posbubbles>
+            <!-- Please note; these coordinates are for map: livonia -->
+            <!--pos x="973.24" z="1180.82" /-->
+            <pos x="1431" z="7143" />
+            <pos x="2150" z="7515" />
+            <pos x="1916" z="6849" />
+            <pos x="1381" z="7709" />
+            <pos x="3924" z="8118" />
+            <pos x="5213" z="9574" />
+            <pos x="5407" z="9855" />
+            <pos x="6157" z="10430" />
+            <pos x="9162" z="10679" />
+            <pos x="9562" z="10761" />
+            <pos x="9224" z="11029" />
+            <pos x="10641" z="10926" />
+            <pos x="10790" z="11234" />
+            <pos x="11293" z="9646" />
+            <pos x="11525" z="9343" />
+            <pos x="11662" z="9728" />
+            <pos x="5761" z="4043" />
+            <pos x="6021" z="3868" />
+            <pos x="6263" z="4142" />
+            <pos x="5891" z="4275" />
+            <pos x="844" z="5349" />
+            <pos x="1016" z="5599" />
+            <pos x="710" z="5628" />
+        </generator_posbubbles>
+    </fresh>
+    <hop></hop>
+    <travel></travel>
+</playerspawnpoints>

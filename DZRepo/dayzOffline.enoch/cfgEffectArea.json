@@ -1,0 +1,214 @@
+{
+    "Areas": [
+        {
+            "AreaName": "Gas Zone Gliniska left",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [3775, 0, 10086],
+                "Radius": 402,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone gliniska centro",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [4075, 0, 10336],
+                "Radius": 454,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone right",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [4291, 0, 10514],
+                "Radius": 318,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone 7",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [678, 0, 1214],
+                "Radius": 93,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone 8",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [797, 0, 1228],
+                "Radius": 63,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone 9",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [6966, 0, 4530],
+                "Radius": 57,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone 10",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [6984, 0, 4607],
+                "Radius": 68,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Radunin medico",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [7511, 0, 6114],
+                "Radius": 109,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Radunin colegio",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [7633, 0, 5995],
+                "Radius": 84,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Radunin barracas",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [7814, 0, 5855],
+                "Radius": 87,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        },
+        {
+            "AreaName": "Gas Zone dambog",
+            "Type": "ContaminatedArea_Static",
+            "TriggerType": "ContaminatedTrigger",
+            "Data": {
+                "Pos": [542, 0, 1116],
+                "Radius": 166,
+                "PosHeight": 20,
+                "NegHeight": 3,
+                "InnerPartDist": 100,
+                "OuterOffset": 20,
+                "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
+            },
+            "PlayerData": {
+                "AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                "PPERequesterType": "PPERequester_ContaminatedAreaTint"
+            }
+        }
+    ],
+    "SafePositions": []
+}

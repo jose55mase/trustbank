@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<messages>
+
+    <!-- ==================================================== -->
+    <!--          NOTIFICACIONES DE REINICIO DEL SERVIDOR     -->
+    <!-- ==================================================== -->
+    <message>
+        <deadline>120</deadline>
+        <shutdown>1</shutdown>
+        <text>[!] RESTART --&gt; #name will restart in #tmin minutes! Please log out safely.</text>
+    </message>
+    <message>
+        <deadline>120</deadline>
+        <text>[!] REINICIO --&gt; ¡#name se reiniciara en #tmin minutos! Por favor ponte a salvo.</text>
+    </message>
+
+
+    <!-- ==================================================== -->
+    <!--               ENLACES Y COMUNIDAD                    -->
+    <!-- ==================================================== -->
+    <!-- Enlace de Discord (Se muestra cada 20 minutos) -->
+    <message>
+        <delay>10</delay>
+        <repeat>20</repeat>
+        <onconnect>1</onconnect>
+        <text>[ DISCORD ] Join us || Unete: https://discord.gg/RTTSk5tXC</text>
+    </message>
+
+
+    <!-- ==================================================== -->
+    <!--                  REGLAS DEL SERVIDOR                 -->
+    <!-- ==================================================== -->
+
+    <!-- Regla 1: Construcción (Salen juntos cada 35 minutos) -->
+    <message>
+        <delay>15</delay>
+        <repeat>35</repeat>
+        <onconnect>1</onconnect>
+        <text>[REGLA] Prohibido construir en bases militares o estaciones de policia.</text>
+    </message>
+    <message>
+        <delay>15</delay>
+        <repeat>35</repeat>
+        <onconnect>1</onconnect>
+        <text>[RULE] Do not build on military bases or police stations.</text>
+    </message>
+
+    <!-- Regla 2: Raideos (Salen juntos cada 50 minutos) -->
+    <message>
+        <delay>5</delay>
+        <repeat>50</repeat>
+        <onconnect>1</onconnect>
+        <text>[REGLA] Los raideos estan permitidos UNICAMENTE los fines de semana.</text>
+    </message>
+    <message>
+        <delay>5</delay>
+        <repeat>50</repeat>
+        <onconnect>1</onconnect>
+        <text>[RULE] Raiding is strictly allowed on weekends only.</text>
+    </message>
+
+
+    <!-- ==================================================== -->
+    <!--               MENSAJES DESACTIVADOS                  -->
+    <!-- ==================================================== -->
+    <!--
+    <message>
+        <delay>15</delay>
+        <repeat>45</repeat>
+        <onconnect>1</onconnect>
+        <text>[!] EVENTO --&gt; Raid Activo / Raid Active</text>
+    </message>
+
+    <message>
+        <delay>15</delay>
+        <repeat>55</repeat>
+        <onconnect>1</onconnect>
+        <text>[!] EVENTO --&gt; Se realizara evento de PVP en el laberinto. Mas info en Discord.</text>
+    </message>
+    -->
+
+</messages>
