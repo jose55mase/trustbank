@@ -18793,8 +18793,9 @@
 				</container>
 		</group>
 
-		<group name="StaticObj_Misc_SupplyBox1_DE_JOXE" lootmax="40">
+		<group name="StaticObj_Misc_SupplyBox1_DE_JOXE" lootmax="0">
 			<usage name="Military" />
+			<!--
 			<container name="lootFloor" lootmax="40">
 				<category name="weapons" />
 				<category name="explosives" />
@@ -18806,17 +18807,21 @@
 					<point pos="-2.466845 -0.577179 -1.298379" range="0.5" height="1.5" flags="32" />
 					<point pos="-0.466845 -0.577179 -1.298379" range="0.5" height="1.5" flags="32" />
 			</container>
+			-->
 			<dispatch dechance="1.0">
-				<proxy type="Grenade_ChemGas" pos="-3.30603 0.26218 -1.340943" rpy="0.000000 0.000000 0.000000" dechance="1.0" />
+				<proxy type="Grenade_ChemGas" pos="0.5 0.26 0.5" rpy="0 0 0" dechance="1.0" />
 			</dispatch>
 			<dispatch dechance="1.0">
-				<proxy type="NBCPantsYellow" pos="-3.30603 0.26218 -1.340943" rpy="0.000000 0.000000 0.000000" dechance="1.0" />
+				<proxy type="Grenade_ChemGas" pos="-0.5 0.26 0.5" rpy="0 0 0" dechance="1.0" />
 			</dispatch>
 			<dispatch dechance="1.0">
-				<proxy type="NBCHoodYellow" pos="-3.30603 0.26218 -1.340943" rpy="0.000000 0.000000 0.000000" dechance="1.0" />
+				<proxy type="NBCPantsYellow" pos="0.8 0.26 -0.5" rpy="0 0 0" dechance="1.0" />
 			</dispatch>
 			<dispatch dechance="1.0">
-				<proxy type="NBCGlovesYellow" pos="-3.30603 0.26218 -1.340943" rpy="0.000000 0.000000 0.000000" dechance="1.0" />
+				<proxy type="NBCHoodYellow" pos="-0.8 0.26 -0.5" rpy="0 0 0" dechance="1.0" />
+			</dispatch>
+			<dispatch dechance="1.0">
+				<proxy type="NBCGlovesYellow" pos="0.0 0.26 -1.0" rpy="0 0 0" dechance="1.0" />
 			</dispatch>
 		</group>
 </prototype>

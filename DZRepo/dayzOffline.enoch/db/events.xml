@@ -1176,9 +1176,10 @@
         <active>1</active>
         <children>
             <child lootmax="0" lootmin="0" max="1" min="1" type="StaticObj_Misc_SupplyBox1_DE"/>
-            <child lootmax="0" lootmin="0" max="1" min="1" type="AKM"/>
-            <child lootmax="0" lootmin="0" max="2" min="1" type="Mag_AKM_30Rnd"/>
-            <child lootmax="0" lootmin="0" max="1" min="1" type="NVGoggles"/>
+            <child lootmax="0" lootmin="0" max="2" min="1" type="Grenade_ChemGas"/>
+            <child lootmax="0" lootmin="0" max="1" min="1" type="NBCPantsYellow"/>
+            <child lootmax="0" lootmin="0" max="1" min="1" type="NBCHoodYellow"/>
+            <child lootmax="0" lootmin="0" max="1" min="1" type="NBCGlovesYellow"/>
         </children>
     </event>
 </events>
