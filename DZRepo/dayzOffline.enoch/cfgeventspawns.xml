@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <eventposdef>
     <event name="VehicleJoxee_2">
-	<pos x="11293.36" z="7886.63" a="357.697601"/>
+		<pos x="11293.36" z="7886.63" a="357.697601"/>
     </event>
 	
     <event name="ItemJoxe_11">
-	<pos x="10832.00" z="10974.00" a="0.0"/>
+		<pos x="10832.00" z="10974.00" a="0.0"/>
     </event>
 	
     <event name="StaticHeliCrash">
@@ -759,4 +759,7 @@
     <event name="AnimalRoeDeer" />
     <event name="AnimalWolf" />
     <event name="AnimalWildBoar" />
+    <event name="Item_SupplyBoxCustom">
+        <pos x="10832.00" z="10974.00" a="0.0"/>
+    </event>
 </eventposdef>
