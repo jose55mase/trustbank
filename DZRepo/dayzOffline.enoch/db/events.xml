@@ -23,11 +23,11 @@
         <nominal>1</nominal>
         <min>0</min>
         <max>0</max>
-        <lifetime>3600</lifetime>
-        <restock>0</restock>
+        <lifetime>1800</lifetime>
+        <restock>3600</restock>
         <saferadius>0</saferadius>
         <distanceradius>0</distanceradius>
-        <cleanupradius>120</cleanupradius>
+        <cleanupradius>0</cleanupradius>
         <flags deletable="1" init_random="0" remove_damaged="0"/>
         <position>fixed</position>
         <limit>child</limit>

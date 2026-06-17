@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <eventgroupdef>
-    <group name="AirDrops_joxe">
-        <child type="StaticObj_Misc_SupplyBox1_DE" deloot="1" lootmax="0" lootmin="0" x="0" z="0" a="0" y="0"/>
+    <group name="AirDrops_V1">
+        <child type="StaticObj_Misc_WoodenCrate_5x" deloot="1" lootmax="40" lootmin="40" x="0" z="0" a="0" y="0"/>
+        <child type="StaticObj_ShellCrater2_Large" spawnsecondary="false" x="0" z="0" a="0" y="0.0"/>
         <!--child type="Grenade_ChemGas" deloot="0" lootmax="0" lootmin="0" x="0.5" z="0.5" a="0" y="0"/>
         <child type="Grenade_ChemGas" deloot="0" lootmax="0" lootmin="0" x="-0.5" z="0.5" a="0" y="0"/>
         <child type="NBCPantsYellow" deloot="0" lootmax="0" lootmin="0" x="0.8" z="-0.5" a="0" y="0"/>

@@ -5,7 +5,7 @@
     </event>
 	
     <event name="Static_DabAirDrop_V1">
-		<pos x="10832.00" z="10974.00" a="0.0" group="AirDrops_joxe"/>
+		<pos x="10832.42" z="10968.29" a="0.0" group="AirDrops_V1"/>
     </event>
 	
     <event name="StaticHeliCrash">
