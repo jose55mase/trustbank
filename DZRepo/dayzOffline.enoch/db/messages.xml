@@ -7,11 +7,15 @@
     <message>
         <deadline>120</deadline>
         <shutdown>1</shutdown>
-        <text>[!] RESTART --&gt; #name will restart in #tmin minutes! Please log out safely.</text>
+        <text>#name</text>
     </message>
     <message>
         <deadline>120</deadline>
         <text>[!] REINICIO --&gt; ¡#name se reiniciara en #tmin minutos! Por favor ponte a salvo.</text>
+    </message>
+    <message>
+        <deadline>120</deadline>
+        <text>[!] RESTART --&gt; #name will restart in #tmin minutes! Please log out safely.</text>
     </message>
 
 
@@ -47,13 +51,13 @@
 
     <!-- Regla 2: Raideos (Salen juntos cada 50 minutos) -->
     <message>
-        <delay>5</delay>
+        <delay>20</delay>
         <repeat>50</repeat>
         <onconnect>1</onconnect>
         <text>[REGLA] Los raideos estan permitidos UNICAMENTE los fines de semana.</text>
     </message>
     <message>
-        <delay>5</delay>
+        <delay>20</delay>
         <repeat>50</repeat>
         <onconnect>1</onconnect>
         <text>[RULE] Raiding is strictly allowed on weekends only.</text>

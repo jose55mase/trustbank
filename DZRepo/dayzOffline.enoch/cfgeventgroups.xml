@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <eventgroupdef>
+    <group name="AirDrops_joxe">
+        <child type="StaticObj_Misc_SupplyBox1_DE_JOXE" deloot="1" lootmax="40" lootmin="40" x="0" z="0" a="0" y="0"/>
+    </group>
     <!--pos x="9994.689" z="11443.961" a="0" y="174.216" group="Train_Abandoned_Grabin"/-->
     <group name="Train_Abandoned_Grabin">
         <child type="StaticObj_Wreck_Train_742_Red_DE" deloot="0" lootmax="3" lootmin="1" x="0" z="0" a="290.128" y="1.76"/>
