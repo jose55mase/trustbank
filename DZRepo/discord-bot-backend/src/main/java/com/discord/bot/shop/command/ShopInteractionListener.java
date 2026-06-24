@@ -1,16 +1,22 @@
 package com.discord.bot.shop.command;
 
+import com.discord.bot.economy.model.PlayerProfile;
+import com.discord.bot.economy.service.PlayerLinkService;
+import com.discord.bot.shop.model.PlayerPosition;
 import com.discord.bot.shop.model.Product;
 import com.discord.bot.shop.model.ShopOrder;
+import com.discord.bot.shop.service.PlayerPositionService;
 import com.discord.bot.shop.service.ShopService;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
@@ -20,7 +26,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class ShopInteractionListener extends ListenerAdapter {
@@ -29,9 +39,21 @@ public class ShopInteractionListener extends ListenerAdapter {
     private static final String ORDERS_CHANNEL_NAME = "pedidos-mercado";
 
     private final ShopService shopService;
+    private final PlayerLinkService playerLinkService;
+    private final PlayerPositionService playerPositionService;
 
-    public ShopInteractionListener(ShopService shopService) {
+    /**
+     * Active shopping sessions: player has confirmed their position and can add products.
+     * Key: discordId, Value: confirmed position + list of completed orders in this session
+     */
+    private final Map<String, ShoppingSession> activeSessions = new ConcurrentHashMap<>();
+
+    public ShopInteractionListener(ShopService shopService,
+                                   PlayerLinkService playerLinkService,
+                                   PlayerPositionService playerPositionService) {
         this.shopService = shopService;
+        this.playerLinkService = playerLinkService;
+        this.playerPositionService = playerPositionService;
     }
 
     @Override
@@ -41,6 +63,7 @@ public class ShopInteractionListener extends ListenerAdapter {
         switch (buttonId) {
             case "shop_open_catalog" -> handleOpenCatalog(event);
             case "shop_buy_button" -> handleBuyButton(event);
+            case "shop_add_product" -> handleAddProductButton(event);
             case "product_add" -> handleProductAddButton(event);
             case "product_edit" -> handleProductEditButton(event);
             case "product_delete" -> handleProductDeleteButton(event);
@@ -54,16 +77,48 @@ public class ShopInteractionListener extends ListenerAdapter {
     }
 
     @Override
+    public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+        String menuId = event.getComponentId();
+
+        if (menuId.equals("shop_position_select")) {
+            handlePositionSelect(event);
+        }
+    }
+
+    @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         switch (event.getModalId()) {
-            case "shop_purchase_modal" -> handlePurchaseModal(event);
+            case "shop_add_product_modal" -> handleAddProductModal(event);
             case "product_add_modal" -> handleProductAddModal(event);
             case "product_edit_modal" -> handleProductEditModal(event);
             case "product_delete_modal" -> handleProductDeleteModal(event);
         }
     }
 
+    // ---- Shop Flow ----
+
     private void handleOpenCatalog(ButtonInteractionEvent event) {
+        String discordId = event.getUser().getId();
+
+        // Validate player is linked before showing catalog
+        Optional<PlayerProfile> profileOpt = playerLinkService.findByDiscordId(discordId);
+        if (profileOpt.isEmpty()) {
+            var embed = new EmbedBuilder()
+                    .setColor(new Color(0xE74C3C))
+                    .setTitle("🔗 Cuenta no vinculada")
+                    .setDescription(
+                            "Para usar la tienda necesitas vincular tu cuenta de Discord " +
+                            "con tu nombre de jugador en DayZ.\n\n" +
+                            "Usa el comando `/vincular` seguido de tu nombre de jugador.\n\n" +
+                            "**Ejemplo:** `/vincular MiNombreDayZ`"
+                    )
+                    .setFooter("TNT Market • Vincula tu cuenta para comprar")
+                    .build();
+
+            event.replyEmbeds(embed).setEphemeral(true).queue();
+            return;
+        }
+
         List<Product> products = shopService.getAvailableProducts();
 
         if (products.isEmpty()) {
@@ -96,6 +151,121 @@ public class ShopInteractionListener extends ListenerAdapter {
     }
 
     private void handleBuyButton(ButtonInteractionEvent event) {
+        String discordId = event.getUser().getId();
+
+        // Validate player is linked
+        Optional<PlayerProfile> profileOpt = playerLinkService.findByDiscordId(discordId);
+        if (profileOpt.isEmpty()) {
+            event.reply("❌ Debes vincular tu cuenta primero con `/vincular` para poder comprar.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        String dayzName = profileOpt.get().getDayzPlayerName();
+
+        // Defer while we fetch positions from logs
+        event.deferReply(true).queue();
+
+        // Fetch last 3 unique positions from logs
+        List<PlayerPosition> positions = playerPositionService.getLastPositions(dayzName);
+
+        if (positions.isEmpty()) {
+            event.getHook().editOriginal(
+                    "❌ No se encontraron posiciones recientes para tu jugador **" + dayzName + "**.\n" +
+                    "Debes estar conectado al servidor para que podamos detectar tu ubicación."
+            ).queue();
+            return;
+        }
+
+        // Build select menu with positions
+        StringSelectMenu.Builder menuBuilder = StringSelectMenu.create("shop_position_select")
+                .setPlaceholder("📍 Selecciona dónde entregar tus pedidos")
+                .setRequiredRange(1, 1);
+
+        for (int i = 0; i < positions.size(); i++) {
+            PlayerPosition pos = positions.get(i);
+            String label = String.format("Posición %d — %s", i + 1, pos.timestamp());
+            String description = String.format("X: %.1f | Z: %.1f | Altura: %.1f", pos.x(), pos.z(), pos.y());
+            menuBuilder.addOption(label, String.valueOf(i), description);
+        }
+
+        // Store positions temporarily for the select handler
+        activeSessions.put(discordId, new ShoppingSession(positions, null, new ArrayList<>()));
+
+        var embed = new EmbedBuilder()
+                .setColor(new Color(0xF39C12))
+                .setTitle("📍 Confirma tu ubicación de entrega")
+                .setDescription(
+                        "Jugador: **" + dayzName + "**\n\n" +
+                        "Estas son tus últimas posiciones detectadas en el servidor.\n" +
+                        "Selecciona dónde quieres recibir tus pedidos.\n\n" +
+                        "Una vez confirmada la ubicación, podrás agregar productos sin volver a seleccionar posición."
+                )
+                .setFooter("TNT Market • Paso 1: Confirmar ubicación")
+                .build();
+
+        event.getHook().editOriginalEmbeds(embed)
+                .setComponents(ActionRow.of(menuBuilder.build()))
+                .queue();
+    }
+
+    /**
+     * Player confirmed their delivery position. Show the "session" embed with Add Product button.
+     */
+    private void handlePositionSelect(StringSelectInteractionEvent event) {
+        String discordId = event.getUser().getId();
+
+        ShoppingSession session = activeSessions.get(discordId);
+        if (session == null || session.positions() == null) {
+            event.reply("❌ Tu sesión de compra expiró. Usa el botón 🛒 Abrir Tienda de nuevo.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        int positionIndex;
+        try {
+            positionIndex = Integer.parseInt(event.getValues().get(0));
+        } catch (NumberFormatException e) {
+            event.reply("❌ Error al procesar la selección.").setEphemeral(true).queue();
+            return;
+        }
+
+        if (positionIndex < 0 || positionIndex >= session.positions().size()) {
+            event.reply("❌ Posición inválida.").setEphemeral(true).queue();
+            return;
+        }
+
+        PlayerPosition selectedPosition = session.positions().get(positionIndex);
+
+        // Update session with confirmed position
+        activeSessions.put(discordId, new ShoppingSession(
+                session.positions(), selectedPosition, new ArrayList<>()));
+
+        // Show the shopping session embed with Add Product button
+        var embed = buildSessionEmbed(discordId, selectedPosition, List.of());
+
+        event.editMessage("")
+                .setEmbeds(embed.build())
+                .setComponents(ActionRow.of(
+                        Button.success("shop_add_product", "➕ Agregar Producto"),
+                        Button.secondary("shop_open_catalog", "📋 Ver Catálogo")
+                ))
+                .queue();
+    }
+
+    /**
+     * Player clicks "Add Product" — show modal to enter product ID and quantity.
+     */
+    private void handleAddProductButton(ButtonInteractionEvent event) {
+        String discordId = event.getUser().getId();
+
+        ShoppingSession session = activeSessions.get(discordId);
+        if (session == null || session.confirmedPosition() == null) {
+            event.reply("❌ Tu sesión expiró. Usa el botón 🛒 Abrir Tienda para iniciar una nueva compra.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
         TextInput productId = TextInput.create("product_id", "ID del Producto", TextInputStyle.SHORT)
                 .setPlaceholder("Ej: 1")
                 .setRequired(true)
@@ -110,49 +280,38 @@ public class ShopInteractionListener extends ListenerAdapter {
                 .setMaxLength(5)
                 .build();
 
-        TextInput coordX = TextInput.create("coord_x", "Coordenada X", TextInputStyle.SHORT)
-                .setPlaceholder("Ej: 4523.5")
-                .setRequired(true)
-                .setMinLength(1)
-                .setMaxLength(10)
-                .build();
-
-        TextInput coordY = TextInput.create("coord_y", "Coordenada Y", TextInputStyle.SHORT)
-                .setPlaceholder("Ej: 8912.3")
-                .setRequired(true)
-                .setMinLength(1)
-                .setMaxLength(10)
-                .build();
-
-        Modal modal = Modal.create("shop_purchase_modal", "🛍️ Realizar Compra")
+        Modal modal = Modal.create("shop_add_product_modal", "➕ Agregar Producto al Pedido")
                 .addComponents(
                         ActionRow.of(productId),
-                        ActionRow.of(quantity),
-                        ActionRow.of(coordX),
-                        ActionRow.of(coordY)
+                        ActionRow.of(quantity)
                 )
                 .build();
 
         event.replyModal(modal).queue();
     }
 
-    private void handlePurchaseModal(ModalInteractionEvent event) {
+    /**
+     * Process the Add Product modal — debit coins, create order, update session embed.
+     */
+    private void handleAddProductModal(ModalInteractionEvent event) {
         String discordId = event.getUser().getId();
+
+        ShoppingSession session = activeSessions.get(discordId);
+        if (session == null || session.confirmedPosition() == null) {
+            event.reply("❌ Tu sesión expiró. Usa el botón 🛒 Abrir Tienda para iniciar una nueva compra.")
+                    .setEphemeral(true).queue();
+            return;
+        }
 
         String productIdStr = event.getValue("product_id").getAsString().trim();
         String quantityStr = event.getValue("quantity").getAsString().trim();
-        String coordXStr = event.getValue("coord_x").getAsString().trim();
-        String coordYStr = event.getValue("coord_y").getAsString().trim();
 
         long productId;
         int quantity;
-        double coordX, coordY;
 
         try {
             productId = Long.parseLong(productIdStr);
             quantity = Integer.parseInt(quantityStr);
-            coordX = Double.parseDouble(coordXStr);
-            coordY = Double.parseDouble(coordYStr);
         } catch (NumberFormatException e) {
             event.reply("❌ Los valores ingresados no son válidos. Asegúrate de usar números.")
                     .setEphemeral(true).queue();
@@ -165,26 +324,37 @@ public class ShopInteractionListener extends ListenerAdapter {
             return;
         }
 
-        // Defer reply immediately — upload to Nitrado can take several seconds
+        // Defer — upload to Nitrado can take time
         event.deferReply(true).queue();
 
+        PlayerPosition pos = session.confirmedPosition();
+
         try {
-            ShopOrder order = shopService.processPurchase(discordId, productId, quantity, coordX, coordY);
+            ShopOrder order = shopService.processPurchase(
+                    discordId, productId, quantity,
+                    pos.x(), pos.y(), pos.z()
+            );
 
-            var confirmEmbed = new EmbedBuilder()
-                    .setColor(new Color(0x2ECC71))
-                    .setTitle("✅ Compra Exitosa")
-                    .addField("Producto", order.getProduct().getName(), true)
-                    .addField("Cantidad", String.valueOf(order.getQuantity()), true)
-                    .addField("Total", order.getTotalPrice() + " TNT Coins", true)
-                    .addField("Coordenadas", String.format("X: %.1f | Y: %.1f", order.getCoordX(), order.getCoordY()), false)
-                    .addField("Pedido #", String.valueOf(order.getId()), true)
-                    .addField("Estado", "⏳ PENDIENTE (se entrega en próximo restart)", true)
-                    .setFooter("Tu pedido se entregará en el próximo reinicio del servidor")
-                    .build();
+            // Add order to session history
+            List<OrderSummary> updatedOrders = new ArrayList<>(session.orders());
+            updatedOrders.add(new OrderSummary(
+                    order.getId(), order.getProduct().getName(),
+                    order.getQuantity(), order.getTotalPrice()));
 
-            event.getHook().editOriginalEmbeds(confirmEmbed).queue();
+            activeSessions.put(discordId, new ShoppingSession(
+                    session.positions(), session.confirmedPosition(), updatedOrders));
 
+            // Reply with success + updated session
+            var successEmbed = buildSessionEmbed(discordId, pos, updatedOrders);
+
+            event.getHook().editOriginalEmbeds(successEmbed.build())
+                    .setComponents(ActionRow.of(
+                            Button.success("shop_add_product", "➕ Agregar Producto"),
+                            Button.secondary("shop_open_catalog", "📋 Ver Catálogo")
+                    ))
+                    .queue();
+
+            // Publish to orders channel
             publishOrderToChannel(event, order);
 
         } catch (Exception e) {
@@ -213,7 +383,9 @@ public class ShopInteractionListener extends ListenerAdapter {
                 .addField("Producto", order.getProduct().getName(), true)
                 .addField("Cantidad", String.valueOf(order.getQuantity()), true)
                 .addField("Total Pagado", order.getTotalPrice() + " TNT Coins", true)
-                .addField("Coordenadas", String.format("X: %.1f | Y: %.1f", order.getCoordX(), order.getCoordY()), false)
+                .addField("Coordenadas",
+                        String.format("X: %.1f | Z: %.1f | Altura: %.1f",
+                                order.getCoordX(), order.getCoordZ(), order.getCoordY()), false)
                 .addField("Estado", "⏳ PENDIENTE", false)
                 .setFooter("Pedido realizado")
                 .setTimestamp(order.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant())
@@ -222,6 +394,35 @@ public class ShopInteractionListener extends ListenerAdapter {
         ordersChannel.sendMessageEmbeds(orderEmbed)
                 .addActionRow(Button.success("shop_deliver_" + order.getId(), "✅ Marcar Entregado"))
                 .queue();
+    }
+
+    /**
+     * Builds the session embed showing confirmed position and list of orders placed.
+     */
+    private EmbedBuilder buildSessionEmbed(String discordId, PlayerPosition pos, List<OrderSummary> orders) {
+        var embed = new EmbedBuilder()
+                .setColor(new Color(0x2ECC71))
+                .setTitle("🛒 Sesión de Compra Activa")
+                .addField("📍 Ubicación de entrega",
+                        String.format("X: %.1f | Z: %.1f | Altura: %.1f", pos.x(), pos.z(), pos.y()), false);
+
+        if (orders.isEmpty()) {
+            embed.setDescription("✅ Ubicación confirmada. Haz click en **➕ Agregar Producto** para comprar.");
+        } else {
+            StringBuilder orderList = new StringBuilder();
+            long totalSpent = 0;
+            for (OrderSummary o : orders) {
+                orderList.append(String.format("• **#%d** — %dx %s (%d TNT Coins)\n",
+                        o.orderId(), o.quantity(), o.productName(), o.totalPrice()));
+                totalSpent += o.totalPrice();
+            }
+            embed.addField("📦 Pedidos en esta sesión (" + orders.size() + ")", orderList.toString(), false);
+            embed.addField("💰 Total gastado", totalSpent + " TNT Coins", true);
+            embed.setDescription("Puedes seguir agregando productos. Todos se entregarán en la misma ubicación.");
+        }
+
+        embed.setFooter("TNT Market • Los pedidos se entregan en el próximo restart");
+        return embed;
     }
 
     // ---- Product Management Handlers ----
@@ -460,4 +661,20 @@ public class ShopInteractionListener extends ListenerAdapter {
             event.reply("❌ Error al actualizar el pedido.").setEphemeral(true).queue();
         }
     }
+
+    // ---- Internal DTOs ----
+
+    /**
+     * Holds the active shopping session for a player.
+     */
+    private record ShoppingSession(
+            List<PlayerPosition> positions,
+            PlayerPosition confirmedPosition,
+            List<OrderSummary> orders
+    ) {}
+
+    /**
+     * Summary of a completed order within a session.
+     */
+    private record OrderSummary(long orderId, String productName, int quantity, long totalPrice) {}
 }

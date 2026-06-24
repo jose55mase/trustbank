@@ -126,9 +126,9 @@ public class EntregasCommand implements SlashCommand {
         sb.append("📦 **Pedidos Pendientes (").append(pending.size()).append("):**\n\n");
 
         for (ShopOrder order : pending) {
-            sb.append(String.format("**#%d** — %dx %s para **%s** en (%.0f, %.0f)\n",
+            sb.append(String.format("**#%d** — %dx %s para **%s** en (X:%.0f, Z:%.0f, Alt:%.0f)\n",
                     order.getId(), order.getQuantity(), order.getProduct().getName(),
-                    order.getDayzPlayerName(), order.getCoordX(), order.getCoordY()));
+                    order.getDayzPlayerName(), order.getCoordX(), order.getCoordZ(), order.getCoordY()));
         }
 
         sb.append("\nUsa `/entregas preparar` antes del restart para subir los archivos.");

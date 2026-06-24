@@ -46,6 +46,9 @@ public class ShopOrder {
     private double coordY;
 
     @Column(nullable = false)
+    private double coordZ;
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
@@ -54,7 +57,7 @@ public class ShopOrder {
     protected ShopOrder() {}
 
     public ShopOrder(String discordId, String dayzPlayerName, Product product,
-                     int quantity, long totalPrice, double coordX, double coordY) {
+                     int quantity, long totalPrice, double coordX, double coordY, double coordZ) {
         this.discordId = discordId;
         this.dayzPlayerName = dayzPlayerName;
         this.product = product;
@@ -62,6 +65,7 @@ public class ShopOrder {
         this.totalPrice = totalPrice;
         this.coordX = coordX;
         this.coordY = coordY;
+        this.coordZ = coordZ;
         this.createdAt = LocalDateTime.now();
         this.status = "PENDING";
     }
@@ -74,6 +78,7 @@ public class ShopOrder {
     public long getTotalPrice() { return totalPrice; }
     public double getCoordX() { return coordX; }
     public double getCoordY() { return coordY; }
+    public double getCoordZ() { return coordZ; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

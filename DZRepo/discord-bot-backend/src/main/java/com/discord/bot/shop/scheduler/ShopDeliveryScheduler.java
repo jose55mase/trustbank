@@ -76,7 +76,7 @@ public class ShopDeliveryScheduler {
     }
 
     /**
-     * Marks pending orders as DELIVERED and restores original event files.
+     * Marks pending orders as DELIVERED and cleans up custom spawn files.
      * Called when the server comes back online (items have already spawned).
      */
     private void confirmAndCleanup() {
@@ -88,7 +88,7 @@ public class ShopDeliveryScheduler {
             }
 
             shopService.confirmDelivery();
-            log.info("[ShopDelivery] Confirmed {} orders and restored original files.", pending.size());
+            log.info("[ShopDelivery] Confirmed {} orders and cleaned up custom spawn files.", pending.size());
         } catch (Exception e) {
             log.error("[ShopDelivery] Failed to confirm deliveries: {}", e.getMessage());
         }

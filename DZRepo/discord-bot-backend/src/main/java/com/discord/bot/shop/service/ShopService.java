@@ -52,7 +52,7 @@ public class ShopService {
 
     @Transactional
     public ShopOrder processPurchase(String discordId, Long productId, int quantity,
-                                     double coordX, double coordY) {
+                                     double coordX, double coordY, double coordZ) {
         PlayerProfile profile = playerProfileRepository.findByDiscordId(discordId)
                 .orElseThrow(() -> new PlayerNotLinkedException(
                         "No tienes una cuenta vinculada. Usa /vincular primero."));
@@ -76,24 +76,23 @@ public class ShopService {
                 "Compra: " + quantity + "x " + product.getName());
 
         ShopOrder order = new ShopOrder(discordId, profile.getDayzPlayerName(), product,
-                quantity, totalPrice, coordX, coordY);
+                quantity, totalPrice, coordX, coordY, coordZ);
         ShopOrder saved = shopOrderRepository.save(order);
 
-        log.info("Order #{} created: player='{}', product='{}', qty={}, total={}, coords=({}, {})",
+        log.info("Order #{} created: player='{}', product='{}', qty={}, total={}, coords=({}, {}, {})",
                 saved.getId(), profile.getDayzPlayerName(), product.getName(),
-                quantity, totalPrice, coordX, coordY);
+                quantity, totalPrice, coordX, coordY, coordZ);
 
-        // Upload event files immediately with all pending orders (including this one)
+        // Upload custom JSON file and register in cfggameplay.json immediately
         try {
-            List<ShopOrder> allPending = shopOrderRepository.findByStatusOrderByCreatedAtAsc("PENDING");
-            itemSpawnService.uploadPendingOrders(allPending);
-            log.info("Order #{} — uploaded event files with {} total pending orders.", saved.getId(), allPending.size());
+            itemSpawnService.uploadOrderFile(saved);
+            log.info("Order #{} — uploaded custom spawn file.", saved.getId());
         } catch (Exception e) {
-            log.warn("Order #{} — failed to upload event files (will retry on restart): {}", saved.getId(), e.getMessage());
+            log.warn("Order #{} — failed to upload custom file (will retry on restart): {}", saved.getId(), e.getMessage());
         }
 
         // Order stays PENDING — items will spawn on next server restart
-        log.info("Order #{} queued for delivery via event system (next restart)", saved.getId());
+        log.info("Order #{} queued for delivery via custom spawner system (next restart)", saved.getId());
 
         return saved;
     }
@@ -114,7 +113,7 @@ public class ShopService {
     }
 
     /**
-     * Marks all pending orders as delivered and clears the event files.
+     * Marks all pending orders as delivered and cleans up custom spawn files.
      * Call this after a server restart when items have spawned.
      */
     @Transactional
@@ -124,8 +123,9 @@ public class ShopService {
             order.setStatus("DELIVERED");
             shopOrderRepository.save(order);
         }
-        itemSpawnService.restoreOriginalFiles();
-        log.info("Confirmed delivery of {} orders and restored original files.", pending.size());
+        // Clean up: remove files and entries from cfggameplay.json
+        itemSpawnService.cleanupDeliveredOrders(pending);
+        log.info("Confirmed delivery of {} orders and cleaned up custom spawn files.", pending.size());
     }
 
     @Transactional
