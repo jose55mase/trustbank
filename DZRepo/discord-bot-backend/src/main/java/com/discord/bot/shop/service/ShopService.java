@@ -101,6 +101,14 @@ public class ShopService {
     }
 
     /**
+     * Returns pending orders with Product eagerly loaded.
+     * Use this when you need to access product details outside a transaction context.
+     */
+    public List<ShopOrder> getPendingOrdersWithProduct() {
+        return shopOrderRepository.findByStatusWithProductOrderByCreatedAtAsc("PENDING");
+    }
+
+    /**
      * Prepares pending orders for delivery by uploading event files to the server.
      * Call this before a server restart.
      */
@@ -117,7 +125,8 @@ public class ShopService {
      */
     @Transactional
     public void confirmDelivery() {
-        List<ShopOrder> pending = getPendingOrders();
+        // Use WithProduct to avoid LazyInitializationException when accessing product data
+        List<ShopOrder> pending = getPendingOrdersWithProduct();
         for (ShopOrder order : pending) {
             order.setStatus("DELIVERED");
             shopOrderRepository.save(order);

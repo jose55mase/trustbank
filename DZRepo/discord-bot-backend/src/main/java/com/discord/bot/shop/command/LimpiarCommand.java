@@ -56,21 +56,24 @@ public class LimpiarCommand implements SlashCommand {
         event.deferReply(true).queue();
 
         try {
-            // First try DB-based cleanup
-            List<ShopOrder> pending = shopService.getPendingOrders();
+            // First try DB-based cleanup (use WithProduct to avoid LazyInitializationException)
+            List<ShopOrder> pending = shopService.getPendingOrdersWithProduct();
 
             if (!pending.isEmpty()) {
                 log.info("[Limpiar] Cleaning {} pending orders from DB", pending.size());
-                shopService.confirmDelivery();
-
+                
+                // Build message BEFORE confirmDelivery (while data is still accessible)
                 StringBuilder sb = new StringBuilder();
                 sb.append("✅ **Limpieza completada (desde DB)**\n\n");
                 sb.append("Pedidos limpiados: **").append(pending.size()).append("**\n");
                 for (ShopOrder order : pending) {
+                    String productName = order.getProduct() != null ? order.getProduct().getName() : "Desconocido";
                     sb.append(String.format("• #%d — %s (%dx %s)\n",
                             order.getId(), order.getDayzPlayerName(),
-                            order.getQuantity(), order.getProduct().getName()));
+                            order.getQuantity(), productName));
                 }
+                
+                shopService.confirmDelivery();
                 event.getHook().editOriginal(sb.toString()).queue();
             } else {
                 // No pending orders in DB — scan Nitrado for orphaned shop files

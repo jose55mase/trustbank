@@ -352,20 +352,26 @@ public class NitradoApiClient {
      * @return the resolved full server path
      */
     private String resolveServerPath(String filePath) {
+        log.info("[NitradoClient] resolveServerPath() input: '{}'", filePath);
+        
         if (filePath.startsWith("/games/")) {
+            log.info("[NitradoClient] Path already absolute, returning as-is");
             return filePath;
         }
 
         String folderId = config.getGameServerFolderId();
+        log.info("[NitradoClient] Configured folderId: '{}'", folderId);
+        
         if (folderId == null || folderId.isBlank()) {
             // No folder ID configured, return path as-is (PC servers don't need prefix)
+            log.warn("[NitradoClient] No folderId configured! Returning path as-is: '{}'", filePath);
             return filePath;
         }
 
         // Xbox/PS servers: /games/{folderId}/ftproot/dayzxb_missions{filePath}
         String prefix = "/games/" + folderId + "/ftproot/dayzxb_missions";
         String resolved = prefix + filePath;
-        log.debug("[NitradoClient] Resolved path: {} -> {}", filePath, resolved);
+        log.info("[NitradoClient] Resolved path: '{}' -> '{}'", filePath, resolved);
         return resolved;
     }
 
@@ -441,29 +447,96 @@ public class NitradoApiClient {
 
     /**
      * Deletes a file from a game server via the Nitrado API.
-     * Uses POST method as required by the Nitrado file_server API.
+     * Tries DELETE method first, falls back to POST if DELETE fails with 405.
      *
      * @param serviceId the Nitrado service ID
      * @param filePath  the full path of the file to delete on the server
+     * @return true if file was deleted or didn't exist, false on error
      */
-    public void deleteFile(int serviceId, String filePath) {
+    public boolean deleteFile(int serviceId, String filePath) {
         String resolvedPath = resolveServerPath(filePath);
         String url = "/services/" + serviceId + "/gameservers/file_server/delete?path=" + resolvedPath;
-        log.info("[NitradoClient] Deleting file: {} (serviceId={})", resolvedPath, serviceId);
+        
+        log.info("[NitradoClient] === DELETE FILE REQUEST ===");
+        log.info("[NitradoClient] Original filePath: '{}'", filePath);
+        log.info("[NitradoClient] Resolved path: '{}'", resolvedPath);
+        log.info("[NitradoClient] Full URL: '{}'", url);
+        log.info("[NitradoClient] Service ID: {}", serviceId);
 
+        // Try DELETE method first
         try {
             HttpEntity<?> entity = new HttpEntity<>(buildHeaders());
-            restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-            log.info("[NitradoClient] File deleted successfully: {} (serviceId={})", resolvedPath, serviceId);
+            log.info("[NitradoClient] Attempting DELETE method...");
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.DELETE, entity, Map.class);
+            
+            int statusCode = response.getStatusCode().value();
+            log.info("[NitradoClient] ✅ DELETE succeeded, HTTP {}: {} (serviceId={})", 
+                    statusCode, resolvedPath, serviceId);
+            return true;
+            
         } catch (HttpClientErrorException e) {
             int status = e.getStatusCode().value();
+            String responseBody = e.getResponseBodyAsString();
+            
+            log.warn("[NitradoClient] DELETE failed with HTTP {}: {} — Body: {}", status, resolvedPath, responseBody);
+            
             if (status == 404) {
-                log.debug("[NitradoClient] File not found for deletion (OK): {} (serviceId={})", filePath, serviceId);
-                return; // File doesn't exist, that's fine
+                log.info("[NitradoClient] File not found (already deleted or never existed): {}", resolvedPath);
+                return true;
             }
-            log.warn("[NitradoClient] Error {} deleting file: {} (serviceId={})", status, filePath, serviceId);
+            
+            // If DELETE returns 405 Method Not Allowed, try POST
+            if (status == 405) {
+                log.info("[NitradoClient] DELETE returned 405, trying POST method...");
+                return deleteFileWithPost(serviceId, resolvedPath, url);
+            }
+            
+            log.error("[NitradoClient] ❌ Error {} deleting file: {} — Response: {}", status, resolvedPath, responseBody);
+            return false;
+            
+        } catch (HttpServerErrorException e) {
+            int status = e.getStatusCode().value();
+            log.error("[NitradoClient] ❌ Server error {} deleting file: {}", status, resolvedPath);
+            return false;
+            
+        } catch (ResourceAccessException e) {
+            log.error("[NitradoClient] ❌ Connection error deleting file: {} — {}", resolvedPath, e.getMessage());
+            return false;
+            
         } catch (Exception e) {
-            log.warn("[NitradoClient] Could not delete file: {} (serviceId={})", filePath, serviceId);
+            log.error("[NitradoClient] ❌ Unexpected error deleting file: {} — {}", resolvedPath, e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * Fallback delete using POST method (some APIs require POST for delete operations).
+     */
+    private boolean deleteFileWithPost(int serviceId, String resolvedPath, String url) {
+        try {
+            HttpEntity<?> entity = new HttpEntity<>(buildHeaders());
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
+            
+            int statusCode = response.getStatusCode().value();
+            log.info("[NitradoClient] ✅ POST delete succeeded, HTTP {}: {} (serviceId={})", 
+                    statusCode, resolvedPath, serviceId);
+            return true;
+            
+        } catch (HttpClientErrorException e) {
+            int status = e.getStatusCode().value();
+            String responseBody = e.getResponseBodyAsString();
+            
+            if (status == 404) {
+                log.info("[NitradoClient] File not found with POST (OK): {}", resolvedPath);
+                return true;
+            }
+            
+            log.error("[NitradoClient] ❌ POST delete error {}: {} — Body: {}", status, resolvedPath, responseBody);
+            return false;
+            
+        } catch (Exception e) {
+            log.error("[NitradoClient] ❌ POST delete exception: {} — {}", resolvedPath, e.getMessage());
+            return false;
         }
     }
 

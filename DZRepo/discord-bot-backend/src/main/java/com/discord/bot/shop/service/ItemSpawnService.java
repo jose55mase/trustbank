@@ -224,18 +224,27 @@ public class ItemSpawnService {
     private void cleanupFile(String fileName) {
         String filePath = customFolderPath + "/" + fileName;
 
+        log.info("[ShopSpawn] === CLEANUP FILE '{}' ===", fileName);
+        log.info("[ShopSpawn] Full path to delete: {}", filePath);
+        log.info("[ShopSpawn] Using serviceId: {}", serviceId);
+
         try {
             unregisterFromGameplay("custom/" + fileName);
-            log.info("[ShopSpawn] Unregistered {} from cfggameplay.json", fileName);
+            log.info("[ShopSpawn] ✅ Unregistered {} from cfggameplay.json", fileName);
         } catch (Exception e) {
-            log.warn("[ShopSpawn] Failed to unregister {} from cfggameplay.json: {}", fileName, e.getMessage());
+            log.warn("[ShopSpawn] ⚠️ Failed to unregister {} from cfggameplay.json: {}", fileName, e.getMessage());
         }
 
         try {
-            nitradoClient.deleteFile(serviceId, filePath);
-            log.info("[ShopSpawn] Deleted custom file: {}", filePath);
+            log.info("[ShopSpawn] Calling nitradoClient.deleteFile({}, '{}')", serviceId, filePath);
+            boolean deleted = nitradoClient.deleteFile(serviceId, filePath);
+            if (deleted) {
+                log.info("[ShopSpawn] ✅ Deleted custom file: {}", filePath);
+            } else {
+                log.error("[ShopSpawn] ❌ Failed to delete custom file: {} — Check NitradoClient logs above", filePath);
+            }
         } catch (Exception e) {
-            log.warn("[ShopSpawn] Failed to delete file {}: {}", filePath, e.getMessage());
+            log.error("[ShopSpawn] ❌ Exception deleting file {}: {}", filePath, e.getMessage(), e);
         }
     }
 
@@ -429,36 +438,47 @@ public class ItemSpawnService {
      * @return the number of files cleaned
      */
     public int cleanOrphanedFiles() {
+        log.info("[ShopSpawn] === ORPHAN FILE CLEANUP ===");
+        log.info("[ShopSpawn] Scanning folder: {} (serviceId={})", customFolderPath, serviceId);
+        
         try {
             var files = nitradoClient.listFiles(serviceId, customFolderPath);
+            log.info("[ShopSpawn] Found {} total files in custom folder", files.size());
+            
             int cleaned = 0;
 
             for (var file : files) {
                 if (file.name() != null && file.name().startsWith("shop_") && file.name().endsWith(".json")) {
-                    log.info("[ShopSpawn] Found orphaned file: {}", file.name());
+                    log.info("[ShopSpawn] Found shop file to clean: {}", file.name());
 
                     // Remove from cfggameplay.json
                     try {
                         unregisterFromGameplay("custom/" + file.name());
+                        log.info("[ShopSpawn] ✅ Unregistered from cfggameplay: {}", file.name());
                     } catch (Exception e) {
-                        log.warn("[ShopSpawn] Could not unregister {}: {}", file.name(), e.getMessage());
+                        log.warn("[ShopSpawn] ⚠️ Could not unregister {}: {}", file.name(), e.getMessage());
                     }
 
                     // Delete file
                     try {
-                        nitradoClient.deleteFile(serviceId, customFolderPath + "/" + file.name());
-                        log.info("[ShopSpawn] Deleted orphaned file: {}", file.name());
-                        cleaned++;
+                        String filePath = customFolderPath + "/" + file.name();
+                        boolean deleted = nitradoClient.deleteFile(serviceId, filePath);
+                        if (deleted) {
+                            log.info("[ShopSpawn] ✅ Deleted orphaned file: {}", file.name());
+                            cleaned++;
+                        } else {
+                            log.error("[ShopSpawn] ❌ Failed to delete orphaned file: {}", file.name());
+                        }
                     } catch (Exception e) {
-                        log.warn("[ShopSpawn] Could not delete {}: {}", file.name(), e.getMessage());
+                        log.error("[ShopSpawn] ❌ Exception deleting {}: {}", file.name(), e.getMessage());
                     }
                 }
             }
 
-            log.info("[ShopSpawn] Orphan cleanup done. Removed {} files.", cleaned);
+            log.info("[ShopSpawn] === ORPHAN CLEANUP COMPLETE: {}/{} files removed ===", cleaned, files.size());
             return cleaned;
         } catch (Exception e) {
-            log.error("[ShopSpawn] Error scanning for orphaned files: {}", e.getMessage(), e);
+            log.error("[ShopSpawn] ❌ Error scanning for orphaned files: {}", e.getMessage(), e);
             return 0;
         }
     }
