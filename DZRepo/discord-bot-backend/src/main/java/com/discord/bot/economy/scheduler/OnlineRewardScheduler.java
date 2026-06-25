@@ -5,7 +5,6 @@ import com.discord.bot.economy.model.PlayerProfile;
 import com.discord.bot.economy.model.TransactionType;
 import com.discord.bot.economy.service.EconomyService;
 import com.discord.bot.economy.service.PlayerLinkService;
-import com.discord.bot.nitrado.dto.PlayerDto;
 import com.discord.bot.nitrado.service.NitradoApiClient;
 
 import org.slf4j.Logger;
@@ -14,27 +13,34 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Scheduler that rewards linked players with coins for being connected to the server.
  *
- * <p>Every configured interval (default: 5 minutes), queries Nitrado for the list
- * of online players. For each player that is linked (has a PlayerProfile),
- * credits them with the configured amount of coins.</p>
- *
- * <p>Configuration:
- * <ul>
- *   <li>{@code economy.online-reward.coins} — coins awarded per cycle (default: 5)</li>
- *   <li>{@code economy.online-reward.interval-ms} — interval between rewards in ms (default: 300000 = 5 min)</li>
- *   <li>{@code economy.nitrado.service-id} — the Nitrado service ID to query</li>
- * </ul>
+ * <p>Uses server logs to determine who is currently online (tracks connections
+ * and disconnections). This works for both PC and Xbox/PS servers since the
+ * ADM log format is consistent.</p>
  */
 @Component
 public class OnlineRewardScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineRewardScheduler.class);
+
+    /** Matches: HH:mm:ss | Player "NAME" (id=... pos=<...>) is connected */
+    private static final Pattern CONNECT_PATTERN = Pattern.compile(
+            "\\| Player \"(.+?)\" \\(id=.+?\\) is connected$"
+    );
+
+    /** Matches: HH:mm:ss | Player "NAME" (id=... pos=<...>) has been disconnected */
+    private static final Pattern DISCONNECT_PATTERN = Pattern.compile(
+            "\\| Player \"(.+?)\" .*has been disconnected$"
+    );
 
     private final NitradoApiClient nitradoApiClient;
     private final PlayerLinkService playerLinkService;
@@ -43,11 +49,11 @@ public class OnlineRewardScheduler {
     @Value("${economy.nitrado.service-id:0}")
     private int serviceId;
 
-    /** Tracks the last time rewards were given to avoid running more frequently than configured */
-    private long lastRewardTime = 0;
-
     @Value("${economy.guild-id:}")
     private String guildId;
+
+    /** Tracks the last time rewards were given */
+    private long lastRewardTime = 0;
 
     public OnlineRewardScheduler(NitradoApiClient nitradoApiClient,
                                  PlayerLinkService playerLinkService,
@@ -57,10 +63,6 @@ public class OnlineRewardScheduler {
         this.economyService = economyService;
     }
 
-    /**
-     * Runs every minute. Checks if it's time to reward based on the configured interval,
-     * then queries online players and rewards linked ones.
-     */
     @Scheduled(fixedRate = 60000, initialDelay = 60000)
     public void rewardOnlinePlayers() {
         log.info("[OnlineReward] Tick — serviceId={}, guildId='{}'", serviceId, guildId);
@@ -71,67 +73,65 @@ public class OnlineRewardScheduler {
         }
 
         if (guildId == null || guildId.isBlank()) {
-            log.info("[OnlineReward] SKIPPED: guildId is empty or null");
+            log.info("[OnlineReward] SKIPPED: guildId is empty");
             return;
         }
 
         // Read config from DB
         EconomyConfig config = economyService.getConfig(guildId);
         if (!config.isEnabled()) {
-            log.info("[OnlineReward] SKIPPED: economy disabled for guild '{}'", guildId);
+            log.info("[OnlineReward] SKIPPED: economy disabled");
             return;
         }
 
         int coinsPerCycle = config.getOnlineRewardCoins();
         int intervalMinutes = config.getOnlineRewardIntervalMinutes();
-        log.info("[OnlineReward] Config: coins={}, interval={}min, enabled={}", coinsPerCycle, intervalMinutes, config.isEnabled());
+        log.info("[OnlineReward] Config: coins={}, interval={}min", coinsPerCycle, intervalMinutes);
 
         if (coinsPerCycle <= 0 || intervalMinutes <= 0) {
-            log.info("[OnlineReward] SKIPPED: coinsPerCycle={}, intervalMinutes={}", coinsPerCycle, intervalMinutes);
+            log.info("[OnlineReward] SKIPPED: coins or interval is 0");
             return;
         }
 
-        // Check if enough time has passed since last reward
+        // Check if enough time has passed
         long now = System.currentTimeMillis();
         long intervalMs = intervalMinutes * 60_000L;
         long elapsed = now - lastRewardTime;
         if (elapsed < intervalMs) {
-            log.info("[OnlineReward] NOT YET: {}ms elapsed, need {}ms ({}min)", elapsed, intervalMs, intervalMinutes);
+            log.info("[OnlineReward] NOT YET: {}s elapsed, need {}s", elapsed / 1000, intervalMs / 1000);
             return;
         }
         lastRewardTime = now;
 
-        log.info("[OnlineReward] === REWARD CYCLE START === Querying players from serviceId={}", serviceId);
+        log.info("[OnlineReward] === REWARD CYCLE START ===");
 
         try {
-            List<PlayerDto> onlinePlayers = nitradoApiClient.getPlayers(serviceId);
-
-            if (onlinePlayers == null || onlinePlayers.isEmpty()) {
-                log.info("[OnlineReward] No players returned from API.");
+            // Get current log and parse who is online
+            String logContent = nitradoApiClient.getServerLogs(serviceId);
+            if (logContent == null || logContent.isBlank()) {
+                log.info("[OnlineReward] Log content is empty.");
                 return;
             }
 
-            log.info("[OnlineReward] Found {} players from API", onlinePlayers.size());
+            Set<String> onlinePlayers = parseOnlinePlayers(logContent);
+            log.info("[OnlineReward] Players currently online (from logs): {}", onlinePlayers);
+
+            if (onlinePlayers.isEmpty()) {
+                log.info("[OnlineReward] No players online.");
+                return;
+            }
 
             int rewarded = 0;
 
-            for (PlayerDto player : onlinePlayers) {
-                log.info("[OnlineReward] Player: name='{}', online={}", player.name(), player.online());
-
-                if (!player.online()) {
-                    log.info("[OnlineReward]   -> Skipped (not online)");
+            for (String playerName : onlinePlayers) {
+                Optional<PlayerProfile> profileOpt = playerLinkService.findByDayzName(playerName);
+                if (profileOpt.isEmpty()) {
+                    log.info("[OnlineReward]   '{}' -> not linked, skip", playerName);
                     continue;
                 }
 
-                // Look up linked profile by DayZ player name
-                Optional<PlayerProfile> profileOpt = playerLinkService.findByDayzName(player.name());
-                if (profileOpt.isEmpty()) {
-                    log.info("[OnlineReward]   -> Skipped (not linked)");
-                    continue; // Player not linked, skip
-                }
-
                 PlayerProfile profile = profileOpt.get();
-                log.info("[OnlineReward]   -> LINKED! discordId={}, balance={}", profile.getDiscordId(), profile.getBalance());
+                log.info("[OnlineReward]   '{}' -> LINKED (balance={})", playerName, profile.getBalance());
 
                 try {
                     economyService.creditCoins(
@@ -141,17 +141,48 @@ public class OnlineRewardScheduler {
                             "Recompensa por estar conectado"
                     );
                     rewarded++;
-                    log.info("[OnlineReward]   -> REWARDED {} coins. New balance={}", coinsPerCycle, profile.getBalance());
+                    log.info("[OnlineReward]   '{}' -> +{} coins (new balance={})",
+                            playerName, coinsPerCycle, profile.getBalance());
                 } catch (Exception e) {
-                    log.warn("[OnlineReward]   -> FAILED to reward: {}", e.getMessage());
+                    log.warn("[OnlineReward]   '{}' -> FAILED: {}", playerName, e.getMessage());
                 }
             }
 
-            log.info("[OnlineReward] === CYCLE DONE === Rewarded {}/{} players with {} coins each.",
-                    rewarded, onlinePlayers.size(), coinsPerCycle);
+            log.info("[OnlineReward] === CYCLE DONE === Rewarded {}/{} players",
+                    rewarded, onlinePlayers.size());
 
         } catch (Exception e) {
-            log.warn("[OnlineReward] Error checking online players: {}", e.getMessage(), e);
+            log.warn("[OnlineReward] Error: {}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * Parses the server log to determine which players are currently online.
+     * Tracks connect/disconnect events — a player is online if they connected
+     * and haven't disconnected since.
+     *
+     * @param logContent the raw ADM log content
+     * @return set of player names currently online
+     */
+    private Set<String> parseOnlinePlayers(String logContent) {
+        Set<String> online = new HashSet<>();
+        String[] lines = logContent.split("\\r?\\n");
+
+        for (String line : lines) {
+            if (line.isBlank()) continue;
+
+            Matcher connectMatcher = CONNECT_PATTERN.matcher(line);
+            if (connectMatcher.find()) {
+                online.add(connectMatcher.group(1));
+                continue;
+            }
+
+            Matcher disconnectMatcher = DISCONNECT_PATTERN.matcher(line);
+            if (disconnectMatcher.find()) {
+                online.remove(disconnectMatcher.group(1));
+            }
+        }
+
+        return online;
     }
 }
