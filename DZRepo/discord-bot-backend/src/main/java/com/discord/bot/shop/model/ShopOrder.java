@@ -29,7 +29,7 @@ public class ShopOrder {
     @Column(nullable = false)
     private String dayzPlayerName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 

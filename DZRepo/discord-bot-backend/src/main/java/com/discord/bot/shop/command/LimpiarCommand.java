@@ -56,33 +56,40 @@ public class LimpiarCommand implements SlashCommand {
         event.deferReply(true).queue();
 
         try {
+            // First try DB-based cleanup
             List<ShopOrder> pending = shopService.getPendingOrders();
 
-            if (pending.isEmpty()) {
-                event.getHook().editOriginal("📭 No hay pedidos pendientes para limpiar.").queue();
-                return;
+            if (!pending.isEmpty()) {
+                log.info("[Limpiar] Cleaning {} pending orders from DB", pending.size());
+                shopService.confirmDelivery();
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("✅ **Limpieza completada (desde DB)**\n\n");
+                sb.append("Pedidos limpiados: **").append(pending.size()).append("**\n");
+                for (ShopOrder order : pending) {
+                    sb.append(String.format("• #%d — %s (%dx %s)\n",
+                            order.getId(), order.getDayzPlayerName(),
+                            order.getQuantity(), order.getProduct().getName()));
+                }
+                event.getHook().editOriginal(sb.toString()).queue();
+            } else {
+                // No pending orders in DB — scan Nitrado for orphaned shop files
+                log.info("[Limpiar] No pending orders in DB. Scanning Nitrado for orphaned shop files...");
+                int cleaned = shopService.cleanOrphanedShopFiles();
+
+                if (cleaned > 0) {
+                    event.getHook().editOriginal(
+                            "✅ **Limpieza completada**\n\n" +
+                            "No había pedidos en la DB, pero se encontraron **" + cleaned +
+                            "** archivos huérfanos en el servidor que fueron eliminados."
+                    ).queue();
+                } else {
+                    event.getHook().editOriginal("📭 No hay pedidos pendientes ni archivos huérfanos para limpiar.").queue();
+                }
             }
-
-            log.info("[Limpiar] Executing manual cleanup for {} pending orders", pending.size());
-
-            shopService.confirmDelivery();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("✅ **Limpieza completada**\n\n");
-            sb.append("Pedidos limpiados: **").append(pending.size()).append("**\n\n");
-            for (ShopOrder order : pending) {
-                sb.append(String.format("• #%d — %s (%dx %s)\n",
-                        order.getId(), order.getDayzPlayerName(),
-                        order.getQuantity(), order.getProduct().getName()));
-            }
-            sb.append("\n✅ Archivos custom eliminados del servidor");
-            sb.append("\n✅ Rutas removidas de cfggameplay.json");
-
-            event.getHook().editOriginal(sb.toString()).queue();
-            log.info("[Limpiar] Manual cleanup done. {} orders cleaned.", pending.size());
 
         } catch (Exception e) {
-            log.error("[Limpiar] Error during manual cleanup: {}", e.getMessage(), e);
+            log.error("[Limpiar] Error during cleanup: {}", e.getMessage(), e);
             event.getHook().editOriginal("❌ Error al limpiar: " + e.getMessage()).queue();
         }
     }

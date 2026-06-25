@@ -421,4 +421,45 @@ public class ItemSpawnService {
         public ItemSpawnException(String message) { super(message); }
         public ItemSpawnException(String message, Throwable cause) { super(message, cause); }
     }
+
+    /**
+     * Scans the custom folder on Nitrado for any shop_*.json files and removes them,
+     * also cleaning their entries from cfggameplay.json.
+     *
+     * @return the number of files cleaned
+     */
+    public int cleanOrphanedFiles() {
+        try {
+            var files = nitradoClient.listFiles(serviceId, customFolderPath);
+            int cleaned = 0;
+
+            for (var file : files) {
+                if (file.name() != null && file.name().startsWith("shop_") && file.name().endsWith(".json")) {
+                    log.info("[ShopSpawn] Found orphaned file: {}", file.name());
+
+                    // Remove from cfggameplay.json
+                    try {
+                        unregisterFromGameplay("custom/" + file.name());
+                    } catch (Exception e) {
+                        log.warn("[ShopSpawn] Could not unregister {}: {}", file.name(), e.getMessage());
+                    }
+
+                    // Delete file
+                    try {
+                        nitradoClient.deleteFile(serviceId, customFolderPath + "/" + file.name());
+                        log.info("[ShopSpawn] Deleted orphaned file: {}", file.name());
+                        cleaned++;
+                    } catch (Exception e) {
+                        log.warn("[ShopSpawn] Could not delete {}: {}", file.name(), e.getMessage());
+                    }
+                }
+            }
+
+            log.info("[ShopSpawn] Orphan cleanup done. Removed {} files.", cleaned);
+            return cleaned;
+        } catch (Exception e) {
+            log.error("[ShopSpawn] Error scanning for orphaned files: {}", e.getMessage(), e);
+            return 0;
+        }
+    }
 }

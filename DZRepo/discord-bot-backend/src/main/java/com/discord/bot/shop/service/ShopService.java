@@ -187,4 +187,14 @@ public class ShopService {
         productRepository.delete(product);
         log.info("Product deleted: id={}, name='{}'", id, product.getName());
     }
+
+    /**
+     * Scans Nitrado for orphaned shop_*.json files that are not tracked in the DB
+     * and removes them along with their cfggameplay.json entries.
+     *
+     * @return number of files cleaned
+     */
+    public int cleanOrphanedShopFiles() {
+        return itemSpawnService.cleanOrphanedFiles();
+    }
 }
