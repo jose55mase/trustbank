@@ -52,7 +52,8 @@ public class ShopService {
 
     @Transactional
     public ShopOrder processPurchase(String discordId, Long productId, int quantity,
-                                     double coordX, double coordY, double coordZ) {
+                                     double coordX, double coordY, double coordZ,
+                                     long sessionId, boolean isNewSession) {
         PlayerProfile profile = playerProfileRepository.findByDiscordId(discordId)
                 .orElseThrow(() -> new PlayerNotLinkedException(
                         "No tienes una cuenta vinculada. Usa /vincular primero."));
@@ -77,22 +78,20 @@ public class ShopService {
 
         ShopOrder order = new ShopOrder(discordId, profile.getDayzPlayerName(), product,
                 quantity, totalPrice, coordX, coordY, coordZ);
+        order.setSessionId(sessionId);
         ShopOrder saved = shopOrderRepository.save(order);
 
-        log.info("Order #{} created: player='{}', product='{}', qty={}, total={}, coords=({}, {}, {})",
+        log.info("Order #{} created: player='{}', product='{}', qty={}, total={}, session=s{}, coords=({}, {}, {})",
                 saved.getId(), profile.getDayzPlayerName(), product.getName(),
-                quantity, totalPrice, coordX, coordY, coordZ);
+                quantity, totalPrice, sessionId, coordX, coordY, coordZ);
 
-        // Upload custom JSON file and register in cfggameplay.json immediately
+        // Add to session file (append if existing session, create if new)
         try {
-            itemSpawnService.uploadOrderFile(saved);
-            log.info("Order #{} — uploaded custom spawn file.", saved.getId());
+            itemSpawnService.addToSessionFile(saved, sessionId, isNewSession);
+            log.info("Order #{} — added to session file s{}.", saved.getId(), sessionId);
         } catch (Exception e) {
             log.warn("Order #{} — failed to upload custom file (will retry on restart): {}", saved.getId(), e.getMessage());
         }
-
-        // Order stays PENDING — items will spawn on next server restart
-        log.info("Order #{} queued for delivery via custom spawner system (next restart)", saved.getId());
 
         return saved;
     }

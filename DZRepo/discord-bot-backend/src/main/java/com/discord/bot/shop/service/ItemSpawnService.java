@@ -55,55 +55,90 @@ public class ItemSpawnService {
     }
 
     /**
-     * Generates the custom JSON file name for a shop order.
+     * Generates the custom JSON file name for a shopping session.
+     * Uses a session ID to group multiple products in the same file.
      *
-     * @param order the shop order
-     * @return the file name (without path prefix), e.g. "shop_xXTORRESXx9224_42.json"
+     * @param playerName the player's DayZ name
+     * @param sessionId  unique session identifier
+     * @return the file name, e.g. "shop_Macedonia6692_s3.json"
      */
-    public String generateFileName(ShopOrder order) {
-        String safeName = order.getDayzPlayerName().replaceAll("[^a-zA-Z0-9_]", "");
-        return "shop_" + safeName + "_" + order.getId() + ".json";
+    public String generateFileName(String playerName, long sessionId) {
+        String safeName = playerName.replaceAll("[^a-zA-Z0-9_]", "");
+        return "shop_" + safeName + "_s" + sessionId + ".json";
     }
 
     /**
-     * Uploads a custom object spawner JSON for the given orders and registers it
-     * in cfggameplay.json's objectSpawnersArr.
-     *
-     * <p>All pending orders are consolidated into a single file per order to allow
-     * individual cleanup after delivery.
-     *
-     * @param order the shop order to prepare for delivery
+     * Generates the custom JSON file name for a shop order (legacy, for cleanup).
      */
-    public void uploadOrderFile(ShopOrder order) {
+    public String generateFileName(ShopOrder order) {
+        String safeName = order.getDayzPlayerName().replaceAll("[^a-zA-Z0-9_]", "");
+        return "shop_" + safeName + "_s" + order.getSessionId() + ".json";
+    }
+
+    /**
+     * Adds items from an order to an existing session file, or creates a new one.
+     * If the file already exists on the server, downloads it, appends the new objects, and re-uploads.
+     * If it doesn't exist, creates a new file and registers it in cfggameplay.json.
+     *
+     * @param order     the shop order with items to add
+     * @param sessionId the session ID that groups orders into one file
+     * @param isNewSession true if this is the first order in the session (create new file)
+     */
+    public void addToSessionFile(ShopOrder order, long sessionId, boolean isNewSession) {
         if (order == null) {
             return;
         }
 
-        try {
-            // Step 1: Generate the custom JSON content
-            String jsonContent = buildCustomJson(order);
-            String fileName = generateFileName(order);
-            String filePath = customFolderPath + "/" + fileName;
+        String fileName = generateFileName(order.getDayzPlayerName(), sessionId);
+        String filePath = customFolderPath + "/" + fileName;
 
-            log.info("[ShopSpawn] === UPLOAD ORDER #{} ===", order.getId());
-            log.info("[ShopSpawn] gameplayFilePath = {}", gameplayFilePath);
-            log.info("[ShopSpawn] customFolderPath = {}", customFolderPath);
-            log.info("[ShopSpawn] fileName = {}", fileName);
-            log.info("[ShopSpawn] full filePath = {}", filePath);
+        try {
+            log.info("[ShopSpawn] === ADD TO SESSION s{} (order #{}) ===", sessionId, order.getId());
+            log.info("[ShopSpawn] filePath = {}", filePath);
+            log.info("[ShopSpawn] isNewSession = {}", isNewSession);
+
+            String jsonContent;
+
+            if (isNewSession) {
+                // Create new file with this order's items
+                jsonContent = buildCustomJson(order);
+            } else {
+                // Download existing file and append new items
+                try {
+                    String existing = nitradoClient.downloadFile(serviceId, filePath);
+                    jsonContent = appendToCustomJson(existing, order);
+                    log.info("[ShopSpawn] Appended to existing file ({} bytes)", existing.length());
+                } catch (Exception downloadEx) {
+                    // File doesn't exist yet (maybe cleanup happened), create new
+                    log.warn("[ShopSpawn] Could not download existing file, creating new: {}", downloadEx.getMessage());
+                    jsonContent = buildCustomJson(order);
+                    isNewSession = true;
+                }
+            }
+
             log.info("[ShopSpawn] JSON content:\n{}", jsonContent);
 
-            // Step 2: Upload the custom JSON file
+            // Upload the file (create or overwrite)
             nitradoClient.uploadFile(serviceId, filePath, jsonContent);
-            log.info("[ShopSpawn] Uploaded custom file: {}", filePath);
+            log.info("[ShopSpawn] Uploaded file: {}", filePath);
 
-            // Step 3: Register in cfggameplay.json
-            registerInGameplay("custom/" + fileName);
-            log.info("[ShopSpawn] Registered {} in cfggameplay.json objectSpawnersArr", fileName);
+            // Register in cfggameplay.json only if it's a new session file
+            if (isNewSession) {
+                registerInGameplay("custom/" + fileName);
+                log.info("[ShopSpawn] Registered {} in cfggameplay.json", fileName);
+            }
 
         } catch (Exception e) {
-            log.error("[ShopSpawn] Failed to upload order #{}: {}", order.getId(), e.getMessage(), e);
+            log.error("[ShopSpawn] Failed to add order #{} to session s{}: {}", order.getId(), sessionId, e.getMessage(), e);
             throw new ItemSpawnException("Error al preparar pedido: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * @deprecated Use {@link #addToSessionFile} instead.
+     */
+    public void uploadOrderFile(ShopOrder order) {
+        addToSessionFile(order, order.getId(), true);
     }
 
     /**
@@ -158,7 +193,9 @@ public class ItemSpawnService {
     }
 
     /**
-     * Cleans up all delivered orders.
+     * Cleans up all delivered orders, grouped by session.
+     * Multiple orders in the same session share one file, so we only
+     * delete and unregister once per unique session.
      *
      * @param deliveredOrders the list of orders that have been delivered
      */
@@ -167,8 +204,38 @@ public class ItemSpawnService {
             return;
         }
 
+        // Group by session to avoid deleting the same file multiple times
+        java.util.Set<String> cleanedFiles = new java.util.HashSet<>();
+
         for (ShopOrder order : deliveredOrders) {
-            cleanupOrder(order);
+            if (order == null) continue;
+            String fileName = generateFileName(order);
+            if (cleanedFiles.contains(fileName)) {
+                continue; // Already cleaned this session's file
+            }
+            cleanedFiles.add(fileName);
+            cleanupFile(fileName);
+        }
+    }
+
+    /**
+     * Removes a single session file from the server and cfggameplay.json.
+     */
+    private void cleanupFile(String fileName) {
+        String filePath = customFolderPath + "/" + fileName;
+
+        try {
+            unregisterFromGameplay("custom/" + fileName);
+            log.info("[ShopSpawn] Unregistered {} from cfggameplay.json", fileName);
+        } catch (Exception e) {
+            log.warn("[ShopSpawn] Failed to unregister {} from cfggameplay.json: {}", fileName, e.getMessage());
+        }
+
+        try {
+            nitradoClient.deleteFile(serviceId, filePath);
+            log.info("[ShopSpawn] Deleted custom file: {}", filePath);
+        } catch (Exception e) {
+            log.warn("[ShopSpawn] Failed to delete file {}: {}", filePath, e.getMessage());
         }
     }
 
@@ -217,6 +284,43 @@ public class ItemSpawnService {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("Objects", objects);
 
+        return objectMapper.writeValueAsString(root);
+    }
+
+    /**
+     * Appends new items from an order to an existing custom JSON content.
+     * Downloads the existing Objects array and adds the new items to it.
+     */
+    @SuppressWarnings("unchecked")
+    private String appendToCustomJson(String existingContent, ShopOrder order) throws JsonProcessingException {
+        Map<String, Object> root = objectMapper.readValue(existingContent, new TypeReference<>() {});
+
+        List<Map<String, Object>> objects = (List<Map<String, Object>>) root.get("Objects");
+        if (objects == null) {
+            objects = new ArrayList<>();
+        } else {
+            objects = new ArrayList<>(objects); // mutable copy
+        }
+
+        String className = order.getProduct().getDayzClassName();
+        int quantity = order.getQuantity();
+        double x = order.getCoordX();
+        double y = order.getCoordY();
+        double z = order.getCoordZ();
+
+        // Offset based on how many objects already exist
+        int existingCount = objects.size();
+        for (int i = 0; i < quantity; i++) {
+            Map<String, Object> obj = new LinkedHashMap<>();
+            obj.put("name", className);
+            obj.put("pos", List.of(x + ((existingCount + i) * 0.5), y, z + ((existingCount + i) * 0.5)));
+            obj.put("ypr", List.of(0.0, 0.0, 0.0));
+            obj.put("scale", 1.0);
+            obj.put("enableCEPersistency", 0);
+            objects.add(obj);
+        }
+
+        root.put("Objects", objects);
         return objectMapper.writeValueAsString(root);
     }
 

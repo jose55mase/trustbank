@@ -48,6 +48,10 @@ public class ShopInteractionListener extends ListenerAdapter {
      */
     private final Map<String, ShoppingSession> activeSessions = new ConcurrentHashMap<>();
 
+    /** Counter for generating unique session IDs */
+    private final java.util.concurrent.atomic.AtomicLong sessionCounter = new java.util.concurrent.atomic.AtomicLong(
+            System.currentTimeMillis() / 1000);
+
     public ShopInteractionListener(ShopService shopService,
                                    PlayerLinkService playerLinkService,
                                    PlayerPositionService playerPositionService) {
@@ -190,7 +194,7 @@ public class ShopInteractionListener extends ListenerAdapter {
         }
 
         // Store positions temporarily for the select handler
-        activeSessions.put(discordId, new ShoppingSession(positions, null, new ArrayList<>()));
+        activeSessions.put(discordId, new ShoppingSession(positions, null, new ArrayList<>(), 0, true));
 
         var embed = new EmbedBuilder()
                 .setColor(new Color(0xF39C12))
@@ -237,9 +241,10 @@ public class ShopInteractionListener extends ListenerAdapter {
 
         PlayerPosition selectedPosition = session.positions().get(positionIndex);
 
-        // Update session with confirmed position
+        // Update session with confirmed position and a unique session ID
+        long sessionId = sessionCounter.incrementAndGet();
         activeSessions.put(discordId, new ShoppingSession(
-                session.positions(), selectedPosition, new ArrayList<>()));
+                session.positions(), selectedPosition, new ArrayList<>(), sessionId, true));
 
         // Show the shopping session embed with Add Product button
         var embed = buildSessionEmbed(discordId, selectedPosition, List.of());
@@ -330,19 +335,22 @@ public class ShopInteractionListener extends ListenerAdapter {
         PlayerPosition pos = session.confirmedPosition();
 
         try {
+            boolean isNewSession = session.isFirstOrder();
             ShopOrder order = shopService.processPurchase(
                     discordId, productId, quantity,
-                    pos.x(), pos.y(), pos.z()
+                    pos.x(), pos.y(), pos.z(),
+                    session.sessionId(), isNewSession
             );
 
-            // Add order to session history
+            // Add order to session history and mark session as no longer new
             List<OrderSummary> updatedOrders = new ArrayList<>(session.orders());
             updatedOrders.add(new OrderSummary(
                     order.getId(), order.getProduct().getName(),
                     order.getQuantity(), order.getTotalPrice()));
 
             activeSessions.put(discordId, new ShoppingSession(
-                    session.positions(), session.confirmedPosition(), updatedOrders));
+                    session.positions(), session.confirmedPosition(), updatedOrders,
+                    session.sessionId(), false));
 
             // Reply with success + updated session
             var successEmbed = buildSessionEmbed(discordId, pos, updatedOrders);
@@ -666,11 +674,14 @@ public class ShopInteractionListener extends ListenerAdapter {
 
     /**
      * Holds the active shopping session for a player.
+     * All orders in the same session share one file on the server.
      */
     private record ShoppingSession(
             List<PlayerPosition> positions,
             PlayerPosition confirmedPosition,
-            List<OrderSummary> orders
+            List<OrderSummary> orders,
+            long sessionId,
+            boolean isFirstOrder
     ) {}
 
     /**

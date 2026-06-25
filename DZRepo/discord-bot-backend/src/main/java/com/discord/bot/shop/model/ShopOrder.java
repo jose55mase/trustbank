@@ -54,6 +54,9 @@ public class ShopOrder {
     @Column(nullable = false)
     private String status = "PENDING";
 
+    @Column
+    private Long sessionId;
+
     protected ShopOrder() {}
 
     public ShopOrder(String discordId, String dayzPlayerName, Product product,
@@ -82,4 +85,6 @@ public class ShopOrder {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public Long getSessionId() { return sessionId; }
+    public void setSessionId(Long sessionId) { this.sessionId = sessionId; }
 }
