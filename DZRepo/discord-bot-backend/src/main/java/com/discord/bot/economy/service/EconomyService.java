@@ -260,6 +260,14 @@ public class EconomyService {
             config.setEnabled(dto.enabled());
         }
 
+        if (dto.onlineRewardCoins() != null) {
+            config.setOnlineRewardCoins(dto.onlineRewardCoins());
+        }
+
+        if (dto.onlineRewardIntervalMinutes() != null) {
+            config.setOnlineRewardIntervalMinutes(dto.onlineRewardIntervalMinutes());
+        }
+
         EconomyConfig saved = economyConfigRepository.save(config);
         log.info("Updated economy config for guild '{}': coinsPerZombieKill={}, enabled={}",
                 guildId, saved.getCoinsPerZombieKill(), saved.isEnabled());

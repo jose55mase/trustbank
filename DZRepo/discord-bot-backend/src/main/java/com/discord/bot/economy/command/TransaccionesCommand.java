@@ -123,6 +123,7 @@ public class TransaccionesCommand implements SlashCommand {
             case PLAYER_TRANSFER_SENT -> "📤 Transferencia Enviada";
             case PLAYER_TRANSFER_RECEIVED -> "📥 Transferencia Recibida";
             case SHOP_PURCHASE -> "🛒 Compra Tienda";
+            case ONLINE_REWARD -> "🟢 Recompensa Online";
         };
     }
 

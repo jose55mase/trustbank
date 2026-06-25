@@ -40,6 +40,12 @@ public class EconomyConfig {
     @Column(nullable = false)
     private boolean enabled;
 
+    @Column(nullable = false)
+    private int onlineRewardCoins;
+
+    @Column(nullable = false)
+    private int onlineRewardIntervalMinutes;
+
     /** No-arg constructor required by JPA. */
     protected EconomyConfig() {
     }
@@ -54,6 +60,8 @@ public class EconomyConfig {
         this.coinsPerZombieKill = DEFAULT_COINS_PER_ZOMBIE_KILL;
         this.meleeWeapons = DEFAULT_MELEE_WEAPONS;
         this.enabled = true;
+        this.onlineRewardCoins = 5;
+        this.onlineRewardIntervalMinutes = 5;
     }
 
     // --- Getters and Setters ---
@@ -96,5 +104,21 @@ public class EconomyConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getOnlineRewardCoins() {
+        return onlineRewardCoins;
+    }
+
+    public void setOnlineRewardCoins(int onlineRewardCoins) {
+        this.onlineRewardCoins = onlineRewardCoins;
+    }
+
+    public int getOnlineRewardIntervalMinutes() {
+        return onlineRewardIntervalMinutes;
+    }
+
+    public void setOnlineRewardIntervalMinutes(int onlineRewardIntervalMinutes) {
+        this.onlineRewardIntervalMinutes = onlineRewardIntervalMinutes;
     }
 }

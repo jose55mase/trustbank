@@ -29,6 +29,8 @@ class EconomyConfigScreen extends ConsumerStatefulWidget {
 
 class _EconomyConfigScreenState extends ConsumerState<EconomyConfigScreen> {
   final _coinsController = TextEditingController();
+  final _onlineRewardCoinsController = TextEditingController();
+  final _onlineRewardIntervalController = TextEditingController();
 
   // Local mutable copies of the config fields so the form is interactive
   // before the user saves.
@@ -48,12 +50,16 @@ class _EconomyConfigScreenState extends ConsumerState<EconomyConfigScreen> {
   @override
   void dispose() {
     _coinsController.dispose();
+    _onlineRewardCoinsController.dispose();
+    _onlineRewardIntervalController.dispose();
     super.dispose();
   }
 
   /// Syncs local form state when the notifier delivers a fresh config.
   void _syncFormFromConfig(EconomyConfigModel config) {
     _coinsController.text = config.coinsPerZombieKill.toString();
+    _onlineRewardCoinsController.text = config.onlineRewardCoins.toString();
+    _onlineRewardIntervalController.text = config.onlineRewardIntervalMinutes.toString();
     _meleeWeapons = List<String>.from(config.meleeWeapons);
     _enabled = config.enabled;
   }
@@ -69,10 +75,33 @@ class _EconomyConfigScreenState extends ConsumerState<EconomyConfigScreen> {
       return;
     }
 
+    final onlineCoins = int.tryParse(_onlineRewardCoinsController.text.trim());
+    final onlineInterval = int.tryParse(_onlineRewardIntervalController.text.trim());
+
+    if (onlineCoins == null || onlineCoins <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Las monedas por conexión deben ser un número positivo'),
+        ),
+      );
+      return;
+    }
+
+    if (onlineInterval == null || onlineInterval <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El intervalo debe ser un número positivo (en minutos)'),
+        ),
+      );
+      return;
+    }
+
     final updatedConfig = EconomyConfigModel(
       coinsPerZombieKill: coins,
       meleeWeapons: _meleeWeapons,
       enabled: _enabled,
+      onlineRewardCoins: onlineCoins,
+      onlineRewardIntervalMinutes: onlineInterval,
     );
 
     await ref
@@ -181,6 +210,53 @@ class _EconomyConfigScreenState extends ConsumerState<EconomyConfigScreen> {
                       labelText: 'Monedas por kill',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.monetization_on_outlined),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Online reward configuration
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Recompensa por conexión',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Monedas otorgadas a jugadores vinculados por estar conectados al servidor',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _onlineRewardCoinsController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Monedas por ciclo',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.access_time),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _onlineRewardIntervalController,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: const InputDecoration(
+                      labelText: 'Intervalo (minutos)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.timer_outlined),
+                      helperText: 'Cada cuántos minutos se da la recompensa',
                     ),
                   ),
                 ],

@@ -15,5 +15,7 @@ public enum TransactionType {
     /** Coins received from another player via /transferir. */
     PLAYER_TRANSFER_RECEIVED,
     /** Coins spent purchasing a product from the shop. */
-    SHOP_PURCHASE
+    SHOP_PURCHASE,
+    /** Coins earned for being connected to the server. */
+    ONLINE_REWARD
 }

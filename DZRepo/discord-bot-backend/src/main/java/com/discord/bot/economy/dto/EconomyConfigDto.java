@@ -19,16 +19,11 @@ import java.util.List;
 public record EconomyConfigDto(
         int coinsPerZombieKill,
         List<String> meleeWeapons,
-        boolean enabled
+        boolean enabled,
+        int onlineRewardCoins,
+        int onlineRewardIntervalMinutes
 ) {
 
-    /**
-     * Creates an {@code EconomyConfigDto} from an {@link EconomyConfig} entity,
-     * splitting the CSV melee-weapons string into a {@code List<String>}.
-     *
-     * @param config the JPA economy configuration entity
-     * @return a new DTO populated from the entity
-     */
     public static EconomyConfigDto fromConfig(EconomyConfig config) {
         List<String> weapons = config.getMeleeWeapons() == null || config.getMeleeWeapons().isBlank()
                 ? List.of()
@@ -40,7 +35,9 @@ public record EconomyConfigDto(
         return new EconomyConfigDto(
                 config.getCoinsPerZombieKill(),
                 weapons,
-                config.isEnabled()
+                config.isEnabled(),
+                config.getOnlineRewardCoins(),
+                config.getOnlineRewardIntervalMinutes()
         );
     }
 }

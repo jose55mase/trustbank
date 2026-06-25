@@ -17,6 +17,8 @@ import java.util.List;
 public record EconomyConfigUpdateDto(
         @Positive Integer coinsPerZombieKill,
         List<String> meleeWeapons,
-        Boolean enabled
+        Boolean enabled,
+        @Positive Integer onlineRewardCoins,
+        @Positive Integer onlineRewardIntervalMinutes
 ) {
 }
