@@ -278,12 +278,12 @@ public class ItemSpawnService {
         double y = order.getCoordY();
         double z = order.getCoordZ();
 
-        // Create one entry per item quantity (each slightly offset to avoid stacking issues)
+        // Create one entry per item quantity
         for (int i = 0; i < quantity; i++) {
             Map<String, Object> obj = new LinkedHashMap<>();
             obj.put("name", className);
-            // All items spawn at same spot, offset 10 units from player position
-            obj.put("pos", List.of(x + 10.0, y, z + 10.0));
+            // Items spawn at player's exact position
+            obj.put("pos", List.of(x, y, z));
             obj.put("ypr", List.of(0.0, 0.0, 0.0));
             obj.put("scale", 1.0);
             obj.put("enableCEPersistency", 0);
@@ -322,7 +322,7 @@ public class ItemSpawnService {
         for (int i = 0; i < quantity; i++) {
             Map<String, Object> obj = new LinkedHashMap<>();
             obj.put("name", className);
-            obj.put("pos", List.of(x + 10.0, y, z + 10.0));
+            obj.put("pos", List.of(x, y, z));
             obj.put("ypr", List.of(0.0, 0.0, 0.0));
             obj.put("scale", 1.0);
             obj.put("enableCEPersistency", 0);
