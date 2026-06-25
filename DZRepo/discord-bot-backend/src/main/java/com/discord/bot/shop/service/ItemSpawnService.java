@@ -273,8 +273,8 @@ public class ItemSpawnService {
         for (int i = 0; i < quantity; i++) {
             Map<String, Object> obj = new LinkedHashMap<>();
             obj.put("name", className);
-            // Offset each item slightly so they don't stack on top of each other
-            obj.put("pos", List.of(x + (i * 0.5), y, z + (i * 0.5)));
+            // All items spawn at same spot, offset 10 units from player position
+            obj.put("pos", List.of(x + 10.0, y, z + 10.0));
             obj.put("ypr", List.of(0.0, 0.0, 0.0));
             obj.put("scale", 1.0);
             obj.put("enableCEPersistency", 0);
@@ -313,7 +313,7 @@ public class ItemSpawnService {
         for (int i = 0; i < quantity; i++) {
             Map<String, Object> obj = new LinkedHashMap<>();
             obj.put("name", className);
-            obj.put("pos", List.of(x + ((existingCount + i) * 0.5), y, z + ((existingCount + i) * 0.5)));
+            obj.put("pos", List.of(x + 10.0, y, z + 10.0));
             obj.put("ypr", List.of(0.0, 0.0, 0.0));
             obj.put("scale", 1.0);
             obj.put("enableCEPersistency", 0);
