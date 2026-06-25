@@ -64,7 +64,7 @@ public class OnlineRewardScheduler {
     @Scheduled(fixedRate = 60000, initialDelay = 60000)
     public void rewardOnlinePlayers() {
         if (serviceId <= 0) {
-            log.debug("[OnlineReward] Skipped: no service ID configured.");
+            log.debug("[OnlineReward] Skipped: no service ID configured. serviceId={}", serviceId);
             return;
         }
 
@@ -84,7 +84,7 @@ public class OnlineRewardScheduler {
         int intervalMinutes = config.getOnlineRewardIntervalMinutes();
 
         if (coinsPerCycle <= 0 || intervalMinutes <= 0) {
-            log.debug("[OnlineReward] Skipped: reward coins or interval is 0.");
+            log.debug("[OnlineReward] Skipped: coinsPerCycle={}, intervalMinutes={}", coinsPerCycle, intervalMinutes);
             return;
         }
 
@@ -95,6 +95,9 @@ public class OnlineRewardScheduler {
             return; // Not time yet
         }
         lastRewardTime = now;
+
+        log.info("[OnlineReward] Running reward cycle. serviceId={}, coins={}, interval={}min",
+                serviceId, coinsPerCycle, intervalMinutes);
 
         try {
             List<PlayerDto> onlinePlayers = nitradoApiClient.getPlayers(serviceId);
