@@ -447,13 +447,14 @@ public class NitradoApiClient {
      * @param filePath  the full path of the file to delete on the server
      */
     public void deleteFile(int serviceId, String filePath) {
-        String url = "/services/" + serviceId + "/gameservers/file_server/delete?path=" + filePath;
-        log.info("[NitradoClient] Deleting file: {} (serviceId={})", filePath, serviceId);
+        String resolvedPath = resolveServerPath(filePath);
+        String url = "/services/" + serviceId + "/gameservers/file_server/delete?path=" + resolvedPath;
+        log.info("[NitradoClient] Deleting file: {} (serviceId={})", resolvedPath, serviceId);
 
         try {
             HttpEntity<?> entity = new HttpEntity<>(buildHeaders());
             restTemplate.exchange(url, HttpMethod.POST, entity, Map.class);
-            log.debug("[NitradoClient] File deleted: {} (serviceId={})", filePath, serviceId);
+            log.info("[NitradoClient] File deleted successfully: {} (serviceId={})", resolvedPath, serviceId);
         } catch (HttpClientErrorException e) {
             int status = e.getStatusCode().value();
             if (status == 404) {
