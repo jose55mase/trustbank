@@ -30,7 +30,7 @@ public class ShopDeliveryScheduler {
     private final NitradoApiClient nitradoApiClient;
     private final ShopService shopService;
 
-    @Value("${shop.nitrado.service-id:0}")
+    @Value("${economy.nitrado.service-id:${shop.nitrado.service-id:0}}")
     private int serviceId;
 
     /** Tracks whether the server was online in the last check. */
@@ -48,6 +48,7 @@ public class ShopDeliveryScheduler {
     @Scheduled(fixedRate = 60000)
     public void checkServerAndCleanup() {
         if (serviceId <= 0) {
+            log.info("[ShopDelivery] SKIPPED: serviceId={} (not configured)", serviceId);
             return;
         }
 
@@ -55,20 +56,29 @@ public class ShopDeliveryScheduler {
         try {
             GameServerDto status = nitradoApiClient.getServerStatus(serviceId);
             currentlyOnline = "started".equalsIgnoreCase(status.status());
+            log.debug("[ShopDelivery] Server status: '{}', online={}", status.status(), currentlyOnline);
         } catch (Exception e) {
             log.debug("[ShopDelivery] Could not check server status: {}", e.getMessage());
             return;
         }
 
-        // First run — just record the state
+        // First run — check if there are pending orders that should have been delivered
         if (lastKnownOnline == null) {
             lastKnownOnline = currentlyOnline;
+            if (currentlyOnline) {
+                // Bot just started and server is online — check for stale pending orders
+                List<ShopOrder> pending = shopService.getPendingOrders();
+                if (!pending.isEmpty()) {
+                    log.info("[ShopDelivery] Bot startup: server online with {} pending orders. Cleaning up...", pending.size());
+                    confirmAndCleanup();
+                }
+            }
             return;
         }
 
         // Server came back ONLINE after being offline
         if (!lastKnownOnline && currentlyOnline) {
-            log.info("[ShopDelivery] Server is back online. Cleaning up delivered orders...");
+            log.info("[ShopDelivery] Server transitioned OFFLINE → ONLINE. Cleaning up...");
             confirmAndCleanup();
         }
 
@@ -83,14 +93,20 @@ public class ShopDeliveryScheduler {
         try {
             List<ShopOrder> pending = shopService.getPendingOrders();
             if (pending.isEmpty()) {
-                log.debug("[ShopDelivery] No pending orders to confirm.");
+                log.info("[ShopDelivery] No pending orders to confirm.");
                 return;
             }
 
+            log.info("[ShopDelivery] Found {} pending orders to clean up:", pending.size());
+            for (ShopOrder order : pending) {
+                log.info("[ShopDelivery]   Order #{} — player='{}', sessionId={}",
+                        order.getId(), order.getDayzPlayerName(), order.getSessionId());
+            }
+
             shopService.confirmDelivery();
-            log.info("[ShopDelivery] Confirmed {} orders and cleaned up custom spawn files.", pending.size());
+            log.info("[ShopDelivery] ✅ Confirmed {} orders and cleaned up custom spawn files.", pending.size());
         } catch (Exception e) {
-            log.error("[ShopDelivery] Failed to confirm deliveries: {}", e.getMessage());
+            log.error("[ShopDelivery] ❌ Failed to confirm deliveries: {}", e.getMessage(), e);
         }
     }
 }
