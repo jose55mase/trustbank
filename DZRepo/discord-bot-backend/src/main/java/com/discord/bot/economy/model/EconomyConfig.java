@@ -16,7 +16,7 @@ import jakarta.persistence.Table;
 @Table(name = "economy_config")
 public class EconomyConfig {
 
-    /** Default number of TNT Coins awarded per zombie kill with a melee weapon. */
+    /** Default number of Coins awarded per zombie kill with a melee weapon. */
     public static final int DEFAULT_COINS_PER_ZOMBIE_KILL = 10;
 
     /** Default CSV list of DayZ weapons classified as melee. */

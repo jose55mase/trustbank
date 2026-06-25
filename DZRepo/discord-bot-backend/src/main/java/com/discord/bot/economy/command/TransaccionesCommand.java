@@ -25,7 +25,7 @@ import java.util.Optional;
 
 /**
  * Slash command {@code /transacciones} that displays the player's last 10
- * TNT Coins transactions.
+ * Coins transactions.
  *
  * <p>Shows an embed listing each transaction with its type (translated to Spanish),
  * amount (with +/- prefix), date/time, and description.</p>
@@ -51,7 +51,7 @@ public class TransaccionesCommand implements SlashCommand {
 
     @Override
     public String getDescription() {
-        return "Muestra tus últimas transacciones de TNT Coins";
+        return "Muestra tus últimas transacciones de Coins";
     }
 
     @Override
@@ -92,7 +92,7 @@ public class TransaccionesCommand implements SlashCommand {
                 String txDescription = tx.getDescription() != null ? tx.getDescription() : "";
 
                 description.append(typeLabel)
-                        .append(" | **").append(formattedAmount).append("** TNT Coins")
+                        .append(" | **").append(formattedAmount).append("** Coins")
                         .append(" | ").append(date)
                         .append("\n").append(txDescription)
                         .append("\n\n");

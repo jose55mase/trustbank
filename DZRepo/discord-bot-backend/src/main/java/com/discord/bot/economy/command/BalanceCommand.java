@@ -18,7 +18,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 /**
- * Slash command {@code /balance} that displays the player's current TNT Coins balance.
+ * Slash command {@code /balance} that displays the player's current Coins balance.
  *
  * <p>Shows an embed with the formatted balance (thousands separator).
  * If the user has no linked account, an ephemeral error message is returned.</p>
@@ -41,7 +41,7 @@ public class BalanceCommand implements SlashCommand {
 
     @Override
     public String getDescription() {
-        return "Muestra tu balance de TNT Coins";
+        return "Muestra tu balance de Coins";
     }
 
     @Override
@@ -61,8 +61,8 @@ public class BalanceCommand implements SlashCommand {
 
             var embed = new EmbedBuilder()
                     .setColor(new Color(0xF1C40F))
-                    .setTitle("💰 Balance de TNT Coins")
-                    .addField("Balance actual", formattedBalance + " TNT Coins", false)
+                    .setTitle("💰 Balance de Coins")
+                    .addField("Balance actual", formattedBalance + " Coins", false)
                     .build();
 
             event.replyEmbeds(embed).queue();

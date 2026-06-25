@@ -68,7 +68,7 @@ public class ShopService {
 
         if (profile.getBalance() < totalPrice) {
             throw new InsufficientBalanceException(
-                    "Balance insuficiente. Necesitas " + totalPrice + " TNT Coins pero tienes " + profile.getBalance(),
+                    "Balance insuficiente. Necesitas " + totalPrice + " Coins pero tienes " + profile.getBalance(),
                     profile.getBalance(), totalPrice);
         }
 

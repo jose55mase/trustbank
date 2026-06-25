@@ -12,7 +12,7 @@ import java.util.List;
  * economy settings. The melee weapons list is returned as a
  * {@code List<String>} rather than the raw CSV stored in the entity.</p>
  *
- * @param coinsPerZombieKill number of TNT Coins awarded per zombie melee kill
+ * @param coinsPerZombieKill number of Coins awarded per zombie melee kill
  * @param meleeWeapons       list of weapon names classified as melee
  * @param enabled            whether the economy system is currently enabled
  */

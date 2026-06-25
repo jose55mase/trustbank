@@ -27,7 +27,7 @@ import java.util.Optional;
 
 /**
  * Slash command {@code /transferir} that allows a linked player to transfer
- * TNT Coins to another linked player.
+ * Coins to another linked player.
  *
  * <p>Validates that both sender and receiver have linked accounts, the receiver
  * is not a bot, the sender is not transferring to themselves, and the amount
@@ -53,14 +53,14 @@ public class TransferirCommand implements SlashCommand {
 
     @Override
     public String getDescription() {
-        return "Transfiere TNT Coins a otro jugador";
+        return "Transfiere Coins a otro jugador";
     }
 
     @Override
     public CommandData getCommandData() {
         return Commands.slash(getName(), getDescription())
                 .addOption(OptionType.USER, "usuario", "Jugador al que transferir monedas", true)
-                .addOption(OptionType.INTEGER, "cantidad", "Cantidad de TNT Coins a transferir", true);
+                .addOption(OptionType.INTEGER, "cantidad", "Cantidad de Coins a transferir", true);
     }
 
     @Override
@@ -109,11 +109,11 @@ public class TransferirCommand implements SlashCommand {
                     .setTitle("✅ Transferencia Exitosa")
                     .addField("Emisor", event.getUser().getAsMention(), true)
                     .addField("Receptor", targetUser.getAsMention(), true)
-                    .addField("Cantidad", formatBalance(cantidad) + " TNT Coins", false)
+                    .addField("Cantidad", formatBalance(cantidad) + " Coins", false)
                     .addField("Nuevo balance emisor",
-                            formatBalance(result.senderTransaction().getBalanceAfter()) + " TNT Coins", true)
+                            formatBalance(result.senderTransaction().getBalanceAfter()) + " Coins", true)
                     .addField("Nuevo balance receptor",
-                            formatBalance(result.receiverTransaction().getBalanceAfter()) + " TNT Coins", true)
+                            formatBalance(result.receiverTransaction().getBalanceAfter()) + " Coins", true)
                     .build();
 
             event.replyEmbeds(embed).queue();
@@ -123,7 +123,7 @@ public class TransferirCommand implements SlashCommand {
                     .setEphemeral(true).queue();
         } catch (InsufficientBalanceException e) {
             event.reply("❌ Balance insuficiente. Tu balance actual es: "
-                    + formatBalance(e.getCurrentBalance()) + " TNT Coins.")
+                    + formatBalance(e.getCurrentBalance()) + " Coins.")
                     .setEphemeral(true).queue();
         } catch (SelfTransferException e) {
             event.reply("❌ No puedes transferirte monedas a ti mismo.")

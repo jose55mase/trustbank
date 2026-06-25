@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 
 /**
  * JPA entity representing a currency transaction in the economy system.
- * Each transaction records a change in a player's TNT Coins balance,
+ * Each transaction records a change in a player's Coins balance,
  * including the type, amount, resulting balance, and a description.
  */
 @Entity

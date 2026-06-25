@@ -31,7 +31,7 @@ import java.util.Optional;
 /**
  * Slash command {@code /economia} with subcommands {@code dar} and {@code quitar}.
  *
- * <p>Allows Discord administrators to credit or debit TNT Coins from players.
+ * <p>Allows Discord administrators to credit or debit Coins from players.
  * Requires administrator permissions. Validates that the target user has a
  * linked account, the amount is positive, and (for debits) the balance is
  * sufficient.</p>
@@ -56,17 +56,17 @@ public class EconomiaCommand implements SlashCommand {
 
     @Override
     public String getDescription() {
-        return "Administra la economía de TNT Coins de los jugadores";
+        return "Administra la economía de Coins de los jugadores";
     }
 
     @Override
     public CommandData getCommandData() {
         return Commands.slash(getName(), getDescription())
                 .addSubcommands(
-                        new SubcommandData("dar", "Da TNT Coins a un jugador")
+                        new SubcommandData("dar", "Da Coins a un jugador")
                                 .addOption(OptionType.USER, "usuario", "Jugador al que dar monedas", true)
                                 .addOption(OptionType.INTEGER, "cantidad", "Cantidad de monedas a dar", true),
-                        new SubcommandData("quitar", "Quita TNT Coins a un jugador")
+                        new SubcommandData("quitar", "Quita Coins a un jugador")
                                 .addOption(OptionType.USER, "usuario", "Jugador al que quitar monedas", true)
                                 .addOption(OptionType.INTEGER, "cantidad", "Cantidad de monedas a quitar", true)
                 );
@@ -107,7 +107,7 @@ public class EconomiaCommand implements SlashCommand {
             event.reply("❌ La cantidad debe ser positiva.").setEphemeral(true).queue();
         } catch (InsufficientBalanceException e) {
             event.reply("❌ Balance insuficiente. Balance actual: "
-                    + formatBalance(e.getCurrentBalance()) + " TNT Coins.")
+                    + formatBalance(e.getCurrentBalance()) + " Coins.")
                     .setEphemeral(true).queue();
         } catch (Exception e) {
             log.error("Error al ejecutar /economia {}: {}", event.getSubcommandName(), e.getMessage(), e);
@@ -125,10 +125,10 @@ public class EconomiaCommand implements SlashCommand {
 
         var embed = new EmbedBuilder()
                 .setColor(new Color(0x2ECC71))
-                .setTitle("✅ TNT Coins Acreditadas")
+                .setTitle("✅ Coins Acreditadas")
                 .addField("Jugador", targetUser.getAsMention(), true)
-                .addField("Cantidad", "+" + formatBalance(cantidad) + " TNT Coins", true)
-                .addField("Nuevo balance", formatBalance(transaction.getBalanceAfter()) + " TNT Coins", false)
+                .addField("Cantidad", "+" + formatBalance(cantidad) + " Coins", true)
+                .addField("Nuevo balance", formatBalance(transaction.getBalanceAfter()) + " Coins", false)
                 .build();
 
         event.replyEmbeds(embed).queue();
@@ -143,10 +143,10 @@ public class EconomiaCommand implements SlashCommand {
 
         var embed = new EmbedBuilder()
                 .setColor(new Color(0xE74C3C))
-                .setTitle("✅ TNT Coins Debitadas")
+                .setTitle("✅ Coins Debitadas")
                 .addField("Jugador", targetUser.getAsMention(), true)
-                .addField("Cantidad", "-" + formatBalance(cantidad) + " TNT Coins", true)
-                .addField("Nuevo balance", formatBalance(transaction.getBalanceAfter()) + " TNT Coins", false)
+                .addField("Cantidad", "-" + formatBalance(cantidad) + " Coins", true)
+                .addField("Nuevo balance", formatBalance(transaction.getBalanceAfter()) + " Coins", false)
                 .build();
 
         event.replyEmbeds(embed).queue();

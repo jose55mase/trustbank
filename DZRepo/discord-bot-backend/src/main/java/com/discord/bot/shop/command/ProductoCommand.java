@@ -47,7 +47,7 @@ public class ProductoCommand implements SlashCommand {
                 .addField("✏️ Editar", "Modificar un producto existente", false)
                 .addField("🗑️ Eliminar", "Eliminar un producto por ID", false)
                 .addField("📋 Listar", "Ver todos los productos registrados", false)
-                .setFooter("TNT Market • Admin Panel")
+                .setFooter("DZ Market • Admin Panel")
                 .build();
 
         event.replyEmbeds(embed)

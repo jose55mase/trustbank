@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Service responsible for processing zombie kill events and awarding
- * TNT Coins to linked players who use melee weapons.
+ * Coins to linked players who use melee weapons.
  *
  * <p>For each {@link ZombieKillEvent}, this service:</p>
  * <ol>
@@ -113,7 +113,7 @@ public class ZombieKillRewardService {
             String description = String.format("Zombie kill: %s with %s", event.zombieType(), weapon);
             economyService.creditCoins(profile, coinsPerKill, TransactionType.ZOMBIE_KILL_REWARD, description);
 
-            log.info("Awarded {} TNT Coins to player '{}' for melee zombie kill ({} with {}).",
+            log.info("Awarded {} Coins to player '{}' for melee zombie kill ({} with {}).",
                     coinsPerKill, playerName, event.zombieType(), weapon);
         } else {
             // Non-melee kill: only increment zombie kills, no coin reward

@@ -62,7 +62,7 @@ public class TopCommand implements SlashCommand {
                 .addSubcommands(
                         new SubcommandData("kills", "Top 10 jugadores con más kills"),
                         new SubcommandData("zombies", "Top 10 jugadores con más kills de zombies"),
-                        new SubcommandData("ricos", "Top 10 jugadores con más TNT Coins"),
+                        new SubcommandData("ricos", "Top 10 jugadores con más Coins"),
                         new SubcommandData("kd", "Top 10 jugadores con mejor ratio K/D")
                 );
     }
@@ -151,11 +151,11 @@ public class TopCommand implements SlashCommand {
             PlayerProfile p = topPlayers.get(i);
             sb.append(formatPosition(i + 1))
                     .append(" **").append(p.getDayzPlayerName()).append("** — ")
-                    .append(numberFormat.format(p.getBalance())).append(" TNT Coins\n");
+                    .append(numberFormat.format(p.getBalance())).append(" Coins\n");
         }
 
         appendUserPosition(sb, topPlayers, discordId, profile ->
-                numberFormat.format(profile.getBalance()) + " TNT Coins");
+                numberFormat.format(profile.getBalance()) + " Coins");
 
         return new EmbedBuilder()
                 .setColor(new Color(0xF1C40F))

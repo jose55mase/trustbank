@@ -25,7 +25,7 @@ import java.util.Optional;
  * Slash command {@code /estatus} that displays a player's DayZ statistics.
  *
  * <p>Shows an embed with: DayZ name, player kills, deaths, K/D ratio,
- * zombie kills, and TNT Coins balance. Supports an optional {@code usuario}
+ * zombie kills, and Coins balance. Supports an optional {@code usuario}
  * option to view another user's stats.</p>
  */
 @Component
@@ -99,7 +99,7 @@ public class EstatusCommand implements SlashCommand {
                     .addField("Muertes", String.valueOf(profile.getDeaths()), true)
                     .addField("K/D Ratio", kdRatio, true)
                     .addField("Kills de Zombies", String.valueOf(profile.getZombieKills()), true)
-                    .addField("Balance TNT Coins", formattedBalance, true)
+                    .addField("Balance Coins", formattedBalance, true)
                     .build();
 
             event.replyEmbeds(embed).queue();

@@ -112,7 +112,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                             "Usa el comando `/vincular` seguido de tu nombre de jugador.\n\n" +
                             "**Ejemplo:** `/vincular MiNombreDayZ`"
                     )
-                    .setFooter("TNT Market • Vincula tu cuenta para comprar")
+                    .setFooter("DZ Market • Vincula tu cuenta para comprar")
                     .build();
 
             event.replyEmbeds(embed).setEphemeral(true).queue();
@@ -130,7 +130,7 @@ public class ShopInteractionListener extends ListenerAdapter {
         StringBuilder catalog = new StringBuilder();
         for (Product p : products) {
             catalog.append(String.format("**ID %d** — %s\n", p.getId(), p.getName()));
-            catalog.append(String.format("   💰 %d TNT Coins", p.getPrice()));
+            catalog.append(String.format("   💰 %d Coins", p.getPrice()));
             if (p.getDescription() != null && !p.getDescription().isBlank()) {
                 catalog.append(String.format(" • %s", p.getDescription()));
             }
@@ -201,7 +201,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                         "Selecciona dónde quieres recibir tus pedidos.\n\n" +
                         "Una vez confirmada la ubicación, podrás agregar productos sin volver a seleccionar posición."
                 )
-                .setFooter("TNT Market • Paso 1: Confirmar ubicación")
+                .setFooter("DZ Market • Paso 1: Confirmar ubicación")
                 .build();
 
         event.getHook().editOriginalEmbeds(embed)
@@ -382,7 +382,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                 .addField("Discord", "<@" + order.getDiscordId() + ">", true)
                 .addField("Producto", order.getProduct().getName(), true)
                 .addField("Cantidad", String.valueOf(order.getQuantity()), true)
-                .addField("Total Pagado", order.getTotalPrice() + " TNT Coins", true)
+                .addField("Total Pagado", order.getTotalPrice() + " Coins", true)
                 .addField("Coordenadas",
                         String.format("X: %.1f | Z: %.1f | Altura: %.1f",
                                 order.getCoordX(), order.getCoordZ(), order.getCoordY()), false)
@@ -412,16 +412,16 @@ public class ShopInteractionListener extends ListenerAdapter {
             StringBuilder orderList = new StringBuilder();
             long totalSpent = 0;
             for (OrderSummary o : orders) {
-                orderList.append(String.format("• **#%d** — %dx %s (%d TNT Coins)\n",
+                orderList.append(String.format("• **#%d** — %dx %s (%d Coins)\n",
                         o.orderId(), o.quantity(), o.productName(), o.totalPrice()));
                 totalSpent += o.totalPrice();
             }
             embed.addField("📦 Pedidos en esta sesión (" + orders.size() + ")", orderList.toString(), false);
-            embed.addField("💰 Total gastado", totalSpent + " TNT Coins", true);
+            embed.addField("💰 Total gastado", totalSpent + " Coins", true);
             embed.setDescription("Puedes seguir agregando productos. Todos se entregarán en la misma ubicación.");
         }
 
-        embed.setFooter("TNT Market • Los pedidos se entregan en el próximo restart");
+        embed.setFooter("DZ Market • Los pedidos se entregan en el próximo restart");
         return embed;
     }
 
@@ -437,7 +437,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                 .addComponents(
                         ActionRow.of(TextInput.create("name", "Nombre", TextInputStyle.SHORT)
                                 .setPlaceholder("Ej: AK-47").setRequired(true).build()),
-                        ActionRow.of(TextInput.create("price", "Precio (TNT Coins)", TextInputStyle.SHORT)
+                        ActionRow.of(TextInput.create("price", "Precio (Coins)", TextInputStyle.SHORT)
                                 .setPlaceholder("Ej: 500").setRequired(true).build()),
                         ActionRow.of(TextInput.create("category", "Categoría", TextInputStyle.SHORT)
                                 .setPlaceholder("Ej: Armas, Comida, Ropa").setRequired(true).build()),
@@ -505,7 +505,7 @@ public class ShopInteractionListener extends ListenerAdapter {
         StringBuilder sb = new StringBuilder();
         for (Product p : products) {
             String status = p.isAvailable() ? "✅" : "❌";
-            sb.append(String.format("%s **ID %d** — %s\n   💰 %d TNT Coins • 📁 %s\n",
+            sb.append(String.format("%s **ID %d** — %s\n   💰 %d Coins • 📁 %s\n",
                     status, p.getId(), p.getName(), p.getPrice(), p.getCategory()));
             if (p.getDescription() != null && !p.getDescription().isBlank()) {
                 sb.append(String.format("   📝 %s\n", p.getDescription()));
@@ -552,7 +552,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                 .setTitle("✅ Producto Creado")
                 .addField("ID", String.valueOf(product.getId()), true)
                 .addField("Nombre", product.getName(), true)
-                .addField("Precio", product.getPrice() + " TNT Coins", true)
+                .addField("Precio", product.getPrice() + " Coins", true)
                 .addField("Categoría", product.getCategory(), true)
                 .addField("DayZ Class", product.getDayzClassName() != null ? product.getDayzClassName() : "N/A", true)
                 .addField("Descripción", description.isBlank() ? "Sin descripción" : description, false)
@@ -609,7 +609,7 @@ public class ShopInteractionListener extends ListenerAdapter {
                     .setTitle("✏️ Producto Editado")
                     .addField("ID", String.valueOf(product.getId()), true)
                     .addField("Nombre", product.getName(), true)
-                    .addField("Precio", product.getPrice() + " TNT Coins", true)
+                    .addField("Precio", product.getPrice() + " Coins", true)
                     .addField("Disponible", product.isAvailable() ? "✅ Sí" : "❌ No", true)
                     .build();
 

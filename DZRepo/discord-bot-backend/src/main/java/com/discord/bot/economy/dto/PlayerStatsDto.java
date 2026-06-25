@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * @param kdRatio          formatted K/D ratio (2 decimals) or "N/A" when deaths is 0
  * @param zombieKills      total zombie kills (all weapons)
  * @param zombieMeleeKills zombie kills with melee weapons only
- * @param balance          current TNT Coins balance
+ * @param balance          current Coins balance
  * @param lastActivity     timestamp of the player's last recorded activity
  */
 public record PlayerStatsDto(
