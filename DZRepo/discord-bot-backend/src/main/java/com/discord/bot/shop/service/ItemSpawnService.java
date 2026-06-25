@@ -43,10 +43,10 @@ public class ItemSpawnService {
     @Value("${shop.nitrado.service-id:0}")
     private int serviceId;
 
-    @Value("${shop.nitrado.gameplay-path:/dayzOffline.chernarusplus/cfggameplay.json}")
+    @Value("${shop.nitrado.gameplay-path:/dayzOffline.enoch/cfggameplay.json}")
     private String gameplayFilePath;
 
-    @Value("${shop.nitrado.custom-folder:/dayzOffline.chernarusplus/custom}")
+    @Value("${shop.nitrado.custom-folder:/dayzOffline.enoch/custom}")
     private String customFolderPath;
 
     public ItemSpawnService(NitradoApiClient nitradoClient) {
@@ -84,6 +84,13 @@ public class ItemSpawnService {
             String jsonContent = buildCustomJson(order);
             String fileName = generateFileName(order);
             String filePath = customFolderPath + "/" + fileName;
+
+            log.info("[ShopSpawn] === UPLOAD ORDER #{} ===", order.getId());
+            log.info("[ShopSpawn] gameplayFilePath = {}", gameplayFilePath);
+            log.info("[ShopSpawn] customFolderPath = {}", customFolderPath);
+            log.info("[ShopSpawn] fileName = {}", fileName);
+            log.info("[ShopSpawn] full filePath = {}", filePath);
+            log.info("[ShopSpawn] JSON content:\n{}", jsonContent);
 
             // Step 2: Upload the custom JSON file
             nitradoClient.uploadFile(serviceId, filePath, jsonContent);
@@ -222,6 +229,7 @@ public class ItemSpawnService {
     @SuppressWarnings("unchecked")
     private void registerInGameplay(String relativePath) {
         String content = nitradoClient.downloadFile(serviceId, gameplayFilePath);
+        log.info("[ShopSpawn] Downloaded cfggameplay.json ({} bytes)", content != null ? content.length() : 0);
         try {
             Map<String, Object> gameplay = objectMapper.readValue(content, new TypeReference<>() {});
 
@@ -235,6 +243,10 @@ public class ItemSpawnService {
             if (spawners == null) {
                 spawners = new ArrayList<>();
                 worldsData.put("objectSpawnersArr", spawners);
+            } else {
+                // Make mutable copy if it's an unmodifiable list from Jackson
+                spawners = new ArrayList<>(spawners);
+                worldsData.put("objectSpawnersArr", spawners);
             }
 
             // Check if already registered
@@ -244,7 +256,7 @@ public class ItemSpawnService {
             }
 
             spawners.add(relativePath);
-            worldsData.put("objectSpawnersArr", spawners);
+            log.info("[ShopSpawn] objectSpawnersArr now has {} entries, added: {}", spawners.size(), relativePath);
 
             String updatedContent = objectMapper.writeValueAsString(gameplay);
             nitradoClient.uploadFile(serviceId, gameplayFilePath, updatedContent);
