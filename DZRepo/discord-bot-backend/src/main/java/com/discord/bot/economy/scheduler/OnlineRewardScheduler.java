@@ -63,64 +63,75 @@ public class OnlineRewardScheduler {
      */
     @Scheduled(fixedRate = 60000, initialDelay = 60000)
     public void rewardOnlinePlayers() {
+        log.info("[OnlineReward] Tick — serviceId={}, guildId='{}'", serviceId, guildId);
+
         if (serviceId <= 0) {
-            log.debug("[OnlineReward] Skipped: no service ID configured. serviceId={}", serviceId);
+            log.info("[OnlineReward] SKIPPED: serviceId is {} (not configured)", serviceId);
             return;
         }
 
         if (guildId == null || guildId.isBlank()) {
-            log.debug("[OnlineReward] Skipped: no guild ID configured.");
+            log.info("[OnlineReward] SKIPPED: guildId is empty or null");
             return;
         }
 
         // Read config from DB
         EconomyConfig config = economyService.getConfig(guildId);
         if (!config.isEnabled()) {
-            log.debug("[OnlineReward] Skipped: economy is disabled for guild '{}'.", guildId);
+            log.info("[OnlineReward] SKIPPED: economy disabled for guild '{}'", guildId);
             return;
         }
 
         int coinsPerCycle = config.getOnlineRewardCoins();
         int intervalMinutes = config.getOnlineRewardIntervalMinutes();
+        log.info("[OnlineReward] Config: coins={}, interval={}min, enabled={}", coinsPerCycle, intervalMinutes, config.isEnabled());
 
         if (coinsPerCycle <= 0 || intervalMinutes <= 0) {
-            log.debug("[OnlineReward] Skipped: coinsPerCycle={}, intervalMinutes={}", coinsPerCycle, intervalMinutes);
+            log.info("[OnlineReward] SKIPPED: coinsPerCycle={}, intervalMinutes={}", coinsPerCycle, intervalMinutes);
             return;
         }
 
         // Check if enough time has passed since last reward
         long now = System.currentTimeMillis();
         long intervalMs = intervalMinutes * 60_000L;
-        if ((now - lastRewardTime) < intervalMs) {
-            return; // Not time yet
+        long elapsed = now - lastRewardTime;
+        if (elapsed < intervalMs) {
+            log.info("[OnlineReward] NOT YET: {}ms elapsed, need {}ms ({}min)", elapsed, intervalMs, intervalMinutes);
+            return;
         }
         lastRewardTime = now;
 
-        log.info("[OnlineReward] Running reward cycle. serviceId={}, coins={}, interval={}min",
-                serviceId, coinsPerCycle, intervalMinutes);
+        log.info("[OnlineReward] === REWARD CYCLE START === Querying players from serviceId={}", serviceId);
 
         try {
             List<PlayerDto> onlinePlayers = nitradoApiClient.getPlayers(serviceId);
 
             if (onlinePlayers == null || onlinePlayers.isEmpty()) {
-                log.debug("[OnlineReward] No players online.");
+                log.info("[OnlineReward] No players returned from API.");
                 return;
             }
+
+            log.info("[OnlineReward] Found {} players from API", onlinePlayers.size());
 
             int rewarded = 0;
 
             for (PlayerDto player : onlinePlayers) {
+                log.info("[OnlineReward] Player: name='{}', online={}", player.name(), player.online());
+
                 if (!player.online()) {
+                    log.info("[OnlineReward]   -> Skipped (not online)");
                     continue;
                 }
 
                 // Look up linked profile by DayZ player name
                 Optional<PlayerProfile> profileOpt = playerLinkService.findByDayzName(player.name());
                 if (profileOpt.isEmpty()) {
+                    log.info("[OnlineReward]   -> Skipped (not linked)");
                     continue; // Player not linked, skip
                 }
 
                 PlayerProfile profile = profileOpt.get();
+                log.info("[OnlineReward]   -> LINKED! discordId={}, balance={}", profile.getDiscordId(), profile.getBalance());
 
                 try {
                     economyService.creditCoins(
@@ -130,19 +141,17 @@ public class OnlineRewardScheduler {
                             "Recompensa por estar conectado"
                     );
                     rewarded++;
+                    log.info("[OnlineReward]   -> REWARDED {} coins. New balance={}", coinsPerCycle, profile.getBalance());
                 } catch (Exception e) {
-                    log.warn("[OnlineReward] Failed to reward player '{}': {}",
-                            player.name(), e.getMessage());
+                    log.warn("[OnlineReward]   -> FAILED to reward: {}", e.getMessage());
                 }
             }
 
-            if (rewarded > 0) {
-                log.info("[OnlineReward] Rewarded {} linked players with {} coins each.",
-                        rewarded, coinsPerCycle);
-            }
+            log.info("[OnlineReward] === CYCLE DONE === Rewarded {}/{} players with {} coins each.",
+                    rewarded, onlinePlayers.size(), coinsPerCycle);
 
         } catch (Exception e) {
-            log.warn("[OnlineReward] Error checking online players: {}", e.getMessage());
+            log.warn("[OnlineReward] Error checking online players: {}", e.getMessage(), e);
         }
     }
 }
