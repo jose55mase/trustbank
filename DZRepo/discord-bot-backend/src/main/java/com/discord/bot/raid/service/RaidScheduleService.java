@@ -54,6 +54,9 @@ public class RaidScheduleService {
     @Value("${shop.nitrado.gameplay-path:/dayzOffline.enoch/cfggameplay.json}")
     private String gameplayFilePath;
 
+    @Value("${raid.nitrado.messages-path:/dayzOffline.chernarusplus/db/messages.xml}")
+    private String messagesFilePath;
+
     public RaidScheduleService(RaidScheduleRepository raidScheduleRepository,
                                @Lazy BotInitializer botInitializer,
                                NitradoApiClient nitradoClient) {
@@ -287,6 +290,13 @@ public class RaidScheduleService {
             log.error("[Raid] ❌ Error updating cfggameplay.json on Nitrado: {}", e.getMessage(), e);
         }
 
+        // Small delay to avoid Nitrado API rate limits
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
+
         // Also update messages.xml to show/hide raid messages
         updateMessagesXml(raidActive);
     }
@@ -307,10 +317,9 @@ public class RaidScheduleService {
      */
     private void updateMessagesXml(boolean raidActive) {
         try {
-            String messagesPath = gameplayFilePath.substring(0, gameplayFilePath.lastIndexOf('/')) + "/db/messages.xml";
-            log.info("[Raid] Updating messages.xml: raidActive={}, path={}", raidActive, messagesPath);
+            log.info("[Raid] Updating messages.xml: raidActive={}, path={}", raidActive, messagesFilePath);
 
-            String content = nitradoClient.downloadFile(serviceId, messagesPath);
+            String content = nitradoClient.downloadFile(serviceId, messagesFilePath);
 
             String updatedContent;
             if (raidActive) {
@@ -319,7 +328,7 @@ public class RaidScheduleService {
                 updatedContent = setRaidInactiveMessages(content);
             }
 
-            nitradoClient.uploadFile(serviceId, messagesPath, updatedContent);
+            nitradoClient.uploadFile(serviceId, messagesFilePath, updatedContent);
             log.info("[Raid] ✅ messages.xml updated successfully");
 
         } catch (Exception e) {
