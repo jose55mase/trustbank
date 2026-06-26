@@ -1,113 +1,68 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <messages>
-<message>
+
+    <!-- ==================================================== -->
+    <!--      NOTIFICACIONES DE REINICIO DEL SERVIDOR          -->
+    <!-- ==================================================== -->
+    <message>
         <deadline>120</deadline>
         <shutdown>1</shutdown>
         <text>#name</text>
-</message>
-<message>
+    </message>
+    <message>
         <deadline>120</deadline>
-        <text>Server restarts in #tmin minutes </text>
-</message>
-<message>
+        <text>[!] REINICIO #name se reiniciara en #tmin minutos! Por favor ponte a salvo.</text>
+    </message>
+    <message>
         <deadline>120</deadline>
-        <text>El Servidor se reinicia en #tmin minutos</text>
-</message>
-
-<message>
-        <delay>10</delay>
-        <repeat>50</repeat>
-        <onconnect>1</onconnect>
-        <text>https://discord.com/invite/jN2rXWKdn7</text>
-</message>
-
-<!--message>
-        <delay>15</delay>
-        <repeat>50</repeat>
-        <onconnect>1</onconnect>
-        <text>RAID ACTIVE</text>
-</message-->
-
-
-
-<!--message>
-        <delay>15</delay>
-        <repeat>50</repeat>
-        <onconnect>1</onconnect>
-        <text>Se realizara evento de pvp en laberinto puedes ver la informacion en discord</text>
-</message-->
-
-
-
-
-
-
-
-
-<!--
-See https://community.bistudio.com/wiki/DayZ:Server_Messages for more information
-<message>
-        <delay>10</delay>
-        <repeat>12</repeat>
-        <onconnect>1</onconnect>
-        <text>Discord:  https://discord.com/invite/jN2rXWKdn7</text>
-</message>
-
-<message>
-        <delay>15</delay>
-        <repeat>6</repeat>
-        <onconnect>1</onconnect>
-        <text>Servidor se reinicia cada 2 horas | Server restart every 2 hour</text> 
-</message>
-
-
-
-Example messages:
-
-1) following message will be displayed to every player in countdown manner
-    and shuts down server in 10 hours from its start
-
-    <message>
-        <deadline>600</deadline>
-        <shutdown>1</shutdown>
-        <text>#name will shutdown in #tmin minutes.</text>
-    </message>
-    <message>
-        <deadline>240</deadline>
-        <shutdown>1</shutdown>
-        <text>El Servidor se reinicia en 5 minutos</text>
+        <text>[!] RESTART #name will restart in #tmin minutes! Please log out safely.</text>
     </message>
 
-	
-
-
-2) following message will be displayed every 15 minutes to every player
-
-    <message>
-        <repeat>1</repeat>
-        <text>Probando mensajes</text>
-    </message>
-
-
-3) following message will be displayed every 50 minutes to every player
-    and 10 minutes after player connect
-
+    <!-- ==================================================== -->
+    <!--               ENLACES Y COMUNIDAD                     -->
+    <!-- ==================================================== -->
     <message>
         <delay>10</delay>
+        <repeat>20</repeat>
+        <onconnect>1</onconnect>
+        <text>[ DISCORD ] Join us || Unete: https://discord.gg/RTTSk5tXC</text>
+    </message>
+
+    <!-- ==================================================== -->
+    <!--                REGLAS DEL SERVIDOR                     -->
+    <!-- ==================================================== -->
+
+    <!-- Regla 1: Construccion (Cada 35 minutos) -->
+    <message>
+        <delay>20</delay>
+        <repeat>35</repeat>
+        <onconnect>1</onconnect>
+        <text>[REGLA] Prohibido construir en bases militares o estaciones de policia.</text>
+    </message>
+    <message>
+        <delay>20</delay>
+        <repeat>35</repeat>
+        <onconnect>1</onconnect>
+        <text>[RULE] Do not build on military bases or police stations.</text>
+    </message>
+
+    <!-- RAID_RULES_START -->
+    <!-- Regla 2: Raideos (Cada 50 minutos) -->
+    <message>
+        <delay>30</delay>
         <repeat>50</repeat>
         <onconnect>1</onconnect>
-        <text>Check our web page at www.dayz.com</text>
+        <text>[REGLA] Los raideos estan permitidos UNICAMENTE en horario de Raid.</text>
     </message>
-
-
-4) following message will be displayed once
-    and 2 minutes after player connect
-
     <message>
-        <delay>2</delay>
+        <delay>30</delay>
+        <repeat>50</repeat>
         <onconnect>1</onconnect>
-        <text>Welcome to my server #name</text>
+        <text>[RULE] Raiding is ONLY allowed during Raid hours.</text>
     </message>
-    -->
+    <!-- RAID_RULES_END -->
+
+    <!-- RAID_ACTIVE_START -->
+    <!-- RAID_ACTIVE_END -->
 
 </messages>
