@@ -63,7 +63,8 @@ public class FlagEventToggleCommand implements SlashCommand {
                 .addSubcommands(
                         new SubcommandData("enable", "Activar el evento de banderas"),
                         new SubcommandData("disable", "Desactivar el evento de banderas"),
-                        new SubcommandData("status", "Ver si el evento está activo o inactivo")
+                        new SubcommandData("status", "Ver si el evento está activo o inactivo"),
+                        new SubcommandData("reset", "Reiniciar todos los tiempos de jugadores")
                 );
     }
 
@@ -81,6 +82,7 @@ public class FlagEventToggleCommand implements SlashCommand {
             case "enable" -> handleEnable(event, guildId);
             case "disable" -> handleDisable(event, guildId);
             case "status" -> handleStatus(event, guildId);
+            case "reset" -> handleReset(event, guildId);
             default -> event.reply("❌ Subcomando no reconocido: " + subcommand)
                     .setEphemeral(true).queue();
         }
@@ -140,6 +142,17 @@ public class FlagEventToggleCommand implements SlashCommand {
                 .addField("Tolerancia", String.format("%.0f metros", location.getTolerance()), true);
 
         event.replyEmbeds(embed.build()).setEphemeral(true).queue();
+    }
+
+    /**
+     * Sends a public embed to the configured notification channel confirming
+     * that the flag event system was enabled or disabled.
+     */
+    private void handleReset(SlashCommandInteractionEvent event, String guildId) {
+        flagEventService.resetAll(guildId);
+        event.reply("🔄 **Evento de banderas reiniciado.** Todos los tiempos de jugadores han sido borrados. " +
+                        "La ubicación y el canal se mantienen configurados.")
+                .setEphemeral(true).queue();
     }
 
     /**

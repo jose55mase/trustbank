@@ -1,6 +1,7 @@
 package com.discord.bot.flagevent.service;
 
 import com.discord.bot.BotInitializer;
+import com.discord.bot.flagevent.config.FlagEventProperties;
 import com.discord.bot.flagevent.model.FlagEvent;
 import com.discord.bot.flagevent.model.LeaderboardEntry;
 
@@ -34,11 +35,14 @@ public class FlagNotificationServiceImpl implements FlagNotificationService {
 
     private final BotInitializer botInitializer;
     private final FlagEventService flagEventService;
+    private final FlagEventProperties properties;
 
     public FlagNotificationServiceImpl(@Lazy BotInitializer botInitializer,
-                                       @Lazy FlagEventService flagEventService) {
+                                       @Lazy FlagEventService flagEventService,
+                                       FlagEventProperties properties) {
         this.botInitializer = botInitializer;
         this.flagEventService = flagEventService;
+        this.properties = properties;
     }
 
     @Override
@@ -53,7 +57,7 @@ public class FlagNotificationServiceImpl implements FlagNotificationService {
             return;
         }
 
-        String guildId = channel.getGuild().getId();
+        String guildId = properties.getGuildId();
 
         // Build leaderboard and dominant flag sections
         String leaderboardSection = buildLeaderboardSection(guildId);
@@ -88,7 +92,7 @@ public class FlagNotificationServiceImpl implements FlagNotificationService {
             return;
         }
 
-        String guildId = channel.getGuild().getId();
+        String guildId = properties.getGuildId();
 
         // Build leaderboard and dominant flag sections
         String leaderboardSection = buildLeaderboardSection(guildId);

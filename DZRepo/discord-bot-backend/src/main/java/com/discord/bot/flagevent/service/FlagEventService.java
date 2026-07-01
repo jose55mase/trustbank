@@ -8,7 +8,9 @@ import com.discord.bot.flagevent.model.LeaderboardEntry;
 import com.discord.bot.flagevent.model.PlayerFlagState;
 import com.discord.bot.flagevent.model.PlayerStatus;
 import com.discord.bot.flagevent.parser.FlagLogParser;
+import com.discord.bot.flagevent.repository.ActiveFlagSessionRepository;
 import com.discord.bot.flagevent.repository.FlagLocationRepository;
+import com.discord.bot.flagevent.repository.FlagPollingStateRepository;
 import com.discord.bot.flagevent.repository.PlayerFlagStateRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +45,8 @@ public class FlagEventService {
     private final FlagSessionManager flagSessionManager;
     private final FlagLocationRepository flagLocationRepository;
     private final PlayerFlagStateRepository playerFlagStateRepository;
+    private final ActiveFlagSessionRepository activeFlagSessionRepository;
+    private final FlagPollingStateRepository flagPollingStateRepository;
     private final FlagEventProperties properties;
 
     @Nullable
@@ -53,6 +57,8 @@ public class FlagEventService {
                             FlagSessionManager flagSessionManager,
                             FlagLocationRepository flagLocationRepository,
                             PlayerFlagStateRepository playerFlagStateRepository,
+                            ActiveFlagSessionRepository activeFlagSessionRepository,
+                            FlagPollingStateRepository flagPollingStateRepository,
                             FlagEventProperties properties,
                             @Nullable FlagNotificationService flagNotificationService) {
         this.flagLogParser = flagLogParser;
@@ -60,6 +66,8 @@ public class FlagEventService {
         this.flagSessionManager = flagSessionManager;
         this.flagLocationRepository = flagLocationRepository;
         this.playerFlagStateRepository = playerFlagStateRepository;
+        this.activeFlagSessionRepository = activeFlagSessionRepository;
+        this.flagPollingStateRepository = flagPollingStateRepository;
         this.properties = properties;
         this.flagNotificationService = flagNotificationService;
     }
@@ -181,6 +189,34 @@ public class FlagEventService {
 
         location.setNotificationChannelId(channelId);
         flagLocationRepository.save(location);
+    }
+
+    /**
+     * Resets all flag event data for a guild: clears all player times,
+     * ends any active session, and resets the polling state.
+     * The flag location and channel configuration are preserved.
+     *
+     * @param guildId the Discord guild ID
+     * @return true if reset was performed, false if no data exists
+     */
+    @Transactional
+    public boolean resetAll(String guildId) {
+        // Delete all player flag states
+        List<PlayerFlagState> states = playerFlagStateRepository.findByGuildId(guildId);
+        if (!states.isEmpty()) {
+            playerFlagStateRepository.deleteAll(states);
+        }
+
+        // Delete active session
+        activeFlagSessionRepository.findByGuildId(guildId)
+                .ifPresent(activeFlagSessionRepository::delete);
+
+        // Reset polling state
+        flagPollingStateRepository.findByGuildId(guildId)
+                .ifPresent(flagPollingStateRepository::delete);
+
+        log.info("[FlagEvent] Reset all flag event data for guild '{}'", guildId);
+        return true;
     }
 
     /**
