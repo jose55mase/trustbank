@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.awt.Color;
@@ -40,7 +41,7 @@ public class FlagEventToggleCommand implements SlashCommand {
 
     public FlagEventToggleCommand(FlagEventService flagEventService,
                                   FlagEventProperties properties,
-                                  BotInitializer botInitializer) {
+                                  @Lazy BotInitializer botInitializer) {
         this.flagEventService = flagEventService;
         this.properties = properties;
         this.botInitializer = botInitializer;
