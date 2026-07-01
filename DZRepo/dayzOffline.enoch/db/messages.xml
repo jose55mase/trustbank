@@ -35,32 +35,46 @@
     <!--                  REGLAS DEL SERVIDOR                 -->
     <!-- ==================================================== -->
 
-    <!-- Regla 1: Construcción (Salen juntos cada 35 minutos) -->
+    <!-- Regla 1: Construcciï¿½n (Salen juntos cada 35 minutos) -->
     <message>
         <delay>15</delay>
-        <repeat>35</repeat>
+        <repeat>30</repeat>
         <onconnect>1</onconnect>
         <text>[REGLA] Prohibido construir en bases militares o estaciones de policia.</text>
     </message>
     <message>
         <delay>15</delay>
-        <repeat>35</repeat>
+        <repeat>30</repeat>
         <onconnect>1</onconnect>
         <text>[RULE] Do not build on military bases or police stations.</text>
     </message>
 
     <!-- Regla 2: Raideos (Salen juntos cada 50 minutos) -->
     <message>
-        <delay>10</delay>
-        <repeat>10</repeat>
+        <delay>20</delay>
+        <repeat>35</repeat>
         <onconnect>1</onconnect>
         <text>[REGLA] Los raideos estan permitidos UNICAMENTE los fines de semana.</text>
     </message>
     <message>
-        <delay>10</delay>
-        <repeat>10</repeat>
+        <delay>20</delay>
+        <repeat>35</repeat>
         <onconnect>1</onconnect>
         <text>[RULE] Raiding is strictly allowed on weekends only.</text>
+    </message>
+
+    <!-- Regla 3: Raid Tactico (Cada 40 minutos) -->
+    <message>
+        <delay>12</delay>
+        <repeat>40</repeat>
+        <onconnect>1</onconnect>
+        <text>[REGLA] Raid tactico activo 24/7. Prohibido construir estructuras para hacer raid tactico (torres, rampas, etc).</text>
+    </message>
+    <message>
+        <delay>12</delay>
+        <repeat>40</repeat>
+        <onconnect>1</onconnect>
+        <text>[RULE] Tactical raid active 24/7. Building structures for tactical raiding is forbidden (towers, ramps, etc).</text>
     </message>
 
 
