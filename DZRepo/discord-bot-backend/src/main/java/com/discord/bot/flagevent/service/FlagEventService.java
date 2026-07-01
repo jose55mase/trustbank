@@ -90,6 +90,9 @@ public class FlagEventService {
             return;
         }
 
+        log.info("[FlagEvent] Parsed {} flag events from {} lines. Location: X={}, Z={}, Tolerance={}",
+                events.size(), lines.size(), location.getCoordX(), location.getCoordZ(), location.getTolerance());
+
         // Determine notification channel
         String channelId = location.getNotificationChannelId();
         boolean canNotify = channelId != null && !channelId.isBlank();
@@ -99,7 +102,16 @@ public class FlagEventService {
 
         // Process each event that matches the configured location
         for (FlagEvent event : events) {
-            if (!positionMatcher.matches(event, location)) {
+            double distance = positionMatcher.distance2D(event.flagX(), event.flagZ(),
+                    location.getCoordX(), location.getCoordZ());
+            boolean matched = distance <= location.getTolerance();
+
+            log.info("[FlagEvent] {} by '{}' flag='{}' at flagPos=({}, {}, {}). Distance={}m, Tolerance={}m, Match={}",
+                    event.action(), event.playerName(), event.flagName(),
+                    event.flagX(), event.flagY(), event.flagZ(),
+                    String.format("%.2f", distance), location.getTolerance(), matched);
+
+            if (!matched) {
                 continue;
             }
 

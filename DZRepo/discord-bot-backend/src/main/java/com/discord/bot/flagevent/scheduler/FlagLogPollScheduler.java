@@ -158,6 +158,7 @@ public class FlagLogPollScheduler {
 
         // Process new lines
         if (!newLines.isEmpty()) {
+            log.info("[FlagPoll] Processing {} new lines for guild '{}'", newLines.size(), guildId);
             flagEventService.processNewLines(newLines);
         }
 
