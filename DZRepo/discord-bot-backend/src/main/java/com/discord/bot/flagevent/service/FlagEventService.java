@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -122,8 +123,8 @@ public class FlagEventService {
                     flagNotificationService.sendRaiseNotification(event, channelId);
                 }
             } else if ("lowered".equals(event.action())) {
-                // Calculate elapsed time before handling lower (session still exists)
-                long elapsedSeconds = calculateActiveSessionElapsed();
+                // Calculate elapsed time using the event timestamp vs session start
+                long elapsedSeconds = calculateElapsedFromEvent(event);
 
                 flagSessionManager.handleLower(event);
 
@@ -357,6 +358,24 @@ public class FlagEventService {
             return 0;
         }
         long elapsed = Duration.between(session.get().getStartTime(), LocalDateTime.now()).getSeconds();
+        return Math.max(elapsed, 0);
+    }
+
+    /**
+     * Calculates the elapsed seconds between the active session start and the event's timestamp.
+     * This is used for lower events where we need the actual elapsed based on log timestamps,
+     * not wall-clock time (which would be wrong when events arrive in the same poll batch).
+     *
+     * @param event the lower event
+     * @return elapsed seconds, or 0 if no active session
+     */
+    private long calculateElapsedFromEvent(FlagEvent event) {
+        Optional<ActiveFlagSession> session = flagSessionManager.getActiveSession();
+        if (session.isEmpty()) {
+            return 0;
+        }
+        LocalDateTime eventDateTime = LocalDateTime.of(LocalDate.now(), event.timestamp());
+        long elapsed = Duration.between(session.get().getStartTime(), eventDateTime).getSeconds();
         return Math.max(elapsed, 0);
     }
 }
