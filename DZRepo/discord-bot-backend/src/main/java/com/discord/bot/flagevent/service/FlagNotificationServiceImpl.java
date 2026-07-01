@@ -35,7 +35,7 @@ public class FlagNotificationServiceImpl implements FlagNotificationService {
     private final BotInitializer botInitializer;
     private final FlagEventService flagEventService;
 
-    public FlagNotificationServiceImpl(BotInitializer botInitializer,
+    public FlagNotificationServiceImpl(@Lazy BotInitializer botInitializer,
                                        @Lazy FlagEventService flagEventService) {
         this.botInitializer = botInitializer;
         this.flagEventService = flagEventService;
