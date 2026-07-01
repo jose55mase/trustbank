@@ -4,6 +4,8 @@ import com.discord.bot.command.SlashCommand;
 import com.discord.bot.flagevent.config.FlagEventProperties;
 import com.discord.bot.flagevent.service.FlagEventService;
 
+import com.discord.bot.flagevent.model.FlagLocation;
+
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -54,7 +57,8 @@ public class FlagChannelCommand implements SlashCommand {
         return Commands.slash(getName(), getDescription())
                 .addSubcommands(
                         new SubcommandData("set", "Establece el canal de notificaciones de banderas")
-                                .addOption(OptionType.STRING, "channel", "ID del canal de Discord (17-20 dígitos)", true)
+                                .addOption(OptionType.STRING, "channel", "ID del canal de Discord (17-20 dígitos)", true),
+                        new SubcommandData("get", "Muestra el canal de notificaciones configurado")
                 );
     }
 
@@ -66,10 +70,11 @@ public class FlagChannelCommand implements SlashCommand {
             return;
         }
 
-        if ("set".equals(subcommand)) {
-            handleSet(event);
-        } else {
-            event.reply("❌ Subcomando no reconocido: " + subcommand).setEphemeral(true).queue();
+        switch (subcommand) {
+            case "set" -> handleSet(event);
+            case "get" -> handleGet(event);
+            default -> event.reply("❌ Subcomando no reconocido: " + subcommand)
+                    .setEphemeral(true).queue();
         }
     }
 
@@ -94,6 +99,22 @@ public class FlagChannelCommand implements SlashCommand {
 
         log.info("Flag notification channel set to {} for guild {}", channelId, guildId);
         event.reply("✅ Canal de notificaciones de banderas configurado: <#" + channelId + ">")
+                .setEphemeral(true).queue();
+    }
+
+    private void handleGet(SlashCommandInteractionEvent event) {
+        String guildId = properties.getGuildId();
+        Optional<FlagLocation> locationOpt = flagEventService.getFlagLocation(guildId);
+
+        if (locationOpt.isEmpty() || locationOpt.get().getNotificationChannelId() == null
+                || locationOpt.get().getNotificationChannelId().isBlank()) {
+            event.reply("ℹ️ No hay canal de notificaciones configurado.")
+                    .setEphemeral(true).queue();
+            return;
+        }
+
+        String channelId = locationOpt.get().getNotificationChannelId();
+        event.reply("📢 Canal de notificaciones: <#" + channelId + ">")
                 .setEphemeral(true).queue();
     }
 }

@@ -171,6 +171,37 @@ public class FlagEventService {
     }
 
     /**
+     * Enables or disables the flag event system for a guild.
+     *
+     * @param guildId the Discord guild ID
+     * @param enabled true to enable, false to disable
+     * @return true if the state was changed, false if no location is configured
+     */
+    @Transactional
+    public boolean setEnabled(String guildId, boolean enabled) {
+        Optional<FlagLocation> locationOpt = flagLocationRepository.findByGuildId(guildId);
+        if (locationOpt.isEmpty()) {
+            return false;
+        }
+        FlagLocation location = locationOpt.get();
+        location.setEnabled(enabled);
+        flagLocationRepository.save(location);
+        return true;
+    }
+
+    /**
+     * Returns whether the flag event system is enabled for a guild.
+     *
+     * @param guildId the Discord guild ID
+     * @return true if enabled, false otherwise
+     */
+    public boolean isEnabled(String guildId) {
+        return flagLocationRepository.findByGuildId(guildId)
+                .map(FlagLocation::isEnabled)
+                .orElse(false);
+    }
+
+    /**
      * Gets the leaderboard for a guild, sorted by total accumulated time descending.
      * Includes active session elapsed time in calculations.
      *

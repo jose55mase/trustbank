@@ -84,6 +84,12 @@ public class FlagLogPollScheduler {
             return;
         }
 
+        // Check if the flag event system is enabled
+        if (!flagEventService.isEnabled(guildId)) {
+            log.debug("[FlagPoll] Skipped: flag event system is disabled for guild '{}'", guildId);
+            return;
+        }
+
         // Check for orphaned sessions each tick
         flagSessionManager.checkOrphanedSession();
 

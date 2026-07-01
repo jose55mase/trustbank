@@ -34,6 +34,9 @@ public class FlagLocation {
     @Column(nullable = true)
     private String notificationChannelId;
 
+    @Column(nullable = false)
+    private boolean enabled = false;
+
     protected FlagLocation() {}
 
     public FlagLocation(String guildId, double coordX, double coordZ, double tolerance) {
@@ -59,4 +62,7 @@ public class FlagLocation {
 
     public String getNotificationChannelId() { return notificationChannelId; }
     public void setNotificationChannelId(String notificationChannelId) { this.notificationChannelId = notificationChannelId; }
+
+    public boolean isEnabled() { return enabled; }
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
 }
