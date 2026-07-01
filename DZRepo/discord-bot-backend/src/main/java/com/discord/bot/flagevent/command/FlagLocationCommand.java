@@ -116,7 +116,7 @@ public class FlagLocationCommand implements SlashCommand {
             tolerance = flagEventProperties.getDefaultTolerance();
         }
 
-        String guildId = event.getGuild().getId();
+        String guildId = flagEventProperties.getGuildId();
         FlagLocation saved = flagEventService.setFlagLocation(guildId, x, z, tolerance);
 
         event.reply(String.format("✅ Flag location set to X=%.2f, Z=%.2f with tolerance=%.2f meters.",
@@ -125,7 +125,7 @@ public class FlagLocationCommand implements SlashCommand {
     }
 
     private void handleGet(SlashCommandInteractionEvent event) {
-        String guildId = event.getGuild().getId();
+        String guildId = flagEventProperties.getGuildId();
         Optional<FlagLocation> locationOpt = flagEventService.getFlagLocation(guildId);
 
         if (locationOpt.isEmpty()) {
