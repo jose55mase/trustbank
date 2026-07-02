@@ -125,9 +125,10 @@ public class FlagEventService {
             }
 
             if ("raised".equals(event.action())) {
-                flagSessionManager.handleRaise(event);
+                boolean created = flagSessionManager.handleRaise(event);
 
-                if (canNotify && flagNotificationService != null) {
+                if (created && canNotify && flagNotificationService != null) {
+                    playerFlagStateRepository.flush();
                     flagNotificationService.sendRaiseNotification(event, channelId);
                 }
             } else if ("lowered".equals(event.action())) {
@@ -137,6 +138,7 @@ public class FlagEventService {
                 flagSessionManager.handleLower(event);
 
                 if (canNotify && flagNotificationService != null) {
+                    playerFlagStateRepository.flush();
                     flagNotificationService.sendLowerNotification(event, elapsedSeconds, channelId);
                 }
             }

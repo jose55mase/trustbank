@@ -48,9 +48,10 @@ public class FlagSessionManager {
      * accumulates elapsed time, and creates a new session.
      *
      * @param event the flag raise event
+     * @return true if a new session was created, false if it was a duplicate raise
      */
     @Transactional
-    public void handleRaise(FlagEvent event) {
+    public boolean handleRaise(FlagEvent event) {
         String guildId = properties.getGuildId();
         Optional<ActiveFlagSession> existingSession = activeSessionRepository.findByGuildId(guildId);
 
@@ -60,7 +61,7 @@ public class FlagSessionManager {
             // If same player and same flag, treat as duplicate raise — ignore
             if (session.getPlayerName().equals(event.playerName())
                     && session.getFlagName().equals(event.flagName())) {
-                return;
+                return false;
             }
 
             // End existing session and accumulate time
@@ -71,12 +72,14 @@ public class FlagSessionManager {
             }
             accumulateTime(guildId, session.getPlayerName(), session.getFlagName(), elapsedSeconds);
             activeSessionRepository.delete(session);
+            activeSessionRepository.flush();
         }
 
         // Create new session
         LocalDateTime startTime = toLocalDateTime(event.timestamp());
         ActiveFlagSession newSession = new ActiveFlagSession(guildId, event.playerName(), event.flagName(), startTime);
         activeSessionRepository.save(newSession);
+        return true;
     }
 
     /**
